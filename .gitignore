@@ -1,2 +1,5 @@
-/game-mahjong-xuezhan.iml
 /.idea/
+/*.iml
+/*/*.iml
+/target/
+/*/target/

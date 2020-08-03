@@ -5,14 +5,22 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>game.mahjong</groupId>
-    <artifactId>game-mahjong-xuezhan</artifactId>
+    <artifactId>game-mahjong</artifactId>
     <version>1.0.0</version>
+    <modules>
+        <module>xuezhan</module>
+        <module>common</module>
+    </modules>
+    <packaging>pom</packaging>
 
-    <dependencies>
-        <dependency>
-            <groupId>base.service.frameworks</groupId>
-            <artifactId>game-poker-common</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-    </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>game.mahjong</groupId>
+                <artifactId>common</artifactId>
+                <version>1.0.0</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 </project>
