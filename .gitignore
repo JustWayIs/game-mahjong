@@ -1,5 +1,10 @@
 /.idea/
-/*.iml
-/*/*.iml
-/target/
 /*/target/
+/*/*.iml
+*.iml
+/*/.classpath
+/*/.project
+/.settings/
+/*/.settings/
+/.project
+/*/proto/

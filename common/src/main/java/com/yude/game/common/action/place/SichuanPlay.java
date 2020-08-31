@@ -1,4 +1,4 @@
-package com.yude.game.xuezhan.domain.action;
+package com.yude.game.common.action.place;
 
 import java.util.List;
 
@@ -10,12 +10,12 @@ import java.util.List;
  */
 public interface SichuanPlay {
 
-    void dingQue(Integer color,int posId);
+    void dingQue(Integer color,Integer posId);
 
     /**
      * 换三张、换四张
      * @param cards
      * @param posId
      */
-    void changeCard(List<Integer> cards,int posId);
+    void exchangeCard(List<Integer> cards,Integer posId);
 }

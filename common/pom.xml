@@ -17,6 +17,52 @@
             <artifactId>game-common</artifactId>
             <version>1.0.0</version>
         </dependency>
+
+        <!--百度对protobuf的封装,屏蔽使用原生protobuf带来的繁琐，避免开发人员做跳出语言之外的事-->
+        <dependency>
+            <groupId>com.baidu</groupId>
+            <artifactId>jprotobuf</artifactId>
+            <version>2.4.3</version>
+        </dependency>
+
+        <!--JProtobuf中的预编译插件的ClassScanner用到了这个包，由于本地预编译有问题，可能需要借助测试类手动生成pb文件 和 动态类，所以保留这个-->
+        <dependency>
+            <groupId>org.jodd</groupId>
+            <artifactId>jodd-core</artifactId>
+            <version>3.8</version>
+        </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.baidu</groupId>
+                <artifactId>jprotobuf-precompile-plugin</artifactId>
+                <version>2.2.2</version>
+                <configuration>
+
+                    <!--0：存放动态生成的class文件 和proto文件的地方，
+                    1：生成完上面两种文件后，要复制到的目标目录
+                    2：要扫描的包路径
+                    3：是否生成proto文件
+                    4：可以针对依赖的类【有@ProtobufClass注解的类所依赖的类】进行编译，即使依赖类不在filterClassPackage的范围内-->
+                    <outputParentDirectory>./proto</outputParentDirectory>
+                    <outputDirectory>./target/classes</outputDirectory>
+                    <filterClassPackage>com.yude</filterClassPackage>
+                    <generateProtoFile>true</generateProtoFile>
+                    <!--这个版本compileDependencies默认是true-->
+                    <compileDependencies>true</compileDependencies>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>precompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>
