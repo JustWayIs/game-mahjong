@@ -70,9 +70,10 @@ public  class MahjongRoom extends AbstractRoomModel<MahjongZone,MahjongSeat, Tim
     }
 
     @Override
-    public void cancel() {
+    public void cancel(Integer card, Integer podId) {
 
     }
+
 
     @Override
     public void chi(Integer card, int posId) {

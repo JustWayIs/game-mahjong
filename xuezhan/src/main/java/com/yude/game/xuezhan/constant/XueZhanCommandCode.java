@@ -19,7 +19,11 @@ public interface XueZhanCommandCode extends MahjongCommandCode {
      */
     int DING_QUE = 0x1004;
 
-    int OUT_CARD = 0x1005;
+    /**
+     * 出牌、碰、直杠、补杠、暗杠、胡牌
+     */
+    int OPERATION_CARD = 0x1005;
+    /*int OUT_CARD = 0x1005;
 
     int PENG = 0x1006;
 
@@ -29,7 +33,7 @@ public interface XueZhanCommandCode extends MahjongCommandCode {
 
     int AN_GANG = 0x1009;
 
-    int HU = 0x100A;
+    int HU = 0x100A;*/
 
     int YI_PAO_DUO_XIANG = 0x100B;
 

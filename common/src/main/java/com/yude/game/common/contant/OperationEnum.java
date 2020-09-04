@@ -10,47 +10,67 @@ import com.yude.game.common.model.MahjongOperation;
  */
 public enum  OperationEnum implements MahjongOperation {
     /**
-     *
+     * 过
      */
-    CANCEL,
-    BU_HUA,
-    EXCHANGE_CARD,
-    DING_QUE,
-    OUT_CARD,
-    CHI,
-    PENG,
-    ZHI_GANG,
-    BU_GANG,
-    AN_GANG,
-    HU,
-    YI_PAO_DUO_XIANG;
+    CANCEL(false,1),
+    /**
+     * 补花
+     */
+    BU_HUA(false,0),
+    /**
+     * 换牌：可能是换三张、可能是换四张
+     */
+    EXCHANGE_CARD(false,0),
+    /**
+     * 定缺
+     */
+    DING_QUE(false,0),
+    /**
+     * 出牌
+     */
+    OUT_CARD(false,0),
+    CHI(true,2),
+    PENG(true,3),
+    ZHI_GANG(true,3),
+    BU_GANG(true,3),
+    AN_GANG(true,3),
+    HU(false,4),
+    /**
+     * 一炮多响
+     */
+    YI_PAO_DUO_XIANG(false,4),
+    /**
+     * 抓牌
+     */
+    TOOK_CARD(false,0);
 
-    /*public List<Integer> getOperationList(){
-        List<Integer> operationList = new ArrayList<>();
-        //逻辑上来说是不会直接使用CANCEL
-        if(!OperationEnum.BU_HUA.equals(this) && !OperationEnum.OUT_CARD.equals(this)){
-            operationList.add(CANCEL.ordinal());
-        }
-        operationList.add(this.ordinal());
-        return operationList;
+    /**
+     * 该操作是否能产生副露，就是对操作类型做进一步的区分
+     */
+    public boolean canProductFulu;
+
+    /**
+     * 值为0 代表这个操作不需要优先级这个概念
+     */
+    public int priority;
+
+    OperationEnum(boolean canProductFulu, int priority) {
+        this.canProductFulu = canProductFulu;
+        this.priority = priority;
     }
-
-    *//**
-     * 存在一个问题，这里返回是带cancel操作的权限集合了，如果同时可以吃、碰 这种多操作呢。集合里就会有两个cancel这个时候又得做一次去重操作。  这样来看的话，倒不如临时决定要不要增加cancel操作，这个方法也就失去了意义。
-     * @return
-     *//*
-    public List<OperationEnum> getOperationEnumList(){
-        List<OperationEnum> operationList = new ArrayList<>();
-        //逻辑上来说是不会直接使用CANCEL
-        if(!OperationEnum.BU_HUA.equals(this) && !OperationEnum.OUT_CARD.equals(this)){
-            operationList.add(CANCEL);
-        }
-        operationList.add(this);
-        return operationList;
-    }*/
 
     @Override
     public Integer value() {
         return this.ordinal();
+    }
+
+    @Override
+    public boolean canProductFulu() {
+        return canProductFulu;
+    }
+
+    @Override
+    public int priority() {
+        return priority;
     }
 }

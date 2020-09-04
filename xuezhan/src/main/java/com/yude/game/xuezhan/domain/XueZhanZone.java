@@ -2,11 +2,10 @@ package com.yude.game.xuezhan.domain;
 
 
 import com.yude.game.common.mahjong.PlayerHand;
-import com.yude.game.common.mahjong.Tile;
-import com.yude.game.common.model.AbstractGameZoneModel;
-import com.yude.game.common.model.MahjongSeat;
-import com.yude.game.common.model.MahjongZone;
+import com.yude.game.common.mahjong.Solution;
+import com.yude.game.common.model.*;
 import com.yude.game.common.model.history.GameStepModel;
+import com.yude.game.common.model.history.OperationCardStep;
 import com.yude.game.common.model.history.Step;
 import com.yude.game.common.model.sichuan.SichuanGameStatusEnum;
 import com.yude.game.common.model.sichuan.SichuanMahjongCard;
@@ -14,13 +13,14 @@ import com.yude.game.common.model.sichuan.SichuanMahjongSeat;
 import com.yude.game.common.model.sichuan.SichuanMahjongZone;
 import com.yude.game.common.model.sichuan.history.DingQueStep;
 import com.yude.game.common.model.sichuan.history.ExchangeCardStep;
+import com.yude.game.xuezhan.constant.XueZhanMahjongOperationEnum;
+import com.yude.game.xuezhan.domain.status.SeatStatusEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 
 /**
@@ -34,6 +34,13 @@ public class XueZhanZone extends AbstractGameZoneModel<XueZhanSeat, SichuanGameS
 
     private SichuanMahjongZone sichuanMahjongZone;
     private MahjongZone mahjongZone;
+
+    /**
+     *  因为换三张操作 、 定缺操作这种地方麻将玩法，导致，historyList不能放在MahjongZone里面
+     *  也就导致多了一层对GameZone的调用。核心问题是，多一重掉用对性能真的有影响么，像现在的Controller省略了Service一样，又对性能提高有多少贡献呢。
+     *  如果想要少一层调用，倒是可以把historyList放在RoomModel里面，这里的核心问题是类的职能划分
+     *  从代码复用的层面来说，这里面的方法确实应该放在 MahjongZone 和 地方麻将Zone里面
+     */
 
     private List<GameStepModel> historyList;
 
@@ -83,48 +90,30 @@ public class XueZhanZone extends AbstractGameZoneModel<XueZhanSeat, SichuanGameS
                 .setColor(color)
                 .setGameStatus(gameStatus)
                 .setHandCards(operationSeat.getMahjongSeat().getStandCardList());
-        GameStepModel<DingQueStep> gameStepModel = new GameStepModel<>(zoneId,operationSeat.getPlayer(),step);
+        GameStepModel<DingQueStep> gameStepModel = new GameStepModel<>(zoneId, operationSeat.getPlayer(), step);
         historyList.add(gameStepModel);
         mahjongZone.stepAdd();
 
-        if(isFinishDingQue){
-            /**
-             * 定缺完成后，进行理牌
-             * posId -> standCardList
-             */
-            Map<Integer, List<Integer>> cardGroup = new HashMap<>();
-            /**
-             * posId -> dingQueColor
-             */
-            Map<Integer, Integer> posIdQueColorMap = new HashMap<>();
-            for (XueZhanSeat xueZhanSeat : playerSeats) {
+        if (isFinishDingQue) {
+
+            for(XueZhanSeat xueZhanSeat : playerSeats){
+                //庄家进行理牌
+                //XueZhanSeat xueZhanSeat = playerSeats[mahjongZone.getBankerPosId()];
+                /**
+                 * 由于庄家出完牌，其他玩家得通过理牌的数据来判断是否能 碰杠胡，所以也得给其他玩家理牌
+                 */
                 MahjongSeat mahjongSeat = xueZhanSeat.getMahjongSeat();
-                cardGroup.compute(mahjongSeat.getPosId(), (k, v) -> {
-                    if (v == null) {
-                        v = new ArrayList<>();
-                    }
-                    v.addAll(mahjongSeat.getStandCardList());
-                    return v;
-                });
-
                 SichuanMahjongSeat sichuanMahjongSeat = xueZhanSeat.getSichuanMahjongSeat();
-                posIdQueColorMap.put(mahjongSeat.getPosId(), sichuanMahjongSeat.getQueColor());
-
-                List<Integer> standCardList = mahjongSeat.getStandCardList();
-                for(Integer card : standCardList){
-                    Tile tile = Tile.getTileByID(card);
-                    mahjongSeat.addTile(tile);
-                }
                 PlayerHand playerHand = mahjongSeat.getPlayerHand();
                 playerHand.bannedSuit = sichuanMahjongSeat.getQueColor();
                 mahjongSeat.solution();
-
             }
-            /*final PlayBoard playBoard = MJManager.INSTANCE.create(mahjongZone.getBankerPosId(), mahjongZone.getCardWall());
-            playBoard.deal(cardGroup, posIdQueColorMap);
-            mahjongZone.setPlayBoard(playBoard);*/
+
+
+
             gameStatus = SichuanGameStatusEnum.OPERATION_CARD;
-            //H2 设置当前操作人
+            //初始化当前操作人为庄家
+            mahjongZone. initCurrentOperator();
 
         }
 
@@ -136,23 +125,32 @@ public class XueZhanZone extends AbstractGameZoneModel<XueZhanSeat, SichuanGameS
     public boolean exchangeCard(List<Integer> cards, XueZhanSeat xueZhanSeat) {
         SichuanMahjongSeat sichuanMahjongSeat = xueZhanSeat.getSichuanMahjongSeat();
         boolean isFinishExchange = sichuanMahjongZone.exchangeCard(cards, sichuanMahjongSeat);
-        if (!isFinishExchange) {
-            ExchangeCardStep exchangeCardStep = new ExchangeCardStep();
-            MahjongSeat mahjongSeat = xueZhanSeat.getMahjongSeat();
-            exchangeCardStep.setStep(mahjongZone.getStepCount())
-                    .setPosId(xueZhanSeat.getPosId())
-                    .setDiscardCards(cards)
-                    .setGameStatus(gameStatus)
-                    .setStandCards(mahjongSeat.getStandCardList());
-            GameStepModel<ExchangeCardStep> gameStepModel = new GameStepModel<>(zoneId, xueZhanSeat.getPlayer(), exchangeCardStep);
-            historyList.add(gameStepModel);
-        } else {
+
+        ExchangeCardStep exchangeCardStep = new ExchangeCardStep();
+        MahjongSeat mahjongSeat = xueZhanSeat.getMahjongSeat();
+        exchangeCardStep.setStep(mahjongZone.getStepCount())
+                .setPosId(xueZhanSeat.getPosId())
+                .setDiscardCards(cards)
+                .setGameStatus(gameStatus)
+                .setStandCards(mahjongSeat.getStandCardList());
+        GameStepModel<ExchangeCardStep> gameStepModel = new GameStepModel<>(zoneId, xueZhanSeat.getPlayer(), exchangeCardStep);
+        historyList.add(gameStepModel);
+        if (isFinishExchange) {
             List<Step> historyByGameStatus = getHistoryByGameStatus(SichuanGameStatusEnum.EXCHANGE_CARD);
             for (Step step : historyByGameStatus) {
-                ExchangeCardStep exchangeCardStep = (ExchangeCardStep) step;
-                exchangeCardStep.setStandCards(playerSeats[exchangeCardStep.getPosId()].getMahjongSeat().getStandCardList())
-                        .setExchangeType(sichuanMahjongZone.getExchangeType());
+                ExchangeCardStep curExchangeCardStep = (ExchangeCardStep) step;
+                //换牌后重新排序
+                XueZhanSeat playerSeat = playerSeats[curExchangeCardStep.getPosId()];
+                Collections.sort(playerSeat.getMahjongSeat().getStandCardList());
+
+                List<Integer> standCardList = playerSeats[curExchangeCardStep.getPosId()].getMahjongSeat().getStandCardList();
+                curExchangeCardStep.setStandCards(standCardList)
+                        .setExchangeType(sichuanMahjongZone.getExchangeType())
+                        .setGainedCards(playerSeat.getSichuanMahjongSeat().getGainedCards())
+                        .setStandCardConvertList(MahjongProp.cardConvertName(standCardList));
+
             }
+            mahjongZone.setGameStatus(SichuanGameStatusEnum.DING_QUE);
             gameStatus = SichuanGameStatusEnum.DING_QUE;
         }
 
@@ -161,44 +159,256 @@ public class XueZhanZone extends AbstractGameZoneModel<XueZhanSeat, SichuanGameS
 
     }
 
-    public List<Integer> whatCanYouDo(){
-        Integer nextObtainCardPosId = mahjongZone.getNextObtainCardPosId();
-        XueZhanSeat playerSeat = playerSeats[nextObtainCardPosId];
+
+    public  GameStepModel<OperationCardStep> outCard(Integer card, Integer posId) {
+        GameStepModel<OperationCardStep> gameStepModel = mahjongZone.outCard(card, posId);
+        historyList.add(gameStepModel);
+        return gameStepModel;
+    }
+
+
+    public GameStepModel<OperationCardStep> hu(Integer card, Integer posId) {
+        GameStepModel<OperationCardStep> gameStepModel = null;
+        return gameStepModel;
+    }
+
+
+    public GameStepModel<OperationCardStep> cancel(Integer card,Integer posId) {
+        GameStepModel<OperationCardStep> cancel = mahjongZone.cancel(card,posId);
+        if(cancel != null){
+            historyList.add(cancel);
+        }
+        return cancel;
+    }
+
+
+    public GameStepModel<OperationCardStep> gang(Integer card, Integer type, Integer posId) {
+        GameStepModel<OperationCardStep> gameStepModel = null;
+        return  null;
+    }
+
+    public GameStepModel<OperationCardStep> peng(Integer card, Integer posId) {
+        GameStepModel<OperationCardStep> gameStepModel = null;
+        return null;
+    }
+
+    /**
+     * 抓牌的人能做什么
+     * @param card
+     * @return
+     */
+    public List<StepAction> whatCanYouDo(Integer card) {
+        Integer curObtainCardPosId = mahjongZone.getCurTookCardPlayerPosId();
+        XueZhanSeat playerSeat = playerSeats[curObtainCardPosId];
         MahjongSeat mahjongSeat = playerSeat.getMahjongSeat();
-        canAnGang(mahjongSeat);
-        canHu(mahjongSeat);
-        List<Integer> list = new ArrayList<>();
 
-        return list;
+        List<StepAction> stepActions = new ArrayList<>();
+        PlayerHand playerHand = mahjongSeat.getPlayerHand();
+        playerHand.canAnGang(stepActions);
+        for(StepAction stepAction : stepActions){
+            stepAction.setCardSource(mahjongSeat.getPosId())
+                    .setOperationType(XueZhanMahjongOperationEnum.AN_GANG);
+        }
+        boolean canBuGang = playerHand.canBuGang(card);
+        if(canBuGang){
+            StepAction stepAction = new StepAction();
+            stepAction.setTargetCard(card)
+                    .setCardSource(mahjongSeat.getPosId())
+                    .setOperationType(XueZhanMahjongOperationEnum.BU_GANG);
+            stepActions.add(stepAction);
+        }
+        List<Solution> solutions = playerHand.canHu(card, true);
+        if(solutions.size() > 0){
+            StepAction stepAction = new StepAction();
+            stepAction.setTargetCard(card)
+                    .setCardSource(mahjongSeat.getPosId())
+                    .setOperationType(XueZhanMahjongOperationEnum.HU);
+            stepActions.add(stepAction);
+        }
+        /*canAnGang(mahjongSeat, stepActions);
+        canBuGang(mahjongSeat,card);
+        canHu(mahjongSeat, card, true);*/
+
+
+        return stepActions;
     }
 
-    public void canPeng(MahjongSeat mahjongSeat,Integer card){
-
-    }
-
-    public void canZhiGang(MahjongSeat mahjongSeat,Integer card){};
-
-    public void canBuGang(MahjongSeat mahjongSeat,Integer card){};
-
-    public void canAnGang(MahjongSeat mahjongSeat){
-
-            // 判断手上有暗杠，但是没有开杠的牌
-            int cardNum = 0;
-            int tempCard = 0;
-            for (Integer c : mahjongSeat.getStandCardList()) {
-                if (tempCard != c) {
-                    cardNum = 0;
-                }
-                tempCard = c;
-                cardNum++;
-                if (cardNum >= 4) {
-
-                }
+    /**
+     * 对于某个玩家出的牌，其他玩家能做什么
+     * @param outCardSet
+     * @param card
+     * @return
+     */
+    public List<MahjongSeat> otherPalyerCanDo(XueZhanSeat outCardSet, Integer card) {
+        List<MahjongSeat> canOperationSeats = new ArrayList<>();
+        for(XueZhanSeat xueZhanSeat : playerSeats){
+            if(outCardSet.equals(xueZhanSeat)){
+                continue;
+            }
+            MahjongSeat mahjongSeat = xueZhanSeat.getMahjongSeat();
+            PlayerHand playerHand = mahjongSeat.getPlayerHand();
+            boolean canPeng = playerHand.canPeng(card);
+            if(canPeng){
+                StepAction stepAction = new StepAction();
+                stepAction.setTargetCard(card)
+                        .setCardSource(outCardSet.getPosId())
+                        .setOperationType(XueZhanMahjongOperationEnum.PENG);
+                mahjongSeat.addOperation(stepAction);
+               /* StepAction stepAction = new StepAction();
+                stepAction.setCardSource(outCardSet.getPosId())
+                        .setTargetCard(card)
+                        .setOperationType(XueZhanMahjongOperationEnum.PENG)
+                        .setCombinationRsult(Arrays.asList(card,card,card));
+                stepActions.add(stepAction);*/
+            }
+            boolean canZhiGang = playerHand.canZhiGang(card);
+            if(canZhiGang){
+                StepAction stepAction = new StepAction();
+                stepAction.setTargetCard(card)
+                        .setCardSource(outCardSet.getPosId())
+                        .setOperationType(XueZhanMahjongOperationEnum.ZHI_GANG);
+                mahjongSeat.addOperation(stepAction);
+                /*StepAction stepAction = new StepAction();
+                stepAction.setCardSource(outCardSet.getPosId())
+                            .setTargetCard(card)
+                            .setOperationType(XueZhanMahjongOperationEnum.ZHI_GANG)
+                            .setCombinationRsult(Arrays.asList(card,card,card,card));*/
+            }
+            List<Solution> solutions = playerHand.canHu(card, false);
+            if(solutions.size() > 0){
+                StepAction stepAction = new StepAction();
+                stepAction.setTargetCard(card)
+                        .setCardSource(outCardSet.getPosId())
+                        .setOperationType(XueZhanMahjongOperationEnum.HU);
+                mahjongSeat.addOperation(stepAction);
             }
 
+            if(canPeng || canZhiGang || solutions.size() > 0){
+                canOperationSeats.add(mahjongSeat);
+            }
+        }
+
+        return canOperationSeats;
     }
 
-    public void canHu(MahjongSeat mahjongSeat){};
+    public Integer refreshTookPlayer(){
+        mahjongZone.refreshObtaionCardPosId();
+        return mahjongZone.getCurTookCardPlayerPosId();
+    }
+
+    public OperationCardStep tookCardStep(Integer posId){
+        Integer card = mahjongZone.TookCardFromCardWall();
+        XueZhanSeat xueZhanSeat = playerSeats[posId];
+        MahjongSeat mahjongSeat = xueZhanSeat.getMahjongSeat();
+        mahjongSeat.appendCard(card);
+
+        List<Integer> standCardList = mahjongSeat.getStandCardList();
+        OperationCardStep step = new OperationCardStep();
+        StepAction stepAction = new StepAction();
+        stepAction.setTargetCard(card)
+                .setOperationType(XueZhanMahjongOperationEnum.TOOK_CARD);
+
+        step.setStep(mahjongZone.getStepCount())
+                .setPosId(posId)
+                .setAction(stepAction)
+                .setGameStatus(gameStatus)
+                .setRemainingCardSize(standCardList.size())
+                .setStandCardList(standCardList)
+                .setStandCardConvertList(MahjongProp.cardConvertName(standCardList));
+
+        GameStepModel<OperationCardStep> gameStepModel = new GameStepModel(zoneId,xueZhanSeat.getPlayer(),step);
+        historyList.add(gameStepModel);
+        return step;
+    }
+
+    public boolean gameover(){
+        List cardWall = mahjongZone.getCardWall();
+        if(cardWall.size() == 0){
+            return true;
+        }
+
+        int alreadyHuCount = 0;
+        for(XueZhanSeat xueZhanSeat : playerSeats){
+            MahjongSeat mahjongSeat = xueZhanSeat.getMahjongSeat();
+            boolean alreadyHu = mahjongSeat.existsStatus(SeatStatusEnum.ALREADY_HU.status());
+            if(alreadyHu){
+                alreadyHuCount++;
+            }
+        }
+        if(alreadyHuCount >= playerSeats.length - 1){
+            return true;
+        }
+        return false;
+    }
+
+    /*public boolean canPeng(MahjongSeat mahjongSeat, Integer card) {
+        PlayerHand playerHand = mahjongSeat.getPlayerHand();
+        List<Solution> solutions = playerHand.solutions;
+        for(Solution solution : solutions){
+            List<Tile> canChow = solution.canChow;
+            for(Tile tile : canChow){
+                if(tile.id == card){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean canZhiGang(MahjongSeat mahjongSeat, Integer card) {
+        return false;
+    }
+
+    public void canAnGang(MahjongSeat mahjongSeat,List<StepAction> stepActions) {
+        // 判断手上有暗杠，但是没有开杠的牌
+        int cardNum = 0;
+        int tempCard = 0;
+        for (Integer card : mahjongSeat.getStandCardList()) {
+            if (tempCard != card) {
+                cardNum = 0;
+            }
+            tempCard = card;
+            cardNum++;
+            if (cardNum >= 4) {
+                StepAction stepAction = new StepAction();
+                stepAction.setTargetCard(card)
+                        .setOperationType(XueZhanMahjongOperationEnum.AN_GANG);
+                stepActions.add(stepAction);
+            }
+        }
+
+    }
+
+    public boolean canBuGang(MahjongSeat mahjongSeat, Integer card) {
+        if(card == null){
+            return false;
+        }
+        mahjongSeat.getPlayerHand()
+        return false;
+    }
+
+    public void canHu(MahjongSeat mahjongSeat, Integer card, boolean cardFromSelf) {
+        PlayerHand playerHand = mahjongSeat.getPlayerHand();
+        List<Solution> solutions = playerHand.solutions;
+        if (card != null) {
+            for(Solution solution : solutions){
+                List<Tile> canWin = solution.canWin;
+                for(Tile tile : canWin){
+                    if(tile.id == card){
+                        //番型判断
+                    }
+                }
+            }
+        } else {
+
+            for(Solution solution : solutions){
+                if(solution.isWin){
+                    //番型判断
+                }
+            }
+        }
+    }*/
+
 
     public List<Step> getHistoryByGameStatus(SichuanGameStatusEnum statusEnum) {
         List<Step> list = new ArrayList<>();
@@ -210,6 +420,7 @@ public class XueZhanZone extends AbstractGameZoneModel<XueZhanSeat, SichuanGameS
         }
         return list;
     }
+
 
     public List<GameStepModel> getHistoryList() {
         return historyList;
@@ -239,19 +450,23 @@ public class XueZhanZone extends AbstractGameZoneModel<XueZhanSeat, SichuanGameS
         return mahjongZone.getBeforeOperatorPosId();
     }
 
-    public Integer getCurObtainCardPlayerPosId() {
-        return mahjongZone.getCurObtainCardPlayerPosId();
+    public Integer getCurTookCardPlayerPosId() {
+        return mahjongZone.getCurTookCardPlayerPosId();
     }
 
-    public Integer getBeforeObtainCardPlayerPosId() {
-        return mahjongZone.getBeforeObtainCardPlayerPosId();
+    public Integer getBeforeTookCardPlayerPosId() {
+        return mahjongZone.getBeforeTookCardPlayerPosId();
     }
 
-    public Integer getNextObtainCardPosId(){
+    /**
+     * 不修改原值
+     * @return
+     */
+    public Integer getNextTookCardPosId() {
         return mahjongZone.getNextObtainCardPosId();
     }
 
-    public boolean checkCurrentGameStatus(SichuanGameStatusEnum gameStatusEnum){
+    public boolean checkCurrentGameStatus(SichuanGameStatusEnum gameStatusEnum) {
         return gameStatusEnum.equals(gameStatus);
     }
 }

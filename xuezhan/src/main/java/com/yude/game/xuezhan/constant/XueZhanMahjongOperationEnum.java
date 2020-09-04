@@ -17,13 +17,13 @@ public enum XueZhanMahjongOperationEnum implements MahjongOperation {
     EXCHANGE_CARD(OperationEnum.EXCHANGE_CARD),
     DING_QUE(OperationEnum.DING_QUE),
     OUT_CARD(OperationEnum.OUT_CARD),
-    CHI(OperationEnum.CHI),
     PENG(OperationEnum.PENG),
     ZHI_GANG(OperationEnum.ZHI_GANG),
     BU_GANG(OperationEnum.BU_GANG),
     AN_GANG(OperationEnum.AN_GANG),
     HU(OperationEnum.HU),
-    YI_PAO_DUO_XIANG(OperationEnum.YI_PAO_DUO_XIANG);
+    YI_PAO_DUO_XIANG(OperationEnum.YI_PAO_DUO_XIANG),
+    TOOK_CARD(OperationEnum.TOOK_CARD);
 
     private OperationEnum operationEnum;
 
@@ -31,8 +31,27 @@ public enum XueZhanMahjongOperationEnum implements MahjongOperation {
         this.operationEnum = operationEnum;
     }
 
+    public static XueZhanMahjongOperationEnum matchByValue(Integer value){
+        for(XueZhanMahjongOperationEnum operationEnum : XueZhanMahjongOperationEnum.values()){
+            if(operationEnum.value().equals(value)){
+                return operationEnum;
+            }
+        }
+        return null;
+    }
+
     @Override
     public Integer value() {
         return operationEnum.value();
+    }
+
+    @Override
+    public boolean canProductFulu() {
+        return operationEnum.canProductFulu();
+    }
+
+    @Override
+    public int priority() {
+        return operationEnum.priority();
     }
 }

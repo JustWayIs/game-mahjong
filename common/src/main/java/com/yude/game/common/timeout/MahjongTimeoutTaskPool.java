@@ -101,6 +101,9 @@ public enum MahjongTimeoutTaskPool implements TimeoutTaskPool{
         thread.start();
     }
 
+    /**
+     * 原有想法是因为使用ScheduledExecutorService来实现超时机制（少量线程处理多个房间），不可避免的会有延时存在，用DelayQueue来达到 即时执行超时任务，但是没有考虑到DelayQueue由于使用了锁机制，会导致大量的竞争问题，会影响效率。结果采用了如下的变通方法，不直接把任务提交给DelayQueue，而是交给了无界非阻塞队列。再用单个线程去从队列中取任务，加入到延时队列中，这样的实现机制 又回到了最初想要编码的问题，超时任务没法完全即时执行
+     */
     public void execute(){
         while(!Thread.currentThread().isInterrupted()){
             TimeoutTask timeOutTask = linkedQueue.poll();

@@ -14,7 +14,13 @@ public enum GameStatusEnum implements Status {
      *
      */
     DEAL_CARD,
+    /**
+     *
+     */
     CHANGE_CARD,
+    /**
+     *
+     */
     DING_QUE,
     OPERATION_CARD,
     SETTLEMENT;

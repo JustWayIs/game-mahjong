@@ -30,6 +30,10 @@ public class SichuanMahjongSeat extends AbstractSeatModel {
      */
     private Integer queColor;
 
+    private boolean isHu;
+
+    private List<Integer> huCards;
+
     public SichuanMahjongSeat(Player player, int posId) {
         super(player, posId);
     }
@@ -79,4 +83,5 @@ public class SichuanMahjongSeat extends AbstractSeatModel {
     public MahjongSeat getMahjongSeat() {
         return mahjongSeat;
     }
+
 }

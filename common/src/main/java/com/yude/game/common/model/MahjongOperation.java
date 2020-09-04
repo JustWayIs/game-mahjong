@@ -9,4 +9,12 @@ package com.yude.game.common.model;
 public interface MahjongOperation {
 
     Integer value();
+
+    /**
+     * 该操作会不会产生副露
+     * @return
+     */
+    boolean canProductFulu();
+
+    int priority();
 }

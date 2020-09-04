@@ -2,6 +2,7 @@ package com.yude.game.xuezhan.domain;
 
 
 import com.yude.game.common.model.AbstractSeatModel;
+import com.yude.game.common.model.MahjongOperation;
 import com.yude.game.common.model.MahjongSeat;
 import com.yude.game.common.model.Player;
 import com.yude.game.common.model.sichuan.SichuanMahjongSeat;
@@ -46,5 +47,17 @@ public class XueZhanSeat extends AbstractSeatModel {
 
     public SeatStatusEnum getSeatStatusEnum() {
         return seatStatusEnum;
+    }
+
+    public void removeCardFromStandCards(Integer card){
+        mahjongSeat.removeCardFromStandCards(card);
+    }
+
+    public boolean canOperation(MahjongOperation operation) {
+        return mahjongSeat.canOperation(operation);
+    }
+
+    public void appendCard(Integer card){
+        mahjongSeat.appendCard(card);
     }
 }

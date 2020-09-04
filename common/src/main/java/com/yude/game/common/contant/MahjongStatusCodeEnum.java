@@ -30,6 +30,10 @@ public enum MahjongStatusCodeEnum implements StatusCodeI {
 
     MATCH_FAIL(103,"加入匹配队列失败"),
 
+    NO_OUT_CARD_PERMISSION(104,"没有出牌权限"),
+
+    NO_MATCH_OPERATION(105,"没有匹配的操作类型"),
+
     EXCHANGE_ERROR(1001,"不能交换出自己没有的牌"),;
 
     private int code;

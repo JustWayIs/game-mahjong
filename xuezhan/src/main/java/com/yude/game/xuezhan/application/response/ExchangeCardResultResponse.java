@@ -39,4 +39,12 @@ public class ExchangeCardResultResponse extends BaseResponse {
         this.gainedCards = gainedCards;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "ExchangeCardResultResponse{" +
+                "exchangeType=" + exchangeType +
+                ", gainedCards=" + gainedCards +
+                '}';
+    }
 }

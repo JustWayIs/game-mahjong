@@ -23,4 +23,13 @@ public class DingQueRequest extends AbstractRequest {
         this.color = color;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "DingQueRequest{" +
+                "color=" + color +
+                ", channelUserId=" + channelUserId +
+                ", messageType=" + messageType +
+                '}';
+    }
 }

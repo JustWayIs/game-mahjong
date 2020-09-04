@@ -1,7 +1,7 @@
 package com.yude.game.common.model.history;
 
 import com.yude.game.common.constant.Status;
-import com.yude.game.common.model.CardAction;
+import com.yude.game.common.model.StepAction;
 
 import java.util.List;
 
@@ -15,10 +15,10 @@ public class OperationCardStep implements Step {
 
     private int step;
     private int posId;
-    private CardAction action;
+    private StepAction action;
     private int remainingCardSize;
-    private List<Integer> handCards;
-    private List<String> handCardConvertList;
+    private List<Integer> standCardList;
+    private List<String> standCardConvertList;
     private Status gameStatus;
 
     public int getStep() {
@@ -49,11 +49,11 @@ public class OperationCardStep implements Step {
         return this;
     }
 
-    public CardAction getAction() {
+    public StepAction getAction() {
         return action;
     }
 
-    public OperationCardStep setAction(CardAction action) {
+    public OperationCardStep setAction(StepAction action) {
         this.action = action;
         return this;
     }
@@ -67,21 +67,21 @@ public class OperationCardStep implements Step {
         return this;
     }
 
-    public List<Integer> getHandCards() {
-        return handCards;
+    public List<Integer> getStandCardList() {
+        return standCardList;
     }
 
-    public OperationCardStep setHandCards(List<Integer> handCards) {
-        this.handCards = handCards;
+    public OperationCardStep setStandCardList(List<Integer> standCardList) {
+        this.standCardList = standCardList;
         return this;
     }
 
-    public List<String> getHandCardConvertList() {
-        return handCardConvertList;
+    public List<String> getStandCardConvertList() {
+        return standCardConvertList;
     }
 
-    public OperationCardStep setHandCardConvertList(List<String> handCardConvertList) {
-        this.handCardConvertList = handCardConvertList;
+    public OperationCardStep setStandCardConvertList(List<String> standCardConvertList) {
+        this.standCardConvertList = standCardConvertList;
         return this;
     }
 
@@ -101,8 +101,8 @@ public class OperationCardStep implements Step {
                 ", posId=" + posId +
                 ", action=" + action +
                 ", remainingCardSize=" + remainingCardSize +
-                ", handCards=" + handCards +
-                ", handCardConvertList=" + handCardConvertList +
+                ", standCardList=" + standCardList +
+                ", standCardConvertList=" + standCardConvertList +
                 ", gameStatus=" + gameStatus +
                 '}';
     }

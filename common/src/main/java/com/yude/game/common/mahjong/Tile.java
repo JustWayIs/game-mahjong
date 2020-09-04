@@ -2,7 +2,9 @@ package com.yude.game.common.mahjong;
 
 import com.yude.game.common.model.CardEnum;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -104,6 +106,14 @@ public enum Tile {
             return TileStatic.TILES.get(pTileID);
         }
         return null;
+    }
+
+    public static List<Tile> cardConvertTileList(List<Integer> cardList){
+        List<Tile> cardTileList  = new ArrayList<>();
+        for(Integer card : cardList){
+            cardTileList.add(getTileByID(card));
+        }
+        return cardTileList;
     }
 
     // ===========================================================

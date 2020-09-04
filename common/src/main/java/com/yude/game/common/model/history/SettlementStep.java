@@ -1,6 +1,7 @@
 package com.yude.game.common.model.history;
 
 import com.yude.game.common.constant.Status;
+import com.yude.game.common.model.StepAction;
 
 import java.util.List;
 
@@ -16,8 +17,9 @@ public class SettlementStep implements Step {
     private Long beforeScore;
     private Long changeScore;
     private Long remaningScore;
-    private List<Integer> handCards;
-    private List<String> handCardsConvertList;
+    private List<Integer> standCards;
+    private List<String> standCardsConvertList;
+    private List<StepAction> fuluList;
     private Status gameStatus;
 
     public int getStep() {
@@ -75,21 +77,30 @@ public class SettlementStep implements Step {
         return this;
     }
 
-    public List<Integer> getHandCards() {
-        return handCards;
+    public List<Integer> getStandCards() {
+        return standCards;
     }
 
-    public SettlementStep setHandCards(List<Integer> handCards) {
-        this.handCards = handCards;
+    public SettlementStep setStandCards(List<Integer> standCards) {
+        this.standCards = standCards;
         return this;
     }
 
-    public List<String> getHandCardsConvertList() {
-        return handCardsConvertList;
+    public List<String> getStandCardsConvertList() {
+        return standCardsConvertList;
     }
 
-    public SettlementStep setHandCardsConvertList(List<String> handCardsConvertList) {
-        this.handCardsConvertList = handCardsConvertList;
+    public SettlementStep setStandCardsConvertList(List<String> standCardsConvertList) {
+        this.standCardsConvertList = standCardsConvertList;
+        return this;
+    }
+
+    public List<StepAction> getFuluList() {
+        return fuluList;
+    }
+
+    public SettlementStep setFuluList(List<StepAction> fuluList) {
+        this.fuluList = fuluList;
         return this;
     }
 
@@ -110,8 +121,9 @@ public class SettlementStep implements Step {
                 ", beforeScore=" + beforeScore +
                 ", changeScore=" + changeScore +
                 ", remaningScore=" + remaningScore +
-                ", handCards=" + handCards +
-                ", handCardsConvertList=" + handCardsConvertList +
+                ", standCards=" + standCards +
+                ", standCardsConvertList=" + standCardsConvertList +
+                ", fuluList=" + fuluList +
                 ", gameStatus=" + gameStatus +
                 '}';
     }

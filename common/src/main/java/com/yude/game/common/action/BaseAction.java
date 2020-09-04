@@ -12,5 +12,5 @@ public interface BaseAction {
 
     void hu(Integer card,Integer posId);
 
-    void cancel();
+    void cancel(Integer card,Integer podId);
 }
