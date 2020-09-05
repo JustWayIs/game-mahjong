@@ -45,4 +45,12 @@ public class TookCardNoticeResponse extends BaseResponse {
         this.card = card;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "TookCardNoticeResponse{" +
+                "posId=" + posId +
+                ", card=" + card +
+                '}';
+    }
 }
