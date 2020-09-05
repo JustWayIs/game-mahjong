@@ -690,7 +690,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             canOperations.add(operationDTO);
             mahjongSeat.addOperation(stepAction.getOperationType());
         });
-        OperationNoticeResponse response = new OperationNoticeResponse(mahjongZone.getBankerPosId(), canOperations);
+        OperationNoticeResponse response = new OperationNoticeResponse(seat.getPosId(), canOperations);
 
         roomManager.pushToUser(XueZhanPushCommandCode.OPERATION_NOTICE, seat.getUserId(), response, roomId);
     }
