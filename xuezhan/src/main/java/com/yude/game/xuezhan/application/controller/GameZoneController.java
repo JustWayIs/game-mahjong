@@ -3,14 +3,11 @@ package com.yude.game.xuezhan.application.controller;
 import com.yude.game.common.application.controller.BaseController;
 import com.yude.game.common.command.annotation.RequestCommand;
 import com.yude.game.common.command.annotation.RequestController;
-import com.yude.game.common.contant.MahjongStatusCodeEnum;
 import com.yude.game.common.manager.IRoomManager;
-import com.yude.game.exception.BizException;
 import com.yude.game.xuezhan.application.request.DingQueRequest;
 import com.yude.game.xuezhan.application.request.ExchangeCardRequest;
 import com.yude.game.xuezhan.application.request.OperationCardRequest;
 import com.yude.game.xuezhan.constant.XueZhanCommandCode;
-import com.yude.game.xuezhan.constant.XueZhanMahjongOperationEnum;
 import com.yude.game.xuezhan.domain.XueZhanRoom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +24,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class GameZoneController implements BaseController {
     private static final Logger log = LoggerFactory.getLogger(GameZoneController.class);
 
+    /**
+     * 其实吧，这里都不应该感知Room这个东西，应该面向Room提供的接口.
+     * 对于应用层的而言，我管你是游戏服务器，还是什么服务
+     */
     @Autowired
     IRoomManager<XueZhanRoom> roomManager;
 
@@ -64,7 +65,8 @@ public class GameZoneController implements BaseController {
             log.warn("玩家已经不在游戏中: userId={}", userId);
             return;
         }
-        Integer operationType = request.getOperationType();
+        room.operation(request.getCard(), request.getOperationType(), userId);
+       /* Integer operationType = request.getOperationType();
         XueZhanMahjongOperationEnum operationEnum = XueZhanMahjongOperationEnum.matchByValue(request.getOperationType());
         switch (operationEnum) {
             case OUT_CARD:
@@ -86,9 +88,9 @@ public class GameZoneController implements BaseController {
                 break;
             default:
                 log.error("没有匹配的操作类型 request={}", request);
-                throw new BizException(MahjongStatusCodeEnum.NO_MATCH_OPERATION);
-        }
-
+                throw new BizException(MahjongStatusCodeEnum.NO_MATCH_OPERATION);*/
     }
 
 }
+
+

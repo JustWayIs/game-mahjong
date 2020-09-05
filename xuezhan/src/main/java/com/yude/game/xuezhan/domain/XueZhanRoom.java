@@ -8,14 +8,20 @@ import com.yude.game.common.manager.IRoomManager;
 import com.yude.game.common.model.*;
 import com.yude.game.common.model.fan.Rule;
 import com.yude.game.common.model.fan.*;
+import com.yude.game.common.model.fan.judge.HuTypeFan;
+import com.yude.game.common.model.fan.judge.appended.*;
+import com.yude.game.common.model.fan.judge.base.PingHuFan;
+import com.yude.game.common.model.fan.judge.base.QiDuiFan;
+import com.yude.game.common.model.fan.judge.compound.QingJinGouDiaoFan;
+import com.yude.game.common.model.fan.judge.compound.QingPengFan;
+import com.yude.game.common.model.fan.judge.compound.QingShiBaLuoHanFan;
+import com.yude.game.common.model.fan.judge.formal.*;
 import com.yude.game.common.model.history.GameStartStep;
 import com.yude.game.common.model.history.GameStepModel;
 import com.yude.game.common.model.history.OperationCardStep;
 import com.yude.game.common.model.history.Step;
-import com.yude.game.common.model.sichuan.SichuanGameStatusEnum;
-import com.yude.game.common.model.sichuan.SichuanMahjongRoom;
-import com.yude.game.common.model.sichuan.SichuanPlayHelper;
-import com.yude.game.common.model.sichuan.SichuanRoomConfig;
+import com.yude.game.common.model.sichuan.*;
+import com.yude.game.common.model.sichuan.constant.SichuanGameStatusEnum;
 import com.yude.game.common.model.sichuan.history.ExchangeCardStep;
 import com.yude.game.common.model.sichuan.history.SichuanGameStartStep;
 import com.yude.game.common.timeout.MahjongTimeoutTaskPool;
@@ -44,15 +50,15 @@ import java.util.List;
 public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, MahjongTimeoutTaskPool> implements XueZhanAction {
 
     private static final Logger log = LoggerFactory.getLogger(XueZhanRoom.class);
-    private SichuanMahjongRoom sichuanMahjongRoom;
-    private MahjongRoom mahjongRoom;
+    private SichuanMahjongZone sichuanMahjongZone;
+    private MahjongZone mahjongZone;
     private Rule<SichuanRoomConfig> rule;
 
     /**
-     *  因为换三张操作 、 定缺操作这种地方麻将玩法，导致，historyList不能放在MahjongZone里面
-     *  也就导致多了一层对GameZone的调用。核心问题是，多一重掉用对性能真的有影响么，像现在的Controller省略了Service一样，又对性能提高有多少贡献呢。
-     *  如果想要少一层调用，倒是可以把historyList放在RoomModel里面，这里的核心问题是类的职能划分
-     *  从代码复用的层面来说，这里面的方法确实应该放在 MahjongZone 和 地方麻将Zone里面
+     * 因为换三张操作 、 定缺操作这种地方麻将玩法，导致，historyList不能放在MahjongZone里面
+     * 也就导致多了一层对GameZone的调用。核心问题是，多一重掉用对性能真的有影响么，像现在的Controller省略了Service一样，又对性能提高有多少贡献呢。
+     * 如果想要少一层调用，倒是可以把historyList放在RoomModel里面，这里的核心问题是类的职能划分
+     * 从代码复用的层面来说，这里面的方法确实应该放在 MahjongZone 和 地方麻将Zone里面
      */
 
     private List<GameStepModel> historyList;
@@ -60,7 +66,9 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
     @Override
     public void init(IRoomManager roomManager, Long roomId, List<Player> playerList, int roundLimit, int inningLimit) {
         ruleInit();
+        historyList = new ArrayList<>();
         super.init(roomManager, roomId, playerList, roundLimit, inningLimit);
+
     }
 
     @Override
@@ -86,12 +94,28 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
          *
          * 数组下标位置就是 posId 【斗地主应该也像这样设置】
          */
-        XueZhanSeat[] seatModels = new XueZhanSeat[posIdSeatMap.size()];
-        for (int i = 0; i < seatModels.length; i++) {
-            seatModels[i] = posIdSeatMap.get(i);
+        XueZhanSeat[] playerSeats = new XueZhanSeat[posIdSeatMap.size()];
+        for (int i = 0; i < playerSeats.length; i++) {
+            playerSeats[i] = posIdSeatMap.get(i);
         }
 
-        return new XueZhanZone(seatModels, gameRound, gameInning);
+        /**
+         * 这一段的作用是废弃 对XueZhanZone的调用，直接让XueZhanRoom来判断应该调用 mahjongZone 还是 siChuanZone 当有特殊需求时，再选择调用 xueZhanZone.
+         */
+        MahjongSeat[] mahjongSeats = new MahjongSeat[playerSeats.length];
+        SichuanMahjongSeat[] sichuanMahjongSeats = new SichuanMahjongSeat[playerSeats.length];
+        int i = 0;
+        for (XueZhanSeat xueZhanSeat : playerSeats) {
+            mahjongSeats[i] = xueZhanSeat.getMahjongSeat();
+            sichuanMahjongSeats[i] = xueZhanSeat.getSichuanMahjongSeat();
+            sichuanMahjongSeats[i].setMahjongSeat(mahjongSeats[i]);
+            ++i;
+        }
+        mahjongZone = new MahjongZone(mahjongSeats, gameRound, gameInning);
+        sichuanMahjongZone = new SichuanMahjongZone(sichuanMahjongSeats, gameRound, gameInning);
+        sichuanMahjongZone.setMahjongZone(mahjongZone);
+
+        return new XueZhanZone(playerSeats, gameRound, gameInning, mahjongZone, sichuanMahjongZone);
     }
 
     @Override
@@ -99,22 +123,56 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
         gameZone = getPracticalGameZoneModel();
         log.debug("血战到底 游戏开始 roomId={}  gameId={}", roomId, gameZone.getZoneId());
         gameZone.init();
-        gameZone.deal(roomId);
+        mahjongZone.deal(SichuanMahjongCard.values(), SichuanGameStatusEnum.DEAL_CARD, roomId, historyList);
+        //0号玩家在该游戏没有任何操作的情况下重连了
+
+        mahjongZone.setLastOperationTime(System.currentTimeMillis());
+        mahjongZone.setGameStatus(SichuanGameStatusEnum.EXCHANGE_CARD);
+
         noticePlayersDealCardsResult();
         //noticePlayersChangeCard();
     }
 
+    public void operation(Integer card, Integer operationType, Long userId) {
+        Integer operationPosId = userPosIdMap.get(userId);
+        XueZhanMahjongOperationEnum operationEnum = XueZhanMahjongOperationEnum.matchByValue(operationType);
+        switch (operationEnum) {
+            case OUT_CARD:
+                outCard(card, operationPosId);
+                break;
+            case PENG:
+
+            case ZHI_GANG:
+
+            case BU_GANG:
+
+            case AN_GANG:
+                operation(card,operationPosId,operationEnum);
+                break;
+
+            case HU:
+                hu(card, operationPosId);
+                break;
+            case CANCEL:
+                cancel(card, operationPosId);
+                break;
+            default:
+                log.error("没有匹配的操作类型 roomId={} zoneId={} posId={} card={} operationType={}", roomId, gameZone.getZoneId(), operationPosId, card, operationEnum);
+                throw new BizException(MahjongStatusCodeEnum.NO_MATCH_OPERATION);
+        }
+    }
 
     @Override
     public void outCard(Integer card, Integer posId) {
-        log.info("出牌：roomId={} zoneId={} 方位=[{},posId={}] card={}",roomId,gameZone.getZoneId(),getSeatDirection(posId),posId,card);
+        log.info("出牌：roomId={} zoneId={} 方位=[{},posId={}] card={}", roomId, gameZone.getZoneId(), getSeatDirection(posId), posId, card);
         XueZhanSeat xueZhanSeat = posIdSeatMap.get(posId);
-        if(!xueZhanSeat.canOperation(XueZhanMahjongOperationEnum.OUT_CARD)){
-            log.warn("玩家没有出牌权限：roomId={} zoneId=={} userId={}  方位=[{},posId={}] card={}",roomId,gameZone.getZoneId(),xueZhanSeat.getUserId(),getSeatDirection(posId),posId,card);     throw new BizException(MahjongStatusCodeEnum.NO_OUT_CARD_PERMISSION);
+        if (!xueZhanSeat.canOperation(XueZhanMahjongOperationEnum.OUT_CARD)) {
+            log.warn("玩家没有出牌权限：roomId={} zoneId=={} userId={}  方位=[{},posId={}] card={}", roomId, gameZone.getZoneId(), xueZhanSeat.getUserId(), getSeatDirection(posId), posId, card);
+            throw new BizException(MahjongStatusCodeEnum.NO_OUT_CARD_PERMISSION);
         }
 
         XueZhanSeat seat = posIdSeatMap.get(posId);
-        GameStepModel<OperationCardStep> gameStepModel = gameZone.outCard(card, posId);
+        GameStepModel<OperationCardStep> gameStepModel = mahjongZone.outCard(card, posId);
         OperationCardStep step = gameStepModel.getOperationStep();
         StepAction action = step.getAction();
 
@@ -122,86 +180,283 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
         response.setPosId(step.getPosId())
                 .setTargetCard(action.getTargetCard())
                 .setOperationType(action.getOperationType().value());
-        pushToRoomUser(XueZhanPushCommandCode.OPERATION_RESULT_NOTICE,response);
+        pushToRoomUser(XueZhanPushCommandCode.OPERATION_RESULT_NOTICE, response);
 
 
         /**
          * 判断有没有玩家可以针对这次出牌进行操作
          */
         List<MahjongSeat> canOperationSeats =
-                gameZone.otherPalyerCanDo(seat, card);
-        if(canOperationSeats.size() > 0){
-            for(MahjongSeat canOperationSeat : canOperationSeats){
+                sichuanMahjongZone.otherPalyerCanDo(seat.getSichuanMahjongSeat(), card);
+        if (canOperationSeats.size() > 0) {
+            for (MahjongSeat canOperationSeat : canOperationSeats) {
                 List<OperationDTO> operationList = new ArrayList<>();
                 List<StepAction> canOperations = canOperationSeat.getCanOperations();
                 canOperations.stream().forEach(operation -> {
-                    OperationDTO operationDTO = new OperationDTO(operation.getOperationType().value(),card);
+                    OperationDTO operationDTO = new OperationDTO(operation.getOperationType().value(), card);
                     operationList.add(operationDTO);
                 });
-                if(operationList.size() > 0){
-                    OperationDTO cancelOperationDTO = new OperationDTO(XueZhanMahjongOperationEnum.CANCEL.value(),card);
+                if (operationList.size() > 0) {
+                    OperationDTO cancelOperationDTO = new OperationDTO(XueZhanMahjongOperationEnum.CANCEL.value(), card);
                     operationList.add(cancelOperationDTO);
                 }
 
-                OperationNoticeResponse noticeResponse = new OperationNoticeResponse(canOperationSeat.getPosId(),operationList);
-                roomManager.pushToUser(XueZhanPushCommandCode.OPERATION_NOTICE,canOperationSeat.getUserId(),noticeResponse,roomId);
+                OperationNoticeResponse noticeResponse = new OperationNoticeResponse(canOperationSeat.getPosId(), operationList);
+                roomManager.pushToUser(XueZhanPushCommandCode.OPERATION_NOTICE, canOperationSeat.getUserId(), noticeResponse, roomId);
             }
-        }else{
-            /**
-             * 没有玩家可以操作，下一个玩家摸牌
-             */
-            if(gameZone.gameover()){
-                settlement();
-                return;
-            }
-            Integer needTookCardPosId = gameZone.refreshTookPlayer();
-            OperationCardStep tookCardStep = gameZone.tookCardStep(needTookCardPosId);
-            TookCardNoticeResponse tookCardNoticeResponse = new TookCardNoticeResponse(needTookCardPosId);
-            tookCardNoticeResponse.setPosId(needTookCardPosId);
-
-            XueZhanSeat needTookCardSeat = posIdSeatMap.get(needTookCardPosId);
-            Long userId = needTookCardSeat.getUserId();
-            pushToRoomUser(XueZhanPushCommandCode.TOOK_CARD_NOTICE,tookCardNoticeResponse,userId);
-
-            Integer tookCard = tookCardStep.getAction().getTargetCard();
-            //因为在pushToRoomUser方法中，需要推送的数据已经被序列化了，所以这里修改相同的response不会影响之前的推送
-            tookCardNoticeResponse.setCard(tookCard);
-            xueZhanSeat.getMahjongSeat().addOperation(XueZhanMahjongOperationEnum.OUT_CARD);
-            roomManager.pushToUser(XueZhanPushCommandCode.TOOK_CARD_NOTICE,userId,tookCardNoticeResponse,roomId);
-
-            gameZone.whatCanYouDo(tookCard);
+        } else {
+            nextPalyerTookCard();
         }
 
+    }
+
+    public void nextPalyerTookCard() {
+        /**
+         * 没有玩家可以操作，下一个玩家摸牌
+         */
+        if (sichuanMahjongZone.gameover()) {
+            settlement();
+            return;
+        }
+        Integer needTookCardPosId = sichuanMahjongZone.refreshTookPlayer();
+        GameStepModel<OperationCardStep> tookCardStep = sichuanMahjongZone.tookCardStep(needTookCardPosId);
+        historyList.add(tookCardStep);
+        TookCardNoticeResponse tookCardNoticeResponse = new TookCardNoticeResponse(needTookCardPosId);
+        tookCardNoticeResponse.setPosId(needTookCardPosId);
+
+        XueZhanSeat needTookCardSeat = posIdSeatMap.get(needTookCardPosId);
+        Long userId = needTookCardSeat.getUserId();
+        pushToRoomUser(XueZhanPushCommandCode.TOOK_CARD_NOTICE, tookCardNoticeResponse, userId);
+
+        Integer tookCard = tookCardStep.getOperationStep().getAction().getTargetCard();
+        //因为在pushToRoomUser方法中，需要推送的数据已经被序列化了，所以这里修改相同的response不会影响之前的推送
+        tookCardNoticeResponse.setCard(tookCard);
+        needTookCardSeat.getMahjongSeat().addOperation(XueZhanMahjongOperationEnum.OUT_CARD);
+        roomManager.pushToUser(XueZhanPushCommandCode.TOOK_CARD_NOTICE, userId, tookCardNoticeResponse, roomId);
+
+        //sichuanMahjongZone.whatCanYouDo(tookCard);
+        noticePlayersOperation(tookCard);
     }
 
     @Override
     public void hu(Integer card, Integer posId) {
+        log.info("请求胡操作： roomId={} zoneId={} 方位=[{},posId={}] type={} card={} posId={}", roomId, gameZone.getZoneId(), getSeatDirection(posId), posId, posId);
+        XueZhanSeat xueZhanSeat = posIdSeatMap.get(posId);
+        boolean canOperation = xueZhanSeat.canOperation(XueZhanMahjongOperationEnum.HU);
+        if (!canOperation) {
+            log.warn("玩家没有 胡 的操作权限：roomId={} userId={} 方位=[{},posId={}]", roomId, xueZhanSeat.getUserId(), getSeatDirection(posId), posId);
+            throw new BizException(MahjongStatusCodeEnum.NOT_HU_OPERATION);
+        }
+        MahjongSeat mahjongSeat = xueZhanSeat.getMahjongSeat();
+        //一定得确保执行的时候，玩家还有操作权限
+        StepAction action = mahjongSeat.getDesignateOperationCardSource(XueZhanMahjongOperationEnum.HU.value(), card);
+        if (action == null) {
+            //既然目标牌需要校验，并且服务器的seat存储了这个操作的具体信息，那么客户端似乎没有必要再传 目标牌 这个属性上来了
+            log.error("玩家没有胡这张牌的权限: roomId={} zoneId={} posId={} card={}", roomId, gameZone.getZoneId(), posId, card);
+            throw new BizException(MahjongStatusCodeEnum.HU_PARAM_ERROR);
+        }
+        GameStepModel<OperationCardStep> stepModel = mahjongZone.hu(card, posId);
+        historyList.add(stepModel);
+
+        boolean needWait = mahjongZone.existsCanOperation();
+        if (needWait) {
+            return;
+        }
+        /**
+         * 还原临时区的最高优先级操作
+         * 或者下一个玩家摸牌
+         */
+        if (!restoreAction()) {
+            OperationResultResponse operationResultResponse = new OperationResultResponse();
+            operationResultResponse
+                    .setPosId(mahjongSeat.getPosId())
+                    .setTargetCard(card)
+                    .setOperationType(action.getOperationType().value())
+                    .setCardSourcePosId(action.getCardSource());
+
+            pushToRoomUser(XueZhanPushCommandCode.OPERATION_RESULT_NOTICE, operationResultResponse);
+            nextPalyerTookCard();
+        }
+    }
+
+    public void multiplePlayerHu(Integer card, List<Integer> posId) {
 
     }
 
     @Override
-    public void cancel(Integer card,Integer posId) {
-        log.info("请求过 roomId={} 方位=[{},posId={}]",roomId,getSeatDirection(posId),posId);
+    public void cancel(Integer card, Integer posId) {
+        log.info("请求过 roomId={} 方位=[{},posId={}]", roomId, getSeatDirection(posId), posId);
         XueZhanSeat xueZhanSeat = posIdSeatMap.get(posId);
         boolean canCancel = xueZhanSeat.canOperation(XueZhanMahjongOperationEnum.CANCEL);
-        if(!canCancel){
-            log.warn("玩家没有 过 的操作权限：roomId={} userId={} 方位=[{},posId={}]",roomId,xueZhanSeat.getUserId(),getSeatDirection(posId),posId);
+        if (!canCancel) {
+            log.warn("玩家没有 过 的操作权限：roomId={} userId={} 方位=[{},posId={}]", roomId, xueZhanSeat.getUserId(), getSeatDirection(posId), posId);
+            throw new BizException(MahjongStatusCodeEnum.NOT_CANCEL_OPERATION);
         }
         //过操作不用通知玩家，要不要响应给本人呢
         //接下来要判断其他用户可不可以操作，可能会涉及到还原操作、通知下一个玩家摸牌
-        GameStepModel<OperationCardStep> cancelStep = gameZone.cancel(card,posId);
+        GameStepModel<OperationCardStep> cancelStep = mahjongZone.cancel(card, posId);
+        historyList.add(cancelStep);
+        boolean needWait = mahjongZone.existsCanOperation();
+        if (needWait) {
+            return;
+        }
+        /**
+         * 还原临时区的最高优先级操作
+         * 或者下一个玩家摸牌
+         */
+        if (!restoreAction()) {
+            OperationResultResponse operationResultResponse = new OperationResultResponse();
+            operationResultResponse
+                    .setPosId(posId)
+                    .setOperationType(XueZhanMahjongOperationEnum.CANCEL.value());
+            roomManager.pushToUser(XueZhanPushCommandCode.OPERATION_RESULT_NOTICE, xueZhanSeat.getUserId(), operationResultResponse, roomId);
+            nextPalyerTookCard();
+        }
+    }
 
+    /**
+     * 能产生副露的操作
+     * @param card
+     * @param posId
+     * @param operationType
+     */
+    public void operation(Integer card,Integer posId,MahjongOperation operationType){
+        log.info("请求操作： type={} roomId={} zoneId={} 方位=[{},posId={}] type={} card={} posId={}",operationType, roomId, gameZone.getZoneId(), getSeatDirection(posId), posId, posId);
+        XueZhanSeat xueZhanSeat = posIdSeatMap.get(posId);
+        boolean canCancel = xueZhanSeat.canOperation(operationType);
+        if (!canCancel) {
+            log.warn("玩家没有该的操作权限：operation={} roomId={} userId={} 方位=[{},posId={}]", operationType,roomId, xueZhanSeat.getUserId(), getSeatDirection(posId), posId);
+            throw new BizException(MahjongStatusCodeEnum.matchNotOperationErrorByOperation(operationType.value()));
+        }
+        MahjongSeat mahjongSeat = xueZhanSeat.getMahjongSeat();
+        //一定得确保执行的时候，玩家还有操作权限
+        StepAction action = mahjongSeat.getDesignateOperationCardSource(operationType.value(), card);
+        if (action == null) {
+            //既然目标牌需要校验，并且服务器的seat存储了这个操作的具体信息，那么客户端似乎没有必要再传 目标牌 这个属性上来了
+            log.error("操作类型{} 没有操作这张牌的权限: roomId={} zoneId={} posId={} card={}", operationType,roomId, gameZone.getZoneId(), posId, card);
+            throw new BizException(MahjongStatusCodeEnum.matchParamErrorByOperation(operationType.value()));
+        }
+        GameStepModel<OperationCardStep> stepModel = mahjongZone.operation(card, posId,operationType);
+        historyList.add(stepModel);
+        nextProcess(mahjongSeat,card,action);
     }
 
     @Override
     public void gang(Integer card, Integer type, Integer posId) {
-        log.info("请求杠操作： roomId={} 方位=[{},posId={}] type={} card={} posId={}",roomId,getSeatDirection(posId),posId,type,posId);
+        log.info("请求杠操作： roomId={} 方位=[{},posId={}] type={} card={} posId={}", roomId, getSeatDirection(posId), posId, type, posId);
+    }
+
+    public void zhiGang(Integer card, Integer posId) {
+        log.info("请求直杠操作： roomId={} zoneId={} 方位=[{},posId={}] type={} card={} posId={}", roomId, gameZone.getZoneId(), getSeatDirection(posId), posId, posId);
+        XueZhanSeat xueZhanSeat = posIdSeatMap.get(posId);
+        boolean canCancel = xueZhanSeat.canOperation(XueZhanMahjongOperationEnum.ZHI_GANG);
+        if (!canCancel) {
+            log.warn("玩家没有 直杠 的操作权限：roomId={} userId={} 方位=[{},posId={}]", roomId, xueZhanSeat.getUserId(), getSeatDirection(posId), posId);
+            throw new BizException(MahjongStatusCodeEnum.NOT_ZHI_GANG_OPERATION);
+        }
+        MahjongSeat mahjongSeat = xueZhanSeat.getMahjongSeat();
+        //一定得确保执行的时候，玩家还有操作权限
+        StepAction action = mahjongSeat.getDesignateOperationCardSource(XueZhanMahjongOperationEnum.ZHI_GANG.value(), card);
+        if (action == null) {
+            //既然目标牌需要校验，并且服务器的seat存储了这个操作的具体信息，那么客户端似乎没有必要再传 目标牌 这个属性上来了
+            log.error("玩家没有直杠这张牌的权限: roomId={} zoneId={} posId={} card={}", roomId, gameZone.getZoneId(), posId, card);
+            throw new BizException(MahjongStatusCodeEnum.ZHI_GANG_PARAM_ERROR);
+        }
+        GameStepModel<OperationCardStep> stepModel = mahjongZone.zhiGang(card, posId);
+        historyList.add(stepModel);
+        nextProcess(mahjongSeat,card,action);
+    }
+
+    /**
+     * 吃碰杠 操作后 流程应该怎么走
+     * @param mahjongSeat
+     * @param card
+     * @param action
+     */
+    private void nextProcess(MahjongSeat mahjongSeat,Integer card,StepAction action){
+        boolean needWait = mahjongZone.existsCanOperation();
+        if (needWait) {
+            return;
+        }
+        /**
+         * 还原临时区的最高优先级操作
+         * 或者下一个玩家摸牌
+         */
+        if (!restoreAction()) {
+            OperationResultResponse operationResultResponse = new OperationResultResponse();
+            operationResultResponse
+                    .setPosId(mahjongSeat.getPosId())
+                    .setTargetCard(card)
+                    .setOperationType(action.getOperationType().value())
+                    .setCardSourcePosId(action.getCardSource());
+
+            pushToRoomUser(XueZhanPushCommandCode.OPERATION_RESULT_NOTICE, operationResultResponse);
+            nextPalyerTookCard();
+        }
+    }
+
+    public void buGang(Integer card, Integer posId) {
+        log.info("请求补杠操作： roomId={} zoneId={} 方位=[{},posId={}] type={} card={} posId={}", roomId, gameZone.getZoneId(), getSeatDirection(posId), posId, posId);
+        XueZhanSeat xueZhanSeat = posIdSeatMap.get(posId);
+        boolean canCancel = xueZhanSeat.canOperation(XueZhanMahjongOperationEnum.BU_GANG);
+        if (!canCancel) {
+            log.warn("玩家没有 补杠 的操作权限：roomId={} userId={} 方位=[{},posId={}]", roomId, xueZhanSeat.getUserId(), getSeatDirection(posId), posId);
+            throw new BizException(MahjongStatusCodeEnum.NOT_BU_GANG_OPERATION);
+        }
+        MahjongSeat mahjongSeat = xueZhanSeat.getMahjongSeat();
+        //一定得确保执行的时候，玩家还有操作权限
+        StepAction action = mahjongSeat.getDesignateOperationCardSource(XueZhanMahjongOperationEnum.BU_GANG.value(), card);
+        if (action == null) {
+            //既然目标牌需要校验，并且服务器的seat存储了这个操作的具体信息，那么客户端似乎没有必要再传 目标牌 这个属性上来了
+            log.error("玩家没有补杠这张牌的权限: roomId={} zoneId={} posId={} card={}", roomId, gameZone.getZoneId(), posId, card);
+            throw new BizException(MahjongStatusCodeEnum.BU_GANG_PARAM_ERROR);
+        }
+        GameStepModel<OperationCardStep> stepModel = mahjongZone.buGang(card, posId);
+        historyList.add(stepModel);
+        nextProcess(mahjongSeat,card,action);
+    }
+
+    public void anGang(Integer card, Integer posId) {
+        log.info("请求暗杠操作： roomId={} zoneId={} 方位=[{},posId={}] type={} card={} posId={}", roomId, gameZone.getZoneId(), getSeatDirection(posId), posId, posId);
+        XueZhanSeat xueZhanSeat = posIdSeatMap.get(posId);
+        boolean canCancel = xueZhanSeat.canOperation(XueZhanMahjongOperationEnum.AN_GANG);
+        if (!canCancel) {
+            log.warn("玩家没有 暗杠 的操作权限：roomId={} userId={} 方位=[{},posId={}]", roomId, xueZhanSeat.getUserId(), getSeatDirection(posId), posId);
+            throw new BizException(MahjongStatusCodeEnum.NOT_AN_GANG_OPERATION);
+        }
+        MahjongSeat mahjongSeat = xueZhanSeat.getMahjongSeat();
+        //一定得确保执行的时候，玩家还有操作权限
+        StepAction action = mahjongSeat.getDesignateOperationCardSource(XueZhanMahjongOperationEnum.AN_GANG.value(), card);
+        if (action == null) {
+            //既然目标牌需要校验，并且服务器的seat存储了这个操作的具体信息，那么客户端似乎没有必要再传 目标牌 这个属性上来了
+            log.error("玩家没有暗杠这张牌的权限: roomId={} zoneId={} posId={} card={}", roomId, gameZone.getZoneId(), posId, card);
+            throw new BizException(MahjongStatusCodeEnum.AN_GANG_PARAM_ERROR);
+        }
+        GameStepModel<OperationCardStep> stepModel = mahjongZone.peng(card, posId);
+        historyList.add(stepModel);
+        nextProcess(mahjongSeat,card,action);
     }
 
     @Override
     public void peng(Integer card, Integer posId) {
-        log.info("请求碰操作： roomId={} 方位=[{},posId={}] card={} posId={}",roomId,getSeatDirection(posId),posId,posId);
-        gameZone.peng(card,posId);
+        log.info("请求碰操作： roomId={} 方位=[{},posId={}] card={} posId={}", roomId, getSeatDirection(posId), posId, posId);
+        XueZhanSeat xueZhanSeat = posIdSeatMap.get(posId);
+        boolean canCancel = xueZhanSeat.canOperation(XueZhanMahjongOperationEnum.PENG);
+        if (!canCancel) {
+            log.warn("玩家没有 碰 的操作权限：roomId={} userId={} 方位=[{},posId={}]", roomId, xueZhanSeat.getUserId(), getSeatDirection(posId), posId);
+            throw new BizException(MahjongStatusCodeEnum.NOT_PENG_OPERATION);
+        }
+        MahjongSeat mahjongSeat = xueZhanSeat.getMahjongSeat();
+        //一定得确保执行的时候，玩家还有操作权限
+        StepAction action = mahjongSeat.getDesignateOperationCardSource(XueZhanMahjongOperationEnum.PENG.value(), card);
+        if (action == null) {
+            //既然目标牌需要校验，并且服务器的seat存储了这个操作的具体信息，那么客户端似乎没有必要再传 目标牌 这个属性上来了
+            log.error("玩家没有碰这张牌的权限: roomId={} zoneId={} posId={} card={}", roomId, gameZone.getZoneId(), posId, card);
+            throw new BizException(MahjongStatusCodeEnum.PENG_PARAM_ERROR);
+        }
+        GameStepModel<OperationCardStep> stepModel = mahjongZone.peng(card, posId);
+        historyList.add(stepModel);
+        nextProcess(mahjongSeat,card,action);
     }
 
     @Override
@@ -211,7 +466,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             log.error("当前游戏不支持换三张： roomId={} zoneId={} userId={} 方位=[{},posId={}]", roomId, gameZone.getZoneId(), xueZhanSeat.getUserId(), getSeatDirection(posId), posId);
             return;
         }
-        if (!gameZone.checkCurrentGameStatus(SichuanGameStatusEnum.EXCHANGE_CARD)) {
+        if (!mahjongZone.checkCurrentGameStatus(SichuanGameStatusEnum.EXCHANGE_CARD)) {
             log.error("当前游戏阶段不是换三张：roomId={} zoneId={} userId={} 方位=[{},posId={}]", roomId, gameZone.getZoneId(), xueZhanSeat.getUserId(), getSeatDirection(posId), posId);
             return;
         }
@@ -221,11 +476,14 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             log.warn("该玩家没有进行换牌的权限： roomId={} zoneId={} 方位=[{},posId={}] 要交换的牌：{}", roomId, gameZone.getZoneId(), getSeatDirection(posId), posId, cards);
             return;
         }
-        boolean isFinishExchange = gameZone.exchangeCard(cards, xueZhanSeat);
+        boolean isFinishExchange = sichuanMahjongZone.exchangeCard(cards, xueZhanSeat.getSichuanMahjongSeat(), historyList);
         mahjongSeat.removeStatus(SeatStatusEnum.EXCHANGE_CARD.status());
         mahjongSeat.clearOperation();
         noticePlayersWhoFinishChangeCard(xueZhanSeat);
         if (isFinishExchange) {
+            List<Step> exchangeHistory = getHistoryByGameStatus(SichuanGameStatusEnum.EXCHANGE_CARD);
+            sichuanMahjongZone.executeExchange(exchangeHistory);
+
             noticePlayersExchangeResult();
             if (rule.getRuleConfig().getCanDingQue()) {
                 noticePlayersDingQue();
@@ -240,7 +498,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             log.error("当前游戏不支持定缺: roomId={} zoneId={} posId={}", roomId, gameZone.getZoneId(), posId);
             return;
         }
-        if (!gameZone.checkCurrentGameStatus(SichuanGameStatusEnum.DING_QUE)) {
+        if (!mahjongZone.checkCurrentGameStatus(SichuanGameStatusEnum.DING_QUE)) {
             log.error("当前游戏阶段不是定缺：roomId={} zoneId={} userId={} 方位=[{},posId={}]", roomId, gameZone.getZoneId(), xueZhanSeat.getUserId(), getSeatDirection(posId), posId);
             return;
         }
@@ -250,26 +508,96 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             log.warn("该玩家没有进行定缺的权限： roomId={} zoneId={} 方位=[{},posId={}] 定缺的花色：{}", roomId, gameZone.getZoneId(), getSeatDirection(posId), posId, color);
             return;
         }
-        final boolean isFinishDingQue = gameZone.dingQue(color, posIdSeatMap.get(posId));
+        final boolean isFinishDingQue = sichuanMahjongZone.dingQue(color, posIdSeatMap.get(posId).getSichuanMahjongSeat(), historyList);
         mahjongSeat.clearOperation();
         mahjongSeat.removeStatus(SeatStatusEnum.DING_QUE.status());
         noticePlayersWhoFinishDingQue(xueZhanSeat);
         if (isFinishDingQue) {
-            FormalProcessNoticeResponse response = new FormalProcessNoticeResponse(gameZone.getBankerPosId(),10);
-            pushToRoomUser(XueZhanPushCommandCode.FORMAL_PROCESS_NOTICE,response);
-            noticePlayersOperation();
+            FormalProcessNoticeResponse response = new FormalProcessNoticeResponse(mahjongZone.getBankerPosId(), 10);
+            pushToRoomUser(XueZhanPushCommandCode.FORMAL_PROCESS_NOTICE, response);
+
+            //定缺完成后，没有摸牌，庄家直接出牌
+            noticePlayersOperation(null);
         }
 
     }
 
-    private void settlement(){
+    private void settlement() {
 
     }
 
-    private void noticePlayersDealCardsResult() {
-        List<GameStepModel> history = gameZone.getHistoryList();
+    /**
+     * 复原未执行的操作（最高优先级的操作）
+     *
+     * @param
+     */
+    private boolean restoreAction() {
+        List<TempAction> tempActions = mahjongZone.getTempActions();
+        if (tempActions.size() > 0) {
+            /**
+             * 已经有玩家在当前回合操作过
+             * 找出临时操作区里，操作级别最高的操作（以目前对麻将的认知而言，一个回合的所有操作中，只有胡牌这个操作等级会可能有多次，碰和杠无论如何只有一次，并且优先级又高于吃牌）
+             */
+            List<TempAction> needExecuteActionList = new ArrayList<>();
+            TempAction needExecuteAction = tempActions.get(0);
+            needExecuteActionList.add(needExecuteAction);
+            int i = 0;
+            for (TempAction tempAction : tempActions) {
+                if (i == 0) {
+                    i++;
+                    continue;
+                }
+                if (needExecuteAction.getPriority() == tempAction.getPriority()) {
+                    needExecuteActionList.add(tempAction);
+                }
+            }
 
-        for (GameStepModel gameStepModel : history) {
+            //H2 不能直接还原，要判断是否有多人胡。如果是多人胡，要把操作类型改为一炮多响
+            if (needExecuteActionList.size() > 1) {
+                List<Integer> huPosIdList = new ArrayList<>();
+                Integer targetCard = null;
+                for (TempAction tempAction : needExecuteActionList) {
+                    huPosIdList.add(tempAction.getPosId());
+                    targetCard = tempAction.getStepAction().getTargetCard();
+                }
+                multiplePlayerHu(targetCard, huPosIdList);
+                return true;
+            }
+
+            for (TempAction tempAction : needExecuteActionList) {
+                StepAction stepAction = tempAction.getStepAction();
+                Integer typeValue = stepAction.getOperationType().value();
+                Integer targetCard = stepAction.getTargetCard();
+                Long operatorUserId = tempAction.getUserId();
+
+                /**
+                 * 得把权限重新赋予给玩家，否则第二次执行就没有权限了，这个时候就体现出 使用TempAction作为权限对象的好处了。
+                 *
+                 */
+                XueZhanSeat xueZhanSeat = posIdSeatMap.get(tempAction.getPosId());
+                MahjongSeat mahjongSeat = xueZhanSeat.getMahjongSeat();
+                mahjongSeat.addOperation(stepAction);
+                operation(targetCard, typeValue, operatorUserId);
+            }
+            return true;
+        }
+        return false;
+
+    }
+
+    public List<Step> getHistoryByGameStatus(SichuanGameStatusEnum statusEnum) {
+        List<Step> list = new ArrayList<>();
+        for (GameStepModel gameStepModel : historyList) {
+            Step operationStep = gameStepModel.getOperationStep();
+            if (operationStep.stepType().equals(statusEnum)) {
+                list.add(operationStep);
+            }
+        }
+        return list;
+    }
+
+    private void noticePlayersDealCardsResult() {
+        for (GameStepModel gameStepModel : historyList) {
             GameStartStep gameStartStep = (GameStartStep) gameStepModel.getOperationStep();
 
             XueZhanStartResponse response = new XueZhanStartResponse();
@@ -297,15 +625,16 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                     .setDiceList(gameStartStep.getDiceList())
                     .setPosId(gameStartStep.getPosId())
                     .setStandCardList(gameStartStep.getStandCards())
+                    .setCardWallRemaining(mahjongZone.getCardWall().size())
                     //发给客户端的游戏状态不应该是记录step时的状态，而是下一个阶段。斗地主那里可能没处理好
-                    .setGameStatus(gameZone.getGameStatus().status());
+                    .setGameStatus(mahjongZone.getGameStatus().status());
 
             roomManager.pushToUser(PushCommandCode.GAME_START, gameStepModel.getPlayers().getUserId(), response, roomId);
         }
     }
 
     private void noticePlayersExchangeResult() {
-        List<Step> historyByGameStatus = gameZone.getHistoryByGameStatus(SichuanGameStatusEnum.EXCHANGE_CARD);
+        List<Step> historyByGameStatus = getHistoryByGameStatus(SichuanGameStatusEnum.EXCHANGE_CARD);
         for (Step stepInfo : historyByGameStatus) {
             ExchangeCardStep step = (ExchangeCardStep) stepInfo;
             ExchangeCardResultResponse response = new ExchangeCardResultResponse(step.getExchangeType().type(), step.getGainedCards());
@@ -334,7 +663,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
         }
     }
 
-    private void noticePlayersWhoFinishDingQue(XueZhanSeat seat){
+    private void noticePlayersWhoFinishDingQue(XueZhanSeat seat) {
         OperationResultResponse response = new OperationResultResponse();
         response.setPosId(seat.getPosId())
                 .setTargetCard(seat.getSichuanMahjongSeat().getQueColor())
@@ -342,25 +671,28 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
         pushToRoomUser(XueZhanPushCommandCode.OPERATION_RESULT_NOTICE, response);
     }
 
-    private void noticePlayersOperation() {
-        XueZhanSeat seat = posIdSeatMap.get(gameZone.getCurTookCardPlayerPosId());
+    /**
+     * @param card 摸的牌。 庄家第一次出牌不用摸牌，所以为null
+     */
+    private void noticePlayersOperation(Integer card) {
+        XueZhanSeat seat = posIdSeatMap.get(mahjongZone.getCurTookCardPlayerPosId());
         MahjongSeat mahjongSeat = seat.getMahjongSeat();
         mahjongSeat.addStatus(SeatStatusEnum.OPERATION_CARD.status());
 
-        List<StepAction> stepActions = gameZone.whatCanYouDo(null);
+        List<StepAction> stepActions = sichuanMahjongZone.whatCanYouDo(card);
         List<OperationDTO> canOperations = new ArrayList<>();
-        OperationDTO outCardOperation = new OperationDTO(XueZhanMahjongOperationEnum.OUT_CARD.value(),null);
+        OperationDTO outCardOperation = new OperationDTO(XueZhanMahjongOperationEnum.OUT_CARD.value(), null);
         canOperations.add(outCardOperation);
         mahjongSeat.addOperation(XueZhanMahjongOperationEnum.OUT_CARD);
 
         stepActions.stream().forEach(stepAction -> {
-            OperationDTO operationDTO = new OperationDTO(stepAction.getOperationType().value(),stepAction.getTargetCard());
+            OperationDTO operationDTO = new OperationDTO(stepAction.getOperationType().value(), stepAction.getTargetCard());
             canOperations.add(operationDTO);
             mahjongSeat.addOperation(stepAction.getOperationType());
         });
-        OperationNoticeResponse response = new OperationNoticeResponse(gameZone.getBankerPosId(),canOperations);
+        OperationNoticeResponse response = new OperationNoticeResponse(mahjongZone.getBankerPosId(), canOperations);
 
-        roomManager.pushToUser(XueZhanPushCommandCode.OPERATION_NOTICE,seat.getUserId(),response,roomId);
+        roomManager.pushToUser(XueZhanPushCommandCode.OPERATION_NOTICE, seat.getUserId(), response, roomId);
     }
 
     public void pushToRoomUser(int command, Response response, Long... excludeUserIds) {
@@ -398,25 +730,25 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
         rule = new Rule<>();
         SichuanRoomConfig ruleConfig = new SichuanRoomConfig(true, true, dingQueOption);
         final List<FanInfo<BaseHuTypeEnum>> baseHuList = new ArrayList<>();
-        FanInfo<BaseHuTypeEnum> pingHu = new FanInfo<>(BaseHuTypeEnum.平胡, 1, 0);
-        FanInfo<BaseHuTypeEnum> qiDui = new FanInfo<>(BaseHuTypeEnum.七对, 4, 0);
+        FanInfo<BaseHuTypeEnum> pingHu = new FanInfo<>(BaseHuTypeEnum.平胡, 1, 0, PingHuFan.INSTANCE);
+        FanInfo<BaseHuTypeEnum> qiDui = new FanInfo<>(BaseHuTypeEnum.七对, 4, 0, QiDuiFan.INSTANCE);
         baseHuList.add(pingHu);
         baseHuList.add(qiDui);
 
         final List<FanInfo<HuTypeEnum>> huTypeList = new ArrayList<>();
-        FanInfo<HuTypeEnum> ziMo = new FanInfo<>(HuTypeEnum.自摸, 2, 0);
-        FanInfo<HuTypeEnum> dianPaoHu = new FanInfo<>(HuTypeEnum.点炮胡, 1, 0);
+        FanInfo<HuTypeEnum> ziMo = new FanInfo<>(HuTypeEnum.自摸, 2, 0, HuTypeFan.INSTANCE);
+        FanInfo<HuTypeEnum> dianPaoHu = new FanInfo<>(HuTypeEnum.点炮胡, 1, 0,HuTypeFan.INSTANCE);
         huTypeList.add(ziMo);
         huTypeList.add(dianPaoHu);
 
         final List<FanInfo<FormalFanTypeEnum>> formalFanTypeEnumList = new ArrayList<>();
-        FanInfo<FormalFanTypeEnum> qingYiSe = new FanInfo<>(FormalFanTypeEnum.清一色, 4, 0);
-        FanInfo<FormalFanTypeEnum> pengPengHu = new FanInfo<>(FormalFanTypeEnum.大对子, 2, 0);
-        FanInfo<FormalFanTypeEnum> jinGouDiao = new FanInfo<>(FormalFanTypeEnum.金钩钓, 4, 0);
-        FanInfo<FormalFanTypeEnum> shiBaLuoHan = new FanInfo<>(FormalFanTypeEnum.十八罗汉, 64, 0);
+        FanInfo<FormalFanTypeEnum> qingYiSe = new FanInfo<>(FormalFanTypeEnum.清一色, 4, 0, QingYiSeFan.INSTANCE);
+        FanInfo<FormalFanTypeEnum> pengPengHu = new FanInfo<>(FormalFanTypeEnum.大对子, 2, 0, BigDoubleFan.INSTANCE);
+        FanInfo<FormalFanTypeEnum> jinGouDiao = new FanInfo<>(FormalFanTypeEnum.金钩钓, 4, 0, JinGouDiaoFan.INSTANCE);
+        FanInfo<FormalFanTypeEnum> shiBaLuoHan = new FanInfo<>(FormalFanTypeEnum.十八罗汉, 64, 0, ShiBaLuoHanFan.INSTANCE);
 
-        FanInfo<FormalFanTypeEnum> qingQiDui = new FanInfo<>(FormalFanTypeEnum.清七对, 4, 0);
-        FanInfo<FormalFanTypeEnum> longQiDui = new FanInfo<>(FormalFanTypeEnum.龙七对, 2, 0);
+        FanInfo<FormalFanTypeEnum> qingQiDui = new FanInfo<>(FormalFanTypeEnum.清七对, 4, 0, QingQiDuiFan.INSTANCE);
+        FanInfo<FormalFanTypeEnum> longQiDui = new FanInfo<>(FormalFanTypeEnum.龙七对, 2, 0,LongQiDuiFan.INSTANCE);
 
         formalFanTypeEnumList.add(qingYiSe);
         formalFanTypeEnumList.add(pengPengHu);
@@ -426,15 +758,15 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
         formalFanTypeEnumList.add(longQiDui);
 
         final List<FanInfo<AppendedTypeEnum>> appendedTypeEnumList = new ArrayList<>();
-        FanInfo<AppendedTypeEnum> gen = new FanInfo<>(AppendedTypeEnum.根, 2, 1);
+        FanInfo<AppendedTypeEnum> gen = new FanInfo<>(AppendedTypeEnum.根, 2, 1, GenFan.INSTANCE);
 
-        FanInfo<AppendedTypeEnum> tianHu = new FanInfo<>(AppendedTypeEnum.天胡, 256, 1);
-        FanInfo<AppendedTypeEnum> diHu = new FanInfo<>(AppendedTypeEnum.地胡, 256, 1);
-        FanInfo<AppendedTypeEnum> haiDiLaoYue = new FanInfo<>(AppendedTypeEnum.海底捞月, 2, 1);
-        FanInfo<AppendedTypeEnum> haiDiPao = new FanInfo<>(AppendedTypeEnum.海底炮, 2, 1);
-        FanInfo<AppendedTypeEnum> qiangGangHu = new FanInfo<>(AppendedTypeEnum.抢杠胡, 2, 1);
-        FanInfo<AppendedTypeEnum> gangShangKaiHua = new FanInfo<>(AppendedTypeEnum.杠上开花, 2, 1);
-        FanInfo<AppendedTypeEnum> gangShangPao = new FanInfo<>(AppendedTypeEnum.杠上炮, 2, 1);
+        FanInfo<AppendedTypeEnum> tianHu = new FanInfo<>(AppendedTypeEnum.天胡, 256, 1, TianHuFan.INSTANCE);
+        FanInfo<AppendedTypeEnum> diHu = new FanInfo<>(AppendedTypeEnum.地胡, 256, 1, DiHuFan.INSTANCE);
+        FanInfo<AppendedTypeEnum> haiDiLaoYue = new FanInfo<>(AppendedTypeEnum.海底捞月, 2, 1, HaiDiLaoYueFan.INSTANCE);
+        FanInfo<AppendedTypeEnum> haiDiPao = new FanInfo<>(AppendedTypeEnum.海底炮, 2, 1, HaiDiPaoFan.INSTANCE);
+        FanInfo<AppendedTypeEnum> qiangGangHu = new FanInfo<>(AppendedTypeEnum.抢杠胡, 2, 1,QiangGangHuFan.INSTANCE);
+        FanInfo<AppendedTypeEnum> gangShangKaiHua = new FanInfo<>(AppendedTypeEnum.杠上开花, 2, 1,GangShangKaiHua.INSTANCE);
+        FanInfo<AppendedTypeEnum> gangShangPao = new FanInfo<>(AppendedTypeEnum.杠上炮, 2, 1,GangShangPao.INSTANCE);
         appendedTypeEnumList.add(gen);
         appendedTypeEnumList.add(tianHu);
         appendedTypeEnumList.add(diHu);
@@ -445,9 +777,9 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
         appendedTypeEnumList.add(gangShangPao);
 
         final List<FanInfo<CompoundFanTypeEnum>> compoundFanTypeEnumList = new ArrayList<>();
-        FanInfo<CompoundFanTypeEnum> qingPeng = new FanInfo<>(CompoundFanTypeEnum.清碰, 8, 0);
-        FanInfo<CompoundFanTypeEnum> qingJinGouDiao = new FanInfo<>(CompoundFanTypeEnum.清金钩钓, 16, 0);
-        FanInfo<CompoundFanTypeEnum> qingShaiBaLuoHan = new FanInfo<>(CompoundFanTypeEnum.清十八罗汉, 256, 0);
+        FanInfo<CompoundFanTypeEnum> qingPeng = new FanInfo<>(CompoundFanTypeEnum.清碰, 8, 0, QingPengFan.INSTANCE);
+        FanInfo<CompoundFanTypeEnum> qingJinGouDiao = new FanInfo<>(CompoundFanTypeEnum.清金钩钓, 16, 0, QingJinGouDiaoFan.INSTANCE);
+        FanInfo<CompoundFanTypeEnum> qingShaiBaLuoHan = new FanInfo<>(CompoundFanTypeEnum.清十八罗汉, 256, 0, QingShiBaLuoHanFan.INSTANCE);
         compoundFanTypeEnumList.add(qingPeng);
         compoundFanTypeEnumList.add(qingJinGouDiao);
         compoundFanTypeEnumList.add(qingShaiBaLuoHan);
@@ -467,7 +799,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
      * @return
      */
     public String getSeatDirection(Integer posId) {
-        Integer zhuangId = gameZone.getBankerPosId();
+        Integer zhuangId = mahjongZone.getBankerPosId();
         if (posId.equals(zhuangId)) {
             return "东";
         } else {

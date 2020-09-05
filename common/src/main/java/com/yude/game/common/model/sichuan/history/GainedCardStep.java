@@ -2,7 +2,7 @@ package com.yude.game.common.model.sichuan.history;
 
 import com.yude.game.common.constant.Status;
 import com.yude.game.common.model.history.Step;
-import com.yude.game.common.model.sichuan.ExchangeTypeEnum;
+import com.yude.game.common.model.sichuan.constant.ExchangeTypeEnum;
 
 import java.util.List;
 

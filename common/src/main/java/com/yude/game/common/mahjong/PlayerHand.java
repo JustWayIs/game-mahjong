@@ -70,9 +70,21 @@ public class PlayerHand {
     // ===========================================================
     // Methods
     // ===========================================================
-    public boolean canPeng(Integer card) {
+    public boolean canChi(Integer card) {
         for(Solution solution : solutions){
             List<Tile> canChow = solution.canChow;
+            for(Tile tile : canChow){
+                if(tile.id == card){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean canPeng(Integer card) {
+        for(Solution solution : solutions){
+            List<Tile> canChow = solution.canPong;
             for(Tile tile : canChow){
                 if(tile.id == card){
                     return true;

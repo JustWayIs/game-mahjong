@@ -1,4 +1,4 @@
-package com.yude.game.common.model.sichuan;
+package com.yude.game.common.model.sichuan.constant;
 
 
 import com.yude.game.common.constant.Status;

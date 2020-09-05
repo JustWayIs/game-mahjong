@@ -19,7 +19,7 @@ import java.util.*;
  * @Version: 1.0
  * @Declare:
  */
-public class MahjongZone<T extends MahjongSeat> extends AbstractGameZoneModel<MahjongSeat, Status> {
+public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
     private static final Logger log = LoggerFactory.getLogger(MahjongZone.class);
 
     private Integer[] dice = new Integer[2];
@@ -35,6 +35,8 @@ public class MahjongZone<T extends MahjongSeat> extends AbstractGameZoneModel<Ma
     private List<Integer> cardWall;
     /**
      * 出的牌：不包括被吃碰杠的牌
+     * 服务器不应该直接信任客户端传上来的目标牌，而是应该使用 cardPool里的最后一张牌？  或者从hitory里面取最后一个操作，那里有更完整的最后一次操作的信息。验证的时候用cardPool。响应的时候用hisory ???
+     * 额，其实可以不用这个和history来判断，因为玩家的可操作权限集合里面，保存了可以进行的操作的具体信息
      */
     private List<Integer> cardPool;
 
@@ -60,7 +62,7 @@ public class MahjongZone<T extends MahjongSeat> extends AbstractGameZoneModel<Ma
      */
     private List<TempAction> tempActions;
 
-    public MahjongZone(T[] playerSeats, int round, int inning) {
+    public MahjongZone(MahjongSeat[] playerSeats, int round, int inning) {
         super(playerSeats, round, inning);
         gameHistory = new ArrayList<>();
     }
@@ -114,6 +116,10 @@ public class MahjongZone<T extends MahjongSeat> extends AbstractGameZoneModel<Ma
         }
     }
 
+    public boolean checkCurrentGameStatus(Status gameStatusEnum) {
+        return gameStatusEnum.equals(gameStatus);
+    }
+
     public GameStepModel<OperationCardStep> outCard(Integer card, Integer posId) {
         MahjongSeat mahjongSeat = playerSeats[posId];
         mahjongSeat.removeCardFromStandCards(card);
@@ -133,7 +139,7 @@ public class MahjongZone<T extends MahjongSeat> extends AbstractGameZoneModel<Ma
                 .setStandCardList(standCardList)
                 .setStandCardConvertList(MahjongProp.cardConvertName(standCardList));
         mahjongSeat.addStep(step);
-        GameStepModel<OperationCardStep> stepModel = new GameStepModel<>(zoneId,mahjongSeat.getPlayer(),step);
+        GameStepModel<OperationCardStep> stepModel = new GameStepModel<>(zoneId, mahjongSeat.getPlayer(), step);
 
         mahjongSeat.clearOperation();
         //出牌完成后，该玩家就变成了前一个摸牌玩家
@@ -144,21 +150,27 @@ public class MahjongZone<T extends MahjongSeat> extends AbstractGameZoneModel<Ma
         return stepModel;
     }
 
+    /**
+     *
+     * @param card
+     * @param posId
+     * @return
+     */
     public GameStepModel<OperationCardStep> hu(Integer card, Integer posId) {
-        GameStepModel<OperationCardStep> stepModel = null;
-        return stepModel;
+        GameStepModel<OperationCardStep> huStepModel = operation(card, posId, OperationEnum.HU);
+        return huStepModel;
     }
 
 
-    public GameStepModel<OperationCardStep> cancel(Integer card,Integer posId) {
+    public GameStepModel<OperationCardStep> cancel(Integer card, Integer posId) {
         MahjongSeat playerSeat = playerSeats[posId];
-        GameStepModel<OperationCardStep> stepModel = null;
         OperationCardStep step = new OperationCardStep();
         StepAction stepAction = new StepAction();
         step.setAction(stepAction);
 
-        Integer cardSource = playerSeat.getDesignateOperationCardSource(OperationEnum.CANCEL.value(), card);
-        if(cardSource == null){
+        StepAction action = playerSeat.getDesignateOperationCardSource(OperationEnum.CANCEL.value(), card);
+        Integer cardSource = action.getCardSource();
+        if (cardSource == null) {
             log.error("严重错误：服务器存储的玩家可操作权限信息，和实际操作信息不一致");
             throw new SystemException("没有匹配的可操作信息");
         }
@@ -173,57 +185,210 @@ public class MahjongZone<T extends MahjongSeat> extends AbstractGameZoneModel<Ma
                 .setGameStatus(gameStatus)
                 .setAction(stepAction);
 
-        GameStepModel<OperationCardStep> gameStepModel = new GameStepModel<>(zoneId,playerSeat.getPlayer(),step);
-        if(needJoinTempActionZone(posId)){
-            TempAction tempAction = new TempAction(gameStepModel);
+        GameStepModel<OperationCardStep> gameStepModel = new GameStepModel<>(zoneId, playerSeat.getPlayer(), step);
+        stepCount++;
+        playerSeat.clearOperation();
+
+        if (needJoinTempActionZone()) {
+            TempAction tempAction = new TempAction(posId, playerSeat.getUserId(), stepAction);
             tempActions.add(tempAction);
-            return null;
+            Collections.sort(tempActions);
         }
-        return stepModel;
+        return gameStepModel;
     }
 
 
-    public GameStepModel<OperationCardStep> gang(Integer card, Integer type, Integer posId) {
+    public GameStepModel<OperationCardStep> buGang(Integer card,Integer posId){
         GameStepModel<OperationCardStep> stepModel = null;
         return stepModel;
     }
 
-    public GameStepModel<OperationCardStep> chi(Integer card,Integer posId){
+    public GameStepModel<OperationCardStep> zhiGang(Integer card,Integer posId){
         GameStepModel<OperationCardStep> stepModel = null;
         return stepModel;
+    }
+
+    public GameStepModel<OperationCardStep> anGang(Integer card,Integer posId){
+        MahjongSeat playerSeat = playerSeats[posId];
+        OperationCardStep step = new OperationCardStep();
+        StepAction stepAction = new StepAction();
+        step.setAction(stepAction);
+
+        StepAction action = playerSeat.getDesignateOperationCardSource(OperationEnum.CANCEL.value(), card);
+        Integer cardSource = action.getCardSource();
+        if (cardSource == null) {
+            log.error("严重错误：服务器存储的 玩家吃 操作信息，和实际操作信息不一致");
+            throw new SystemException("没有匹配的可操作信息");
+        }
+        stepAction.setTargetCard(card)
+                .setOperationType(OperationEnum.AN_GANG)
+                .setCardSource(cardSource)
+                .setCombinationRsult(new ArrayList<>(Arrays.asList(card, card, card,card)));
+        step.setPosId(posId)
+                .setStep(stepCount)
+                .setStandCardList(playerSeat.getStandCardList())
+                .setRemainingCardSize(playerSeat.getStandCardList().size())
+                .setStandCardConvertList(MahjongProp.cardConvertName(playerSeat.getStandCardList()))
+                .setGameStatus(gameStatus)
+                .setAction(stepAction);
+
+        GameStepModel<OperationCardStep> gameStepModel = new GameStepModel<>(zoneId, playerSeat.getPlayer(), step);
+        stepCount++;
+        playerSeat.clearOperation();
+
+        if (needJoinTempActionZone()) {
+            TempAction tempAction = new TempAction(posId, playerSeat.getUserId(), stepAction);
+            tempActions.add(tempAction);
+            Collections.sort(tempActions);
+        }
+        return gameStepModel;
+    }
+
+    /**
+     * 貌似这一个方法可以用来代替 吃、碰、补杠、直杠、暗杠
+     * 这么NB嘛....
+     * @param card
+     * @param posId
+     * @param operationType
+     * @return
+     */
+    public GameStepModel<OperationCardStep> operation(Integer card,Integer posId,MahjongOperation operationType){
+        List<Integer> cardCombination = null;
+        OperationEnum value = OperationEnum.values()[operationType.value()];
+        switch (value){
+            case PENG:cardCombination = new ArrayList<>(Arrays.asList(card,card,card));break;
+            case ZHI_GANG:
+            case BU_GANG:
+            case AN_GANG:cardCombination = new ArrayList<>(Arrays.asList(card,card,card,card));break;
+            case CHI:cardCombination = new ArrayList<>(Arrays.asList(card - 1, card ,card +1));break;
+            default:;
+        }
+
+        MahjongSeat playerSeat = playerSeats[posId];
+        OperationCardStep step = new OperationCardStep();
+        StepAction stepAction = new StepAction();
+        step.setAction(stepAction);
+
+        StepAction action = playerSeat.getDesignateOperationCardSource(operationType.value(), card);
+        Integer cardSource = action.getCardSource();
+        if (cardSource == null) {
+            log.error("严重错误：操作 operation ={} ，和实际操作信息不一致",operationType);
+            throw new SystemException("没有匹配的可操作信息");
+        }
+        stepAction.setTargetCard(card)
+                .setOperationType(operationType)
+                .setCardSource(cardSource)
+                .setCombinationRsult(cardCombination);
+        step.setPosId(posId)
+                .setStep(stepCount)
+                .setStandCardList(playerSeat.getStandCardList())
+                .setRemainingCardSize(playerSeat.getStandCardList().size())
+                .setStandCardConvertList(MahjongProp.cardConvertName(playerSeat.getStandCardList()))
+                .setGameStatus(gameStatus)
+                .setAction(stepAction);
+
+        GameStepModel<OperationCardStep> gameStepModel = new GameStepModel<>(zoneId, playerSeat.getPlayer(), step);
+        stepCount++;
+        playerSeat.clearOperation();
+
+        if (needJoinTempActionZone()) {
+            TempAction tempAction = new TempAction(posId, playerSeat.getUserId(), stepAction);
+            tempActions.add(tempAction);
+            Collections.sort(tempActions);
+        }
+        return gameStepModel;
+    }
+
+    public GameStepModel<OperationCardStep> chi(Integer card, Integer posId) {
+        MahjongSeat playerSeat = playerSeats[posId];
+        OperationCardStep step = new OperationCardStep();
+        StepAction stepAction = new StepAction();
+        step.setAction(stepAction);
+
+        StepAction action = playerSeat.getDesignateOperationCardSource(OperationEnum.CANCEL.value(), card);
+        Integer cardSource = action.getCardSource();
+        if (cardSource == null) {
+            log.error("严重错误：服务器存储的 玩家吃 操作信息，和实际操作信息不一致");
+            throw new SystemException("没有匹配的可操作信息");
+        }
+        stepAction.setTargetCard(card)
+                .setOperationType(OperationEnum.CHI)
+                .setCardSource(cardSource)
+                .setCombinationRsult(new ArrayList<>(Arrays.asList(card-1, card, card+1)));
+        step.setPosId(posId)
+                .setStep(stepCount)
+                .setStandCardList(playerSeat.getStandCardList())
+                .setRemainingCardSize(playerSeat.getStandCardList().size())
+                .setStandCardConvertList(MahjongProp.cardConvertName(playerSeat.getStandCardList()))
+                .setGameStatus(gameStatus)
+                .setAction(stepAction);
+
+        GameStepModel<OperationCardStep> gameStepModel = new GameStepModel<>(zoneId, playerSeat.getPlayer(), step);
+        stepCount++;
+        playerSeat.clearOperation();
+
+        if (needJoinTempActionZone()) {
+            TempAction tempAction = new TempAction(posId, playerSeat.getUserId(), stepAction);
+            tempActions.add(tempAction);
+            Collections.sort(tempActions);
+        }
+        return gameStepModel;
     }
 
     public GameStepModel<OperationCardStep> peng(Integer card, Integer posId) {
-        GameStepModel<OperationCardStep> stepModel = null;
-        return stepModel;
+        MahjongSeat playerSeat = playerSeats[posId];
+        OperationCardStep step = new OperationCardStep();
+        StepAction stepAction = new StepAction();
+        step.setAction(stepAction);
+
+        StepAction action = playerSeat.getDesignateOperationCardSource(OperationEnum.CANCEL.value(), card);
+        Integer cardSource = action.getCardSource();
+        if (cardSource == null) {
+            log.error("严重错误：服务器存储的 玩家碰 操作信息，和实际操作信息不一致");
+            throw new SystemException("没有匹配的可操作信息");
+        }
+        stepAction.setTargetCard(card)
+                .setOperationType(OperationEnum.PENG)
+                .setCardSource(cardSource)
+                .setCombinationRsult(new ArrayList<>(Arrays.asList(card, card, card)));
+        step.setPosId(posId)
+                .setStep(stepCount)
+                .setStandCardList(playerSeat.getStandCardList())
+                .setRemainingCardSize(playerSeat.getStandCardList().size())
+                .setStandCardConvertList(MahjongProp.cardConvertName(playerSeat.getStandCardList()))
+                .setGameStatus(gameStatus)
+                .setAction(stepAction);
+
+        GameStepModel<OperationCardStep> gameStepModel = new GameStepModel<>(zoneId, playerSeat.getPlayer(), step);
+        stepCount++;
+        playerSeat.clearOperation();
+
+        if (needJoinTempActionZone()) {
+            TempAction tempAction = new TempAction(posId, playerSeat.getUserId(), stepAction);
+            tempActions.add(tempAction);
+            Collections.sort(tempActions);
+        }
+        return gameStepModel;
     }
 
-    private GameStepModel<OperationCardStep> zhiGang(){
-        GameStepModel<OperationCardStep> stepModel = null;
-        return stepModel;
-    }
-
-    private GameStepModel<OperationCardStep> anGang(){
-        GameStepModel<OperationCardStep> stepModel = null;
-        return stepModel;
-    }
-
-    private GameStepModel<OperationCardStep> buGang(){
-        GameStepModel<OperationCardStep> stepModel = null;
-        return stepModel;
+    public void canNextProcess() {
+        boolean needWait = existsCanOperation();
     }
 
     /**
      * 如果还有玩家可以操作，或者已经有玩家操作过（当前回合）
-     * @param posId 操作玩家自己
+     *
      * @return
      */
-    public boolean needJoinTempActionZone(Integer posId){
-        if(tempActions.size() > 0){
+    public boolean needJoinTempActionZone() {
+        /**
+         * 是否已经有玩家先操作了，在该回合
+         */
+        if (tempActions.size() > 0) {
             return true;
         }
 
-        if(existsCanOperation(posId)){
+        if (existsCanOperation()) {
             return true;
         }
         return false;
@@ -231,29 +396,37 @@ public class MahjongZone<T extends MahjongSeat> extends AbstractGameZoneModel<Ma
 
     /**
      * 现在操作了的玩家
-     * @param posId
+     *
      * @return
      */
-    public boolean existsCanOperation(Integer posId){
-        for(MahjongSeat mahjongSeat : playerSeats){
-            if(mahjongSeat.getPosId() == posId){
-                continue;
-            }
-            if(mahjongSeat.canOperation()){
+    public boolean existsCanOperation() {
+        for (MahjongSeat mahjongSeat : playerSeats) {
+
+            if (mahjongSeat.canOperation()) {
                 return true;
             }
         }
         return false;
     }
 
-    public void setGameStatus(Status status){
+    public List<TempAction> getTempActions() {
+        return tempActions;
+    }
+
+    public MahjongZone setTempActions(List<TempAction> tempActions) {
+        this.tempActions = tempActions;
+        return this;
+    }
+
+    public void setGameStatus(Status status) {
         gameStatus = status;
     }
+
     public PlayBoard getPlayBoard() {
         return playBoard;
     }
 
-    public MahjongZone<T> setPlayBoard(PlayBoard playBoard) {
+    public MahjongZone setPlayBoard(PlayBoard playBoard) {
         this.playBoard = playBoard;
         return this;
     }
@@ -278,7 +451,7 @@ public class MahjongZone<T extends MahjongSeat> extends AbstractGameZoneModel<Ma
         return curOperatorPosId;
     }
 
-    public MahjongZone<T> setCurOperatorPosId(Integer curOperatorPosId) {
+    public MahjongZone setCurOperatorPosId(Integer curOperatorPosId) {
         this.curOperatorPosId = curOperatorPosId;
         return this;
     }
@@ -287,7 +460,7 @@ public class MahjongZone<T extends MahjongSeat> extends AbstractGameZoneModel<Ma
         return beforeOperatorPosId;
     }
 
-    public MahjongZone<T> setBeforeOperatorPosId(Integer beforeOperatorPosId) {
+    public MahjongZone setBeforeOperatorPosId(Integer beforeOperatorPosId) {
         this.beforeOperatorPosId = beforeOperatorPosId;
         return this;
     }
@@ -296,7 +469,7 @@ public class MahjongZone<T extends MahjongSeat> extends AbstractGameZoneModel<Ma
         return curTookCardPlayerPosId;
     }
 
-    public MahjongZone<T> setCurTookCardPlayerPosId(Integer curTookCardPlayerPosId) {
+    public MahjongZone setCurTookCardPlayerPosId(Integer curTookCardPlayerPosId) {
         this.curTookCardPlayerPosId = curTookCardPlayerPosId;
         return this;
     }
@@ -305,7 +478,7 @@ public class MahjongZone<T extends MahjongSeat> extends AbstractGameZoneModel<Ma
         return beforeTookCardPlayerPosId;
     }
 
-    public MahjongZone<T> setBeforeTookCardPlayerPosId(Integer beforeTookCardPlayerPosId) {
+    public MahjongZone setBeforeTookCardPlayerPosId(Integer beforeTookCardPlayerPosId) {
         this.beforeTookCardPlayerPosId = beforeTookCardPlayerPosId;
         return this;
     }
@@ -336,11 +509,18 @@ public class MahjongZone<T extends MahjongSeat> extends AbstractGameZoneModel<Ma
         curOperatorPosId = curTookCardPlayerPosId;
     }
 
-    public Integer TookCardFromCardWall(){
+    public Integer TookCardFromCardWall() {
         Integer nextCard = cardWall.remove(0);
         return nextCard;
     }
 
+    public void setLastOperationTime(long time) {
+        this.lastOperationTime = time;
+    }
+
+    public void setOperationStatus(Status gameStatus) {
+        this.gameStatus = gameStatus;
+    }
 
     public void canChi(MahjongSeat mahjongSeat, Integer card) {
     }

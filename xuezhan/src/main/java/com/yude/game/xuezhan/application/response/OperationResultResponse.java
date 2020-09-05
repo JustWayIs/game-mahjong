@@ -13,7 +13,7 @@ import java.util.List;
 public class OperationResultResponse extends BaseResponse {
     private Integer posId;
     private Integer targetCard;
-    private Integer cardSource;
+    private Integer cardSourcePosId;
     private List<Integer> combinationCards;
     private Integer operationType;
 
@@ -23,7 +23,7 @@ public class OperationResultResponse extends BaseResponse {
     public OperationResultResponse(Integer posId, Integer targetCard, Integer cardSource, List<Integer> combinationCards, Integer operationType) {
         this.posId = posId;
         this.targetCard = targetCard;
-        this.cardSource = cardSource;
+        this.cardSourcePosId = cardSourcePosId;
         this.combinationCards = combinationCards;
         this.operationType = operationType;
     }
@@ -64,12 +64,12 @@ public class OperationResultResponse extends BaseResponse {
         return this;
     }
 
-    public Integer getCardSource() {
-        return cardSource;
+    public Integer getCardSourcePosId() {
+        return cardSourcePosId;
     }
 
-    public OperationResultResponse setCardSource(Integer cardSource) {
-        this.cardSource = cardSource;
+    public OperationResultResponse setCardSourcePosId(Integer cardSourcePosId) {
+        this.cardSourcePosId = cardSourcePosId;
         return this;
     }
 
@@ -78,7 +78,7 @@ public class OperationResultResponse extends BaseResponse {
         return "OperationResultResponse{" +
                 "posId=" + posId +
                 ", targetCard=" + targetCard +
-                ", cardSource=" + cardSource +
+                ", cardSourcePosId=" + cardSourcePosId +
                 ", combinationCards=" + combinationCards +
                 ", operationType=" + operationType +
                 '}';

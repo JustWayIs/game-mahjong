@@ -45,6 +45,7 @@ public class XueZhanApplication {
 
             jprotobufClassInit();
             MahjongTimeoutTaskPool.getInstance().init();
+            MahjongTimeoutTaskPool.getInstance().setRoomManager(roomManager);
         } catch (Exception e) {
             log.error("血战到底游戏服启动失败",e);
             System.exit(1);

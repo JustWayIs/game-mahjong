@@ -2,6 +2,7 @@ package com.yude.game.common.model.history;
 
 import com.yude.game.common.constant.Status;
 import com.yude.game.common.model.StepAction;
+import com.yude.game.common.model.fan.FanInfo;
 
 import java.util.List;
 
@@ -20,6 +21,7 @@ public class SettlementStep implements Step {
     private List<Integer> standCards;
     private List<String> standCardsConvertList;
     private List<StepAction> fuluList;
+    private List<FanInfo> fanInfoList;
     private Status gameStatus;
 
     public int getStep() {
@@ -113,6 +115,15 @@ public class SettlementStep implements Step {
         return this;
     }
 
+    public List<FanInfo> getFanInfoList() {
+        return fanInfoList;
+    }
+
+    public SettlementStep setFanInfoList(List<FanInfo> fanInfoList) {
+        this.fanInfoList = fanInfoList;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "SettlementStep{" +
@@ -124,6 +135,7 @@ public class SettlementStep implements Step {
                 ", standCards=" + standCards +
                 ", standCardsConvertList=" + standCardsConvertList +
                 ", fuluList=" + fuluList +
+                ", fanInfoList=" + fanInfoList +
                 ", gameStatus=" + gameStatus +
                 '}';
     }

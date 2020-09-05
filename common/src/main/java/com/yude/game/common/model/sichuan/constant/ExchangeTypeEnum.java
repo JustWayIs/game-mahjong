@@ -1,4 +1,4 @@
-package com.yude.game.common.model.sichuan;
+package com.yude.game.common.model.sichuan.constant;
 
 /**
  * @Author: HH

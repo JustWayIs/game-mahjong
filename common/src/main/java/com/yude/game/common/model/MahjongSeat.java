@@ -118,14 +118,14 @@ public class MahjongSeat extends AbstractSeatModel {
 
     /**
      *
-     * @param type
+     * @param type 不用MahjongOperation是因为 不确定用的是MahjongOperation 还是地方麻将的 Operation.但是他们的值是一样的
      * @param card ： 因为可能有多个暗杠操作权限，需要用具体牌来区分
      * @return
      */
-    public Integer getDesignateOperationCardSource(Integer type,Integer card){
+    public StepAction getDesignateOperationCardSource(Integer type,Integer card){
         for(StepAction stepAction : canOperations){
             if(stepAction.getOperationType().value().equals(type) && stepAction.getTargetCard().equals(card)){
-                return stepAction.getCardSource();
+                return stepAction;
             }
         }
         return null;

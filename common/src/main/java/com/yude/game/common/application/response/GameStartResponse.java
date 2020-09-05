@@ -11,14 +11,15 @@ import java.util.List;
  * @Declare:
  */
 public class GameStartResponse extends BaseResponse {
-    protected Long roomId;
-    protected Integer zoneId;
-    protected Integer step;
-    protected List<Integer> diceList;
-    protected Integer bankerPosId;
-    protected Integer posId;
-    protected List<Integer> standCardList;
-    protected Integer gameStatus;
+    private Long roomId;
+    private Integer zoneId;
+    private Integer step;
+    private List<Integer> diceList;
+    private Integer bankerPosId;
+    private Integer posId;
+    private List<Integer> standCardList;
+    private Integer gameStatus;
+    private Integer cardWallRemaining;
 
     public GameStartResponse setRoomId(Long roomId) {
         this.roomId = roomId;
@@ -58,5 +59,25 @@ public class GameStartResponse extends BaseResponse {
     public GameStartResponse setGameStatus(Integer gameStatus) {
         this.gameStatus = gameStatus;
         return this;
+    }
+
+    public GameStartResponse setCardWallRemaining(Integer cardWallRemaining) {
+        this.cardWallRemaining = cardWallRemaining;
+        return this;
+    }
+
+    @Override
+    public String toString() {
+        return "GameStartResponse{" +
+                "roomId=" + roomId +
+                ", zoneId=" + zoneId +
+                ", step=" + step +
+                ", diceList=" + diceList +
+                ", bankerPosId=" + bankerPosId +
+                ", posId=" + posId +
+                ", standCardList=" + standCardList +
+                ", gameStatus=" + gameStatus +
+                ", cardWallRemaining=" + cardWallRemaining +
+                "} " + super.toString();
     }
 }

@@ -33,14 +33,6 @@ public class XueZhanStartResponse extends GameStartResponse {
     public String toString() {
         return "XueZhanStartResponse{" +
                 "recommendExchangeList=" + recommendExchangeList +
-                ", roomId=" + roomId +
-                ", zoneId=" + zoneId +
-                ", step=" + step +
-                ", diceList=" + diceList +
-                ", bankerPosId=" + bankerPosId +
-                ", posId=" + posId +
-                ", standCardList=" + standCardList +
-                ", gameStatus=" + gameStatus +
-                '}';
+                "} " + super.toString();
     }
 }

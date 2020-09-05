@@ -1,5 +1,6 @@
 package com.yude.game.common.timeout;
 
+import com.yude.game.common.manager.IRoomManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,6 +20,14 @@ public enum MahjongTimeoutTaskPool implements TimeoutTaskPool{
      * 唯一实例
      */
     INSTANCE;
+
+    /**
+     * H2 用于开发阶段偷看房间数据
+     */
+    private IRoomManager roomManager;
+    public void setRoomManager(IRoomManager roomManager){
+        this.roomManager = roomManager;
+    }
 
     private AtomicInteger counter = new AtomicInteger(0);
     private int corePoolSize = 2;

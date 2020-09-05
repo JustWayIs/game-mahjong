@@ -10,4 +10,5 @@ public interface FanType {
     int getId();
 
     FanType[] excludeFan();
+
 }

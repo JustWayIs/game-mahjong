@@ -7,19 +7,15 @@ import com.yude.game.common.model.*;
 import com.yude.game.common.model.history.GameStepModel;
 import com.yude.game.common.model.history.OperationCardStep;
 import com.yude.game.common.model.history.Step;
-import com.yude.game.common.model.sichuan.SichuanGameStatusEnum;
+import com.yude.game.common.model.sichuan.constant.SichuanGameStatusEnum;
 import com.yude.game.common.model.sichuan.SichuanMahjongCard;
-import com.yude.game.common.model.sichuan.SichuanMahjongSeat;
 import com.yude.game.common.model.sichuan.SichuanMahjongZone;
-import com.yude.game.common.model.sichuan.history.DingQueStep;
-import com.yude.game.common.model.sichuan.history.ExchangeCardStep;
 import com.yude.game.xuezhan.constant.XueZhanMahjongOperationEnum;
 import com.yude.game.xuezhan.domain.status.SeatStatusEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 
@@ -44,9 +40,9 @@ public class XueZhanZone extends AbstractGameZoneModel<XueZhanSeat, SichuanGameS
 
     private List<GameStepModel> historyList;
 
-    public XueZhanZone(XueZhanSeat[] playerSeats, int round, int inning) {
+    public XueZhanZone(XueZhanSeat[] playerSeats, int round, int inning,MahjongZone mahjongZone,SichuanMahjongZone sichuanMahjongZone) {
         super(playerSeats, round, inning);
-        MahjongSeat[] mahjongSeats = new MahjongSeat[playerSeats.length];
+        /*MahjongSeat[] mahjongSeats = new MahjongSeat[playerSeats.length];
         SichuanMahjongSeat[] sichuanMahjongSeats = new SichuanMahjongSeat[playerSeats.length];
         int i = 0;
         for (XueZhanSeat xueZhanSeat : playerSeats) {
@@ -57,7 +53,10 @@ public class XueZhanZone extends AbstractGameZoneModel<XueZhanSeat, SichuanGameS
         }
         mahjongZone = new MahjongZone(mahjongSeats, round, inning);
         sichuanMahjongZone = new SichuanMahjongZone(sichuanMahjongSeats, round, inning);
-        sichuanMahjongZone.setMahjongZone(mahjongZone);
+        sichuanMahjongZone.setMahjongZone(mahjongZone);*/
+
+        this.mahjongZone = mahjongZone;
+        this.sichuanMahjongZone = sichuanMahjongZone;
     }
 
     @Override
@@ -80,7 +79,7 @@ public class XueZhanZone extends AbstractGameZoneModel<XueZhanSeat, SichuanGameS
 
     }
 
-    public boolean dingQue(Integer color, XueZhanSeat operationSeat) {
+    /*public boolean dingQue(Integer color, XueZhanSeat operationSeat) {
         SichuanMahjongSeat operationSeatSichuanMahjongSeat = operationSeat.getSichuanMahjongSeat();
         final boolean isFinishDingQue = sichuanMahjongZone.dingQue(color, operationSeatSichuanMahjongSeat);
 
@@ -99,9 +98,9 @@ public class XueZhanZone extends AbstractGameZoneModel<XueZhanSeat, SichuanGameS
             for(XueZhanSeat xueZhanSeat : playerSeats){
                 //庄家进行理牌
                 //XueZhanSeat xueZhanSeat = playerSeats[mahjongZone.getBankerPosId()];
-                /**
+                *//**
                  * 由于庄家出完牌，其他玩家得通过理牌的数据来判断是否能 碰杠胡，所以也得给其他玩家理牌
-                 */
+                 *//*
                 MahjongSeat mahjongSeat = xueZhanSeat.getMahjongSeat();
                 SichuanMahjongSeat sichuanMahjongSeat = xueZhanSeat.getSichuanMahjongSeat();
                 PlayerHand playerHand = mahjongSeat.getPlayerHand();
@@ -157,7 +156,7 @@ public class XueZhanZone extends AbstractGameZoneModel<XueZhanSeat, SichuanGameS
         mahjongZone.stepAdd();
         return isFinishExchange;
 
-    }
+    }*/
 
 
     public  GameStepModel<OperationCardStep> outCard(Integer card, Integer posId) {
