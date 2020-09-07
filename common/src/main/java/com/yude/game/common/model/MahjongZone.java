@@ -71,6 +71,7 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
     public void init() {
         cardWall = new ArrayList<>();
         cardPool = new ArrayList<>();
+        tempActions = new ArrayList<>();
     }
 
     @Override
@@ -409,14 +410,17 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         return false;
     }
 
+    /**
+     * 每次多操作结束都要清理
+     */
+    public void cleanTempAction(){
+        tempActions.clear();;
+    }
+
     public List<TempAction> getTempActions() {
         return tempActions;
     }
 
-    public MahjongZone setTempActions(List<TempAction> tempActions) {
-        this.tempActions = tempActions;
-        return this;
-    }
 
     public void setGameStatus(Status status) {
         gameStatus = status;

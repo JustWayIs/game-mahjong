@@ -59,6 +59,15 @@ public enum  OperationEnum implements MahjongOperation {
         this.priority = priority;
     }
 
+    public static OperationEnum matchByValue(Integer value){
+        for(OperationEnum operationEnum : OperationEnum.values()){
+            if(operationEnum.ordinal() == value){
+                return operationEnum;
+            }
+        }
+        return null;
+    }
+
     @Override
     public Integer value() {
         return this.ordinal();
@@ -72,5 +81,14 @@ public enum  OperationEnum implements MahjongOperation {
     @Override
     public int priority() {
         return priority;
+    }
+
+    @Override
+    public String toString() {
+        return "OperationEnum{" +
+                "canProductFulu=" + canProductFulu +
+                ", priority=" + priority +
+                ", value=" + this.ordinal() +
+                '}';
     }
 }

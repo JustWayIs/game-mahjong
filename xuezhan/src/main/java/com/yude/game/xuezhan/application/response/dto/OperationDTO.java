@@ -2,6 +2,7 @@ package com.yude.game.xuezhan.application.response.dto;
 
 import com.baidu.bjf.remoting.protobuf.annotation.EnableZigZap;
 import com.baidu.bjf.remoting.protobuf.annotation.ProtobufClass;
+import com.yude.game.xuezhan.constant.XueZhanMahjongOperationEnum;
 
 /**
  * @Author: HH
@@ -45,7 +46,7 @@ public class OperationDTO {
     @Override
     public String toString() {
         return "OperationDTO{" +
-                "opreation=" + opreation +
+                "opreation=" + XueZhanMahjongOperationEnum.matchByValue(opreation) +
                 ", targetCard=" + targetCard +
                 '}';
     }

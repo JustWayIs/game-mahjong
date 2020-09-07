@@ -1,6 +1,7 @@
 package com.yude.game.common.model.fan;
 
 import com.yude.game.common.model.fan.judge.Fan;
+import com.yude.game.common.model.fan.param.HuFanParam;
 
 /**
  * @Author: HH
@@ -22,17 +23,16 @@ public  class FanInfo<T extends FanType> {
     public FanInfo() {
     }
 
-    public FanInfo(T fanType, Integer fanScore, Integer calculationType) {
-        this.fanType = fanType;
-        this.fanScore = fanScore;
-        this.calculationType = calculationType;
-    }
-
     public FanInfo(T fanType, Integer fanScore, Integer calculationType, Fan fan) {
         this.fanType = fanType;
         this.fanScore = fanScore;
         this.calculationType = calculationType;
         this.fan = fan;
+    }
+
+    public boolean judgeFan(HuFanParam param){
+        FanType fanType = fan.judge(param);
+        return fanType == null ? false : true;
     }
 
     @Override

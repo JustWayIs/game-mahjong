@@ -1,5 +1,7 @@
 package com.yude.game.common.mahjong;
 
+import com.yude.game.common.model.fan.BaseHuTypeEnum;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -33,6 +35,8 @@ public class Solution {
     public int        kongCount     = 0; // 杠数量
     public int        meldingCount  = 0; // 搭子数量
 
+    private BaseHuTypeEnum baseHuType;
+
     // ===========================================================
     // Constructors
     // ===========================================================
@@ -42,6 +46,15 @@ public class Solution {
     // Getter &amp; Setter
     // ===========================================================
 
+
+    public Solution setBaseHuType(BaseHuTypeEnum baseHuType) {
+        this.baseHuType = baseHuType;
+        return this;
+    }
+
+    public BaseHuTypeEnum getBaseHuType() {
+        return baseHuType;
+    }
 
     // ===========================================================
     // Methods for/from SuperClass/Interfaces

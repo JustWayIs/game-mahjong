@@ -9,22 +9,26 @@ import java.util.List;
  * @Declare:
  */
 public class BaseHuParam implements HuFanParam {
-    //立牌 + 副露
-    private List<Integer> handCardList;
-    //将
+    //立牌
+    private List<Integer> standCardList;
+
+    /**
+     * 将：七对是没有将的，或者说有七对将
+     */
     private Integer eyes;
 
-    public BaseHuParam(List<Integer> handCardList) {
-        this.handCardList = handCardList;
-    }
-
-    public BaseHuParam(List<Integer> handCardList, Integer eyes) {
-        this.handCardList = handCardList;
+    public BaseHuParam(List<Integer> standCardList, Integer eyes) {
+        this.standCardList = standCardList;
         this.eyes = eyes;
     }
 
-    public List<Integer> getHandCardList() {
-        return handCardList;
+    public List<Integer> getStandCardList() {
+        return standCardList;
+    }
+
+    public BaseHuParam setStandCardList(List<Integer> standCardList) {
+        this.standCardList = standCardList;
+        return this;
     }
 
     public Integer getEyes() {
@@ -34,5 +38,13 @@ public class BaseHuParam implements HuFanParam {
     public BaseHuParam setEyes(Integer eyes) {
         this.eyes = eyes;
         return this;
+    }
+
+    @Override
+    public String toString() {
+        return "BaseHuParam{" +
+                "standCardList=" + standCardList +
+                ", eyes=" + eyes +
+                '}';
     }
 }

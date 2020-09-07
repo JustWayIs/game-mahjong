@@ -21,7 +21,12 @@ public enum BaseHuTypeEnum implements FanType{
     十三幺("十三幺", ShiSanYaoFan.INSTANCE);
 
     public String name;
-    public Fan<BaseHuParam> fan; //不应该在这里绑定具体算法，因为这个是变动的
+    /**
+     * 不应该在这里绑定具体算法，因为对于不同地方麻将而言可能是不一样的
+     * 但是，可能性非常小。具体番型判断，出现不同的可能性会更高，但是对于基础胡的牌型判断而言，
+     * 几乎不会有不同的地方
+     */
+    public Fan<BaseHuParam> fan;
 
     BaseHuTypeEnum(String name) {
         this.name = name;

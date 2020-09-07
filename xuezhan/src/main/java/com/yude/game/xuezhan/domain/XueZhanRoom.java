@@ -3,6 +3,7 @@ package com.yude.game.xuezhan.domain;
 
 import com.yude.game.common.contant.MahjongStatusCodeEnum;
 import com.yude.game.common.contant.PushCommandCode;
+import com.yude.game.common.mahjong.Solution;
 import com.yude.game.common.manager.IPushManager;
 import com.yude.game.common.manager.IRoomManager;
 import com.yude.game.common.model.*;
@@ -26,12 +27,14 @@ import com.yude.game.common.model.sichuan.history.ExchangeCardStep;
 import com.yude.game.common.model.sichuan.history.SichuanGameStartStep;
 import com.yude.game.common.timeout.MahjongTimeoutTaskPool;
 import com.yude.game.exception.BizException;
+import com.yude.game.exception.SystemException;
 import com.yude.game.xuezhan.application.response.*;
 import com.yude.game.xuezhan.application.response.dto.OperationDTO;
 import com.yude.game.xuezhan.constant.XueZhanMahjongOperationEnum;
 import com.yude.game.xuezhan.constant.XueZhanPushCommandCode;
 import com.yude.game.xuezhan.domain.action.XueZhanAction;
 import com.yude.game.xuezhan.domain.status.SeatStatusEnum;
+import com.yude.protocol.common.constant.StatusCodeEnum;
 import com.yude.protocol.common.response.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,12 +58,8 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
     private Rule<SichuanRoomConfig> rule;
 
     /**
-     * 因为换三张操作 、 定缺操作这种地方麻将玩法，导致，historyList不能放在MahjongZone里面
-     * 也就导致多了一层对GameZone的调用。核心问题是，多一重掉用对性能真的有影响么，像现在的Controller省略了Service一样，又对性能提高有多少贡献呢。
-     * 如果想要少一层调用，倒是可以把historyList放在RoomModel里面，这里的核心问题是类的职能划分
-     * 从代码复用的层面来说，这里面的方法确实应该放在 MahjongZone 和 地方麻将Zone里面
+     * 从XueZhanZone挪到外层
      */
-
     private List<GameStepModel> historyList;
 
     @Override
@@ -196,10 +195,6 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                     OperationDTO operationDTO = new OperationDTO(operation.getOperationType().value(), card);
                     operationList.add(operationDTO);
                 });
-                if (operationList.size() > 0) {
-                    OperationDTO cancelOperationDTO = new OperationDTO(XueZhanMahjongOperationEnum.CANCEL.value(), card);
-                    operationList.add(cancelOperationDTO);
-                }
 
                 OperationNoticeResponse noticeResponse = new OperationNoticeResponse(canOperationSeat.getPosId(), operationList);
                 roomManager.pushToUser(XueZhanPushCommandCode.OPERATION_NOTICE, canOperationSeat.getUserId(), noticeResponse, roomId);
@@ -267,6 +262,8 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
          * 或者下一个玩家摸牌
          */
         if (!restoreAction()) {
+            checkFan(xueZhanSeat,card,XueZhanMahjongOperationEnum.HU.value());
+
             OperationResultResponse operationResultResponse = new OperationResultResponse();
             operationResultResponse
                     .setPosId(mahjongSeat.getPosId())
@@ -277,6 +274,38 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             pushToRoomUser(XueZhanPushCommandCode.OPERATION_RESULT_NOTICE, operationResultResponse);
             nextPalyerTookCard();
         }
+    }
+
+    /**
+     *
+     * @param seat
+     * @param card
+     * @param operationType 用于标识是否是一炮多响
+     */
+    public void checkFan(XueZhanSeat seat,Integer card,Integer operationType){
+        MahjongSeat mahjongSeat = seat.getMahjongSeat();
+        StepAction huAction = mahjongSeat.getDesignateOperationCardSource(operationType, card);
+        Integer cardSourcePosId = huAction.getCardSource();
+        boolean cardFromSelf = cardSourcePosId.equals(seat.getPosId());
+        List<Solution> solutions = mahjongSeat.getPlayerHand().canHu(card, cardFromSelf);
+        //血战（无赖子）可能没有要找最大番型的需要
+        //可能会出现多个solution能胡，但是番型完全一致的情况（没有被优化掉），比如面子 334455 的理牌
+        /*for(Solution solution : solutions){
+
+        }*/
+        if(solutions.size() == 0){
+            log.error("不可思议的异常 玩家有胡牌权限，但是没有找出能胡牌的 理牌 roomId={} zoneId={} 方位=[{}] seat={}",roomId,gameZone.getZoneId(),getSeatDirection(seat.getPosId()),seat);
+            throw new SystemException(StatusCodeEnum.FAIL);
+        }
+
+        Solution solution = solutions.get(0);
+        BaseHuTypeEnum certaintyBaseHuType = solution.getBaseHuType();
+
+        /*List<FanInfo<BaseHuTypeEnum>> baseHuList = rule.getBaseHuList();
+        HuFanParam huFanParam = new BaseHuParam();
+        for(FanInfo<BaseHuTypeEnum> fanInfo : baseHuList){
+            fanInfo.judgeFan(huFanParam);
+        }*/
     }
 
     public void multiplePlayerHu(Integer card, List<Integer> posId) {
@@ -308,7 +337,8 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             OperationResultResponse operationResultResponse = new OperationResultResponse();
             operationResultResponse
                     .setPosId(posId)
-                    .setOperationType(XueZhanMahjongOperationEnum.CANCEL.value());
+                    .setOperationType(XueZhanMahjongOperationEnum.CANCEL.value())
+                    .setTargetCard(card);
             roomManager.pushToUser(XueZhanPushCommandCode.OPERATION_RESULT_NOTICE, xueZhanSeat.getUserId(), operationResultResponse, roomId);
             nextPalyerTookCard();
         }
@@ -337,8 +367,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             throw new BizException(MahjongStatusCodeEnum.matchParamErrorByOperation(operationType.value()));
         }
         GameStepModel<OperationCardStep> stepModel = mahjongZone.operation(card, posId,operationType);
-        historyList.add(stepModel);
-        nextProcess(mahjongSeat,card,action);
+        nextProcess(mahjongSeat,card,action,stepModel);
     }
 
     @Override
@@ -363,8 +392,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             throw new BizException(MahjongStatusCodeEnum.ZHI_GANG_PARAM_ERROR);
         }
         GameStepModel<OperationCardStep> stepModel = mahjongZone.zhiGang(card, posId);
-        historyList.add(stepModel);
-        nextProcess(mahjongSeat,card,action);
+        nextProcess(mahjongSeat,card,action,stepModel);
     }
 
     /**
@@ -373,7 +401,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
      * @param card
      * @param action
      */
-    private void nextProcess(MahjongSeat mahjongSeat,Integer card,StepAction action){
+    private void nextProcess(MahjongSeat mahjongSeat,Integer card,StepAction action,GameStepModel<OperationCardStep> stepModel){
         boolean needWait = mahjongZone.existsCanOperation();
         if (needWait) {
             return;
@@ -383,6 +411,8 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
          * 或者下一个玩家摸牌
          */
         if (!restoreAction()) {
+            historyList.add(stepModel);
+            mahjongZone.cleanTempAction();
             OperationResultResponse operationResultResponse = new OperationResultResponse();
             operationResultResponse
                     .setPosId(mahjongSeat.getPosId())
@@ -412,8 +442,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             throw new BizException(MahjongStatusCodeEnum.BU_GANG_PARAM_ERROR);
         }
         GameStepModel<OperationCardStep> stepModel = mahjongZone.buGang(card, posId);
-        historyList.add(stepModel);
-        nextProcess(mahjongSeat,card,action);
+        nextProcess(mahjongSeat,card,action,stepModel);
     }
 
     public void anGang(Integer card, Integer posId) {
@@ -433,8 +462,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             throw new BizException(MahjongStatusCodeEnum.AN_GANG_PARAM_ERROR);
         }
         GameStepModel<OperationCardStep> stepModel = mahjongZone.peng(card, posId);
-        historyList.add(stepModel);
-        nextProcess(mahjongSeat,card,action);
+        nextProcess(mahjongSeat,card,action,stepModel);
     }
 
     @Override
@@ -455,8 +483,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             throw new BizException(MahjongStatusCodeEnum.PENG_PARAM_ERROR);
         }
         GameStepModel<OperationCardStep> stepModel = mahjongZone.peng(card, posId);
-        historyList.add(stepModel);
-        nextProcess(mahjongSeat,card,action);
+        nextProcess(mahjongSeat,card,action,stepModel);
     }
 
     @Override
@@ -685,11 +712,19 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
         canOperations.add(outCardOperation);
         mahjongSeat.addOperation(XueZhanMahjongOperationEnum.OUT_CARD);
 
-        stepActions.stream().forEach(stepAction -> {
-            OperationDTO operationDTO = new OperationDTO(stepAction.getOperationType().value(), stepAction.getTargetCard());
-            canOperations.add(operationDTO);
-            mahjongSeat.addOperation(stepAction.getOperationType());
-        });
+        if(stepActions.size() > 0){
+            stepActions.stream().forEach(stepAction -> {
+                OperationDTO operationDTO = new OperationDTO(stepAction.getOperationType().value(), stepAction.getTargetCard());
+                canOperations.add(operationDTO);
+                mahjongSeat.addOperation(stepAction.getOperationType());
+            });
+            StepAction cancel = new StepAction();
+            cancel.setTargetCard(card)
+                    .setCardSource(seat.getPosId())
+                    .setOperationType(XueZhanMahjongOperationEnum.CANCEL);
+            mahjongSeat.addOperation(cancel);
+        }
+
         OperationNoticeResponse response = new OperationNoticeResponse(seat.getPosId(), canOperations);
 
         roomManager.pushToUser(XueZhanPushCommandCode.OPERATION_NOTICE, seat.getUserId(), response, roomId);

@@ -162,7 +162,7 @@ public class MahjongSeat extends AbstractSeatModel {
         //这里找出该玩家最后一个操作的意义不仅仅在于找摸的牌，因为吃、碰操作是没有摸牌的。如果采用一个成员变量来存储上一次摸的牌，除非在吃碰的时候手动把 上一次摸的牌设为null，否则判断会有问题
         int size = operationhistory.size();
         if (size > 0) {
-            OperationCardStep step = operationhistory.get(size);
+            OperationCardStep step = operationhistory.get(size - 1);
             StepAction action = step.getAction();
             if (OperationEnum.TOOK_CARD.value().equals(action.getOperationType().value()) && action.getTargetCard().equals(card)) {
                 solution();
@@ -197,12 +197,13 @@ public class MahjongSeat extends AbstractSeatModel {
     }
 
     public void solution() {
-
+        playerHand.tiles.clear();
+        playerHand.melds.clear();
         for (Integer card : standCardList) {
             Tile tile = Tile.getTileByID(card);
             playerHand.tiles.add(tile);
         }
-        List<Meld> melds = new ArrayList<>();
+
         for (OperationCardStep step : operationhistory) {
             if (!step.getAction().getOperationType().canProductFulu()) {
                 continue;
@@ -221,9 +222,9 @@ public class MahjongSeat extends AbstractSeatModel {
                     .convertFrom(step.getPosId(), action.getCardSource())
                     .setPlusKong(OperationEnum.BU_GANG.value() == operationType)
                     .setStable(OperationEnum.PENG.value() == operationType);
-            melds.add(meld);
+            playerHand.melds.add(meld);
         }
-        playerHand.solutions = MJManager.INSTANCE.solutions(melds, playerHand.tiles, true, playerHand.bannedSuit);
+        playerHand.solutions = MJManager.INSTANCE.solutions(playerHand.melds, playerHand.tiles, true, playerHand.bannedSuit);
     }
 
 }

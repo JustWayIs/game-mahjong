@@ -281,6 +281,12 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
             }
 
             if(canPeng || canZhiGang || solutions.size() > 0){
+                StepAction stepAction = new StepAction();
+                stepAction.setTargetCard(card)
+                        .setCardSource(outCardSet.getPosId())
+                        .setOperationType(OperationEnum.CANCEL);
+                mahjongSeat.addOperation(stepAction);
+
                 canOperationSeats.add(mahjongSeat);
             }
         }

@@ -162,7 +162,7 @@ public class PlayerHand {
         } else {
             //庄家第一次判断胡没胡牌是没有摸牌的
 
-            //H2 玩家摸牌后判断胡不胡牌，这个时候因为牌已经加入到手牌里了，所以直接判断能不能胡就行了，问题在于有没有solution。如果加入手牌后，没有立马solution 【也没有必要立马solution，直接判断听牌列表就行了，出牌的时候再solution】，就要走上面的逻辑
+            //H2 玩家摸牌后判断胡不胡牌，这个时候因为牌已经加入到手牌里了，所以直接判断能不能胡就行了，问题在于有没有solution。如果加入手牌后，没有立马solution 【也没有必要立马solution，像点炮胡一样，直接判断听牌列表就行了，出牌的时候再solution】，就要走上面的逻辑
             for(Solution solution : solutions){
                 if(solution.isWin){
                     canHuSolutions.add(solution);

@@ -54,4 +54,11 @@ public enum XueZhanMahjongOperationEnum implements MahjongOperation {
     public int priority() {
         return operationEnum.priority();
     }
+
+    @Override
+    public String toString() {
+        return "XueZhanMahjongOperationEnum{" +
+                "operationEnum=" + operationEnum +
+                '}';
+    }
 }

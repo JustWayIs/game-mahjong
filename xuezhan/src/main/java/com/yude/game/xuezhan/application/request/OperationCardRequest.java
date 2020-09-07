@@ -13,22 +13,23 @@ import com.yude.protocol.common.request.AbstractRequest;
 @EnableZigZap
 @ProtobufClass
 public class OperationCardRequest extends AbstractRequest {
-    private Integer card;
-    private Integer operationType;
+    private int card;
+    private int operationType;
 
-    public Integer getCard() {
+    public int getCard() {
         return card;
     }
 
-    public void setCard(Integer card) {
+    public OperationCardRequest setCard(int card) {
         this.card = card;
+        return this;
     }
 
-    public Integer getOperationType() {
+    public int getOperationType() {
         return operationType;
     }
 
-    public OperationCardRequest setOperationType(Integer operationType) {
+    public OperationCardRequest setOperationType(int operationType) {
         this.operationType = operationType;
         return this;
     }
