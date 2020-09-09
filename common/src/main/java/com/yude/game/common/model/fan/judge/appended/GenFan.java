@@ -25,6 +25,9 @@ public enum GenFan implements Fan<AppendedFanParam> {
 
     @Override
     public FanType judge(AppendedFanParam param) {
+        if(param.getGangCount() > 0){
+            return appendedType;
+        }
         return null;
     }
 }

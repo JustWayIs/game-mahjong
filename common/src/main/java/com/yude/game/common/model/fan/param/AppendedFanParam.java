@@ -1,5 +1,8 @@
 package com.yude.game.common.model.fan.param;
 
+import com.yude.game.common.mahjong.Meld;
+import com.yude.game.common.mahjong.Solution;
+
 /**
  * @Author: HH
  * @Date: 2020/8/17 16:55
@@ -14,7 +17,7 @@ public class AppendedFanParam implements HuFanParam {
     //牌墙剩余牌的数量
     private int cardWallRemainingCount;
 
-    //杠牌数量
+    //杠牌数量 : 似乎没有用到
     private int gangCount;
 
     private boolean qiangGang;
@@ -22,6 +25,10 @@ public class AppendedFanParam implements HuFanParam {
     private int mocardNum;
     private boolean banker;
 
+    //根的数量
+    private int genCount;
+
+    private boolean beforeOperationIsGang;
 
     public boolean isZiMo() {
         return ziMo;
@@ -83,6 +90,35 @@ public class AppendedFanParam implements HuFanParam {
 
     public AppendedFanParam setBanker(boolean banker) {
         this.banker = banker;
+        return this;
+    }
+
+    public int getGenCount() {
+        return genCount;
+    }
+
+    public AppendedFanParam setGenCount(int genCount) {
+        this.genCount = genCount;
+        return this;
+    }
+
+    public AppendedFanParam setGenCountBySolution(Solution solution){
+        int genNum = 0;
+        for(Meld meld : solution.melds){
+            if(Meld.TYPE_KONG == meld.type){
+                genNum++;
+            }
+        }
+        this.gangCount = genNum;
+        return this;
+    }
+
+    public boolean isBeforeOperationIsGang() {
+        return beforeOperationIsGang;
+    }
+
+    public AppendedFanParam setBeforeOperationIsGang(boolean beforeOperationIsGang) {
+        this.beforeOperationIsGang = beforeOperationIsGang;
         return this;
     }
 }

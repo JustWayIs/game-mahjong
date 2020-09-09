@@ -5,8 +5,8 @@
 <configuration status="WARN" monitorInterval="30">
     <Properties>
         <!--自定义一些常量，之后使用${变量名}引用-->
-        <Property name="logFilePath">E://log</Property>
-        <Property name="logFileName">game.log</Property>
+        <Property name="logFilePath">E://log/xuezhan</Property>
+        <Property name="logFileName">xuezhan.log</Property>
     </Properties>
     <!--appenders:定义输出内容,输出格式,输出方式,日志保存策略等,常用其下三种标签[console,File,RollingFile]-->
     <appenders>

@@ -41,4 +41,6 @@ public interface XueZhanPushCommandCode extends PushCommandCode {
      * 进入出牌流程的通知：实质就是通知玩家第一次出牌的是谁，因为第一次出牌是不用先抓牌的
      */
     int FORMAL_PROCESS_NOTICE = 0x2008;
+
+    int SETTLEMENT_NOTICE = 0x2009;
 }

@@ -80,9 +80,12 @@ public enum MahjongStatusCodeEnum implements StatusCodeI {
                 return BU_GANG_PARAM_ERROR;
             case ZHI_GANG:
                 return ZHI_GANG_PARAM_ERROR;
+            case HU:
+                return HU_PARAM_ERROR;
             case CHI:
                 return CHI_PARAM_ERROR;
-            default:;
+            default:
+                ;
         }
         return null;
     }
@@ -98,9 +101,12 @@ public enum MahjongStatusCodeEnum implements StatusCodeI {
                 return NOT_BU_GANG_OPERATION;
             case ZHI_GANG:
                 return NOT_ZHI_GANG_OPERATION;
+            case HU:
+                return NOT_HU_OPERATION;
             case CHI:
                 return NOT_CHI_OPERATION;
-            default:;
+            default:
+                ;
         }
         return null;
     }

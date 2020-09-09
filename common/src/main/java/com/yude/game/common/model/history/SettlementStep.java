@@ -2,9 +2,8 @@ package com.yude.game.common.model.history;
 
 import com.yude.game.common.constant.Status;
 import com.yude.game.common.model.StepAction;
-import com.yude.game.common.model.fan.FanInfo;
 
-import java.util.List;
+import java.util.Map;
 
 /**
  * @Author: HH
@@ -15,13 +14,8 @@ import java.util.List;
 public class SettlementStep implements Step {
     private int step;
     private int posId;
-    private Long beforeScore;
-    private Long changeScore;
-    private Long remaningScore;
-    private List<Integer> standCards;
-    private List<String> standCardsConvertList;
-    private List<StepAction> fuluList;
-    private List<FanInfo> fanInfoList;
+    private StepAction action;
+    private Map<Integer,SettlementInfo> seatSettlementInfoMap;
     private Status gameStatus;
 
     public int getStep() {
@@ -52,57 +46,21 @@ public class SettlementStep implements Step {
         return this;
     }
 
-    public Long getBeforeScore() {
-        return beforeScore;
+    public StepAction getAction() {
+        return action;
     }
 
-    public SettlementStep setBeforeScore(Long beforeScore) {
-        this.beforeScore = beforeScore;
+    public SettlementStep setAction(StepAction action) {
+        this.action = action;
         return this;
     }
 
-    public Long getChangeScore() {
-        return changeScore;
+    public Map<Integer, SettlementInfo> getSeatSettlementInfoMap() {
+        return seatSettlementInfoMap;
     }
 
-    public SettlementStep setChangeScore(Long changeScore) {
-        this.changeScore = changeScore;
-        return this;
-    }
-
-    public Long getRemaningScore() {
-        return remaningScore;
-    }
-
-    public SettlementStep setRemaningScore(Long remaningScore) {
-        this.remaningScore = remaningScore;
-        return this;
-    }
-
-    public List<Integer> getStandCards() {
-        return standCards;
-    }
-
-    public SettlementStep setStandCards(List<Integer> standCards) {
-        this.standCards = standCards;
-        return this;
-    }
-
-    public List<String> getStandCardsConvertList() {
-        return standCardsConvertList;
-    }
-
-    public SettlementStep setStandCardsConvertList(List<String> standCardsConvertList) {
-        this.standCardsConvertList = standCardsConvertList;
-        return this;
-    }
-
-    public List<StepAction> getFuluList() {
-        return fuluList;
-    }
-
-    public SettlementStep setFuluList(List<StepAction> fuluList) {
-        this.fuluList = fuluList;
+    public SettlementStep setSeatSettlementInfoMap(Map<Integer, SettlementInfo> seatSettlementInfoMap) {
+        this.seatSettlementInfoMap = seatSettlementInfoMap;
         return this;
     }
 
@@ -115,27 +73,13 @@ public class SettlementStep implements Step {
         return this;
     }
 
-    public List<FanInfo> getFanInfoList() {
-        return fanInfoList;
-    }
-
-    public SettlementStep setFanInfoList(List<FanInfo> fanInfoList) {
-        this.fanInfoList = fanInfoList;
-        return this;
-    }
-
     @Override
     public String toString() {
         return "SettlementStep{" +
                 "step=" + step +
                 ", posId=" + posId +
-                ", beforeScore=" + beforeScore +
-                ", changeScore=" + changeScore +
-                ", remaningScore=" + remaningScore +
-                ", standCards=" + standCards +
-                ", standCardsConvertList=" + standCardsConvertList +
-                ", fuluList=" + fuluList +
-                ", fanInfoList=" + fanInfoList +
+                ", action=" + action +
+                ", seatSettlementInfoMap=" + seatSettlementInfoMap +
                 ", gameStatus=" + gameStatus +
                 '}';
     }

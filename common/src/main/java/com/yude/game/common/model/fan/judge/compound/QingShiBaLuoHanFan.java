@@ -1,7 +1,9 @@
 package com.yude.game.common.model.fan.judge.compound;
 
+import com.yude.game.common.model.fan.BaseHuTypeEnum;
 import com.yude.game.common.model.fan.CompoundFanTypeEnum;
 import com.yude.game.common.model.fan.FanType;
+import com.yude.game.common.model.fan.FormalFanTypeEnum;
 import com.yude.game.common.model.fan.judge.Fan;
 import com.yude.game.common.model.fan.param.CompoundFanParam;
 
@@ -25,6 +27,21 @@ public enum QingShiBaLuoHanFan implements Fan<CompoundFanParam> {
 
     @Override
     public FanType judge(CompoundFanParam param) {
+        BaseHuTypeEnum baseHuType = param.getBaseHuType();
+        if(BaseHuTypeEnum.平胡.equals(baseHuType)){
+            int num = 0;
+            for(FanType fanType : param.getFanTypeList()){
+                if(FormalFanTypeEnum.清一色.equals(fanType)){
+                    num++;
+                }
+                if(FormalFanTypeEnum.十八罗汉.equals(fanType)){
+                    num++;
+                }
+            }
+            if(num == 2){
+                return fantype;
+            }
+        }
         return null;
     }
 }

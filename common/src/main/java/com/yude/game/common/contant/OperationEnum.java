@@ -2,6 +2,9 @@ package com.yude.game.common.contant;
 
 import com.yude.game.common.model.MahjongOperation;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @Author: HH
  * @Date: 2020/8/3 14:24
@@ -68,6 +71,16 @@ public enum  OperationEnum implements MahjongOperation {
         return null;
     }
 
+    public static List<Integer> getFuluList(){
+        List<Integer> fuLuList = new ArrayList<>();
+        for(OperationEnum operationEnum : OperationEnum.values()){
+            if(operationEnum.canProductFulu){
+                fuLuList.add(operationEnum.value());
+            }
+        }
+        return fuLuList;
+    }
+
     @Override
     public Integer value() {
         return this.ordinal();
@@ -83,12 +96,12 @@ public enum  OperationEnum implements MahjongOperation {
         return priority;
     }
 
-    @Override
+    /*@Override
     public String toString() {
         return "OperationEnum{" +
                 "canProductFulu=" + canProductFulu +
                 ", priority=" + priority +
                 ", value=" + this.ordinal() +
                 '}';
-    }
+    }*/
 }

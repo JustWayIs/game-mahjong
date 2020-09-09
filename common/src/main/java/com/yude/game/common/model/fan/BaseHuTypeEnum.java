@@ -39,7 +39,7 @@ public enum BaseHuTypeEnum implements FanType{
 
     @Override
     public int getId(){
-        return 1000+this.ordinal();
+        return 2000+this.ordinal();
     }
 
     @Override

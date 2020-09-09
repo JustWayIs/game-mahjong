@@ -30,6 +30,11 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
     private Integer bankerPosId;
 
     /**
+     * 牌墙打乱顺序后的所有牌（不会被改变）：用于做记录
+     */
+    private List<Integer> allCard;
+
+    /**
      * 牌墙
      */
     private List<Integer> cardWall;
@@ -72,6 +77,7 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         cardWall = new ArrayList<>();
         cardPool = new ArrayList<>();
         tempActions = new ArrayList<>();
+        allCard = new ArrayList<>();
     }
 
     @Override
@@ -83,8 +89,8 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         this.gameStatus = gameStatus;
         rollingDice();
 
-        Map<Integer, List<Integer>> dealCardGroup = MahjongProp.getDealCardGroup(mahjongCards, bankerPosId, cardWall);
-
+        Map<Integer, List<Integer>> dealCardGroup = MahjongProp.getDealCardGroup(mahjongCards, bankerPosId, allCard);
+        cardWall.addAll(dealCardGroup.get(4));
         for (MahjongSeat mahjongSeat : playerSeats) {
             int posId = mahjongSeat.getPosId();
             mahjongSeat.setStandCardList(dealCardGroup.get(posId));
@@ -131,7 +137,7 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
                 .setCardSource(posId);
 
 
-        List<Integer> standCardList = mahjongSeat.getStandCardList();
+        List<Integer> standCardList = new ArrayList<>(mahjongSeat.getStandCardList());
         step.setPosId(posId)
                 .setStep(stepCount)
                 .setAction(outCardStepAction)
@@ -152,12 +158,20 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
     }
 
     /**
-     *
      * @param card
      * @param posId
      * @return
      */
     public GameStepModel<OperationCardStep> hu(Integer card, Integer posId) {
+        /**
+         * 把胡的牌 加入到立牌中
+         */
+        MahjongSeat playerSeat = playerSeats[posId];
+        List<Integer> standCardList = playerSeat.getStandCardList();
+        standCardList.add(card);
+        Collections.sort(standCardList);
+        //playerSeat.solution();
+
         GameStepModel<OperationCardStep> huStepModel = operation(card, posId, OperationEnum.HU);
         return huStepModel;
     }
@@ -178,11 +192,13 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         stepAction.setTargetCard(card)
                 .setOperationType(OperationEnum.CANCEL)
                 .setCardSource(cardSource);
+
+        List<Integer> standCardList = playerSeat.getStandCardList();
         step.setPosId(posId)
                 .setStep(stepCount)
-                .setStandCardList(playerSeat.getStandCardList())
-                .setRemainingCardSize(playerSeat.getStandCardList().size())
-                .setStandCardConvertList(MahjongProp.cardConvertName(playerSeat.getStandCardList()))
+                .setStandCardList(standCardList)
+                .setRemainingCardSize(standCardList.size())
+                .setStandCardConvertList(MahjongProp.cardConvertName(standCardList))
                 .setGameStatus(gameStatus)
                 .setAction(stepAction);
 
@@ -199,17 +215,17 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
     }
 
 
-    public GameStepModel<OperationCardStep> buGang(Integer card,Integer posId){
+    public GameStepModel<OperationCardStep> buGang(Integer card, Integer posId) {
         GameStepModel<OperationCardStep> stepModel = null;
         return stepModel;
     }
 
-    public GameStepModel<OperationCardStep> zhiGang(Integer card,Integer posId){
+    public GameStepModel<OperationCardStep> zhiGang(Integer card, Integer posId) {
         GameStepModel<OperationCardStep> stepModel = null;
         return stepModel;
     }
 
-    public GameStepModel<OperationCardStep> anGang(Integer card,Integer posId){
+    public GameStepModel<OperationCardStep> anGang(Integer card, Integer posId) {
         MahjongSeat playerSeat = playerSeats[posId];
         OperationCardStep step = new OperationCardStep();
         StepAction stepAction = new StepAction();
@@ -224,12 +240,14 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         stepAction.setTargetCard(card)
                 .setOperationType(OperationEnum.AN_GANG)
                 .setCardSource(cardSource)
-                .setCombinationRsult(new ArrayList<>(Arrays.asList(card, card, card,card)));
+                .setCombinationRsult(new ArrayList<>(Arrays.asList(card, card, card, card)));
+
+        List<Integer> standCardList = playerSeat.getStandCardList();
         step.setPosId(posId)
                 .setStep(stepCount)
-                .setStandCardList(playerSeat.getStandCardList())
-                .setRemainingCardSize(playerSeat.getStandCardList().size())
-                .setStandCardConvertList(MahjongProp.cardConvertName(playerSeat.getStandCardList()))
+                .setStandCardList(standCardList)
+                .setRemainingCardSize(standCardList.size())
+                .setStandCardConvertList(MahjongProp.cardConvertName(standCardList))
                 .setGameStatus(gameStatus)
                 .setAction(stepAction);
 
@@ -247,25 +265,42 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
 
     /**
      * 貌似这一个方法可以用来代替 吃、碰、补杠、直杠、暗杠
-     * 这么NB嘛....
+     *
      * @param card
      * @param posId
      * @param operationType
      * @return
      */
-    public GameStepModel<OperationCardStep> operation(Integer card,Integer posId,MahjongOperation operationType){
+    public GameStepModel<OperationCardStep> operation(Integer card, Integer posId, MahjongOperation operationType) {
+        MahjongSeat playerSeat = playerSeats[posId];
         List<Integer> cardCombination = null;
         OperationEnum value = OperationEnum.values()[operationType.value()];
-        switch (value){
-            case PENG:cardCombination = new ArrayList<>(Arrays.asList(card,card,card));break;
+        switch (value) {
+            case PENG:
+                cardCombination = new ArrayList<>(Arrays.asList(card, card, card));
+                break;
             case ZHI_GANG:
             case BU_GANG:
-            case AN_GANG:cardCombination = new ArrayList<>(Arrays.asList(card,card,card,card));break;
-            case CHI:cardCombination = new ArrayList<>(Arrays.asList(card - 1, card ,card +1));break;
-            default:;
+            case AN_GANG:
+                cardCombination = new ArrayList<>(Arrays.asList(card, card, card, card));
+                break;
+            case CHI:
+                cardCombination = new ArrayList<>(Arrays.asList(card - 1, card, card + 1));
+                break;
+            case HU:
+                cardCombination.addAll(playerSeat.getStandCardList());
+                //应该不需要把副露拼回手牌
+                /*List<StepAction> fuLuOperations = playerSeat.getFuLuOperationsByType();
+                for(StepAction stepAction : fuLuOperations){
+                    cardCombination.addAll(stepAction.getCombinationRsult());
+                }
+                Collections.sort(cardCombination);*/
+                break;
+            default:
+                ;
         }
 
-        MahjongSeat playerSeat = playerSeats[posId];
+
         OperationCardStep step = new OperationCardStep();
         StepAction stepAction = new StepAction();
         step.setAction(stepAction);
@@ -273,18 +308,20 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         StepAction action = playerSeat.getDesignateOperationCardSource(operationType.value(), card);
         Integer cardSource = action.getCardSource();
         if (cardSource == null) {
-            log.error("严重错误：操作 operation ={} ，和实际操作信息不一致",operationType);
+            log.error("严重错误：操作 operation ={} ，和实际操作信息不一致", operationType);
             throw new SystemException("没有匹配的可操作信息");
         }
+
+        List<Integer> standCardList = playerSeat.getStandCardList();
         stepAction.setTargetCard(card)
                 .setOperationType(operationType)
                 .setCardSource(cardSource)
                 .setCombinationRsult(cardCombination);
         step.setPosId(posId)
                 .setStep(stepCount)
-                .setStandCardList(playerSeat.getStandCardList())
-                .setRemainingCardSize(playerSeat.getStandCardList().size())
-                .setStandCardConvertList(MahjongProp.cardConvertName(playerSeat.getStandCardList()))
+                .setStandCardList(standCardList)
+                .setRemainingCardSize(standCardList.size())
+                .setStandCardConvertList(MahjongProp.cardConvertName(standCardList))
                 .setGameStatus(gameStatus)
                 .setAction(stepAction);
 
@@ -315,12 +352,14 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         stepAction.setTargetCard(card)
                 .setOperationType(OperationEnum.CHI)
                 .setCardSource(cardSource)
-                .setCombinationRsult(new ArrayList<>(Arrays.asList(card-1, card, card+1)));
+                .setCombinationRsult(new ArrayList<>(Arrays.asList(card - 1, card, card + 1)));
+
+        List<Integer> standCardList = playerSeat.getStandCardList();
         step.setPosId(posId)
                 .setStep(stepCount)
-                .setStandCardList(playerSeat.getStandCardList())
-                .setRemainingCardSize(playerSeat.getStandCardList().size())
-                .setStandCardConvertList(MahjongProp.cardConvertName(playerSeat.getStandCardList()))
+                .setStandCardList(standCardList)
+                .setRemainingCardSize(standCardList.size())
+                .setStandCardConvertList(MahjongProp.cardConvertName(standCardList))
                 .setGameStatus(gameStatus)
                 .setAction(stepAction);
 
@@ -352,11 +391,13 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
                 .setOperationType(OperationEnum.PENG)
                 .setCardSource(cardSource)
                 .setCombinationRsult(new ArrayList<>(Arrays.asList(card, card, card)));
+
+        List<Integer> standCardList = playerSeat.getStandCardList();
         step.setPosId(posId)
                 .setStep(stepCount)
-                .setStandCardList(playerSeat.getStandCardList())
-                .setRemainingCardSize(playerSeat.getStandCardList().size())
-                .setStandCardConvertList(MahjongProp.cardConvertName(playerSeat.getStandCardList()))
+                .setStandCardList(standCardList)
+                .setRemainingCardSize(standCardList.size())
+                .setStandCardConvertList(MahjongProp.cardConvertName(standCardList))
                 .setGameStatus(gameStatus)
                 .setAction(stepAction);
 
@@ -413,8 +454,9 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
     /**
      * 每次多操作结束都要清理
      */
-    public void cleanTempAction(){
-        tempActions.clear();;
+    public void cleanTempAction() {
+        tempActions.clear();
+        ;
     }
 
     public List<TempAction> getTempActions() {

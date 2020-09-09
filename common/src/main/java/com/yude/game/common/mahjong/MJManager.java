@@ -534,7 +534,7 @@ public enum MJManager {
         /**
          * 七小对
          */
-        tiles =  Arrays.asList(Tile.t1,Tile.t1,Tile.b2,Tile.b2,Tile.b5,Tile.b5,Tile.t3,Tile.t3,Tile.w8,Tile.w8,Tile.t7,Tile.t7,Tile.t9,Tile.t9);
+        /*tiles =  Arrays.asList(Tile.t1,Tile.t1,Tile.b2,Tile.b2,Tile.b5,Tile.b5,Tile.t3,Tile.t3,Tile.w8,Tile.w8,Tile.t7,Tile.t7,Tile.t9,Tile.t9);*/
 
         //tiles = Arrays.asList(Tile.t1,Tile.t9,Tile.b1,Tile.b9,)
 //        // 四饼 四饼 四饼 七饼 一条 六条 九条 九条 三万 六万 東 中 發

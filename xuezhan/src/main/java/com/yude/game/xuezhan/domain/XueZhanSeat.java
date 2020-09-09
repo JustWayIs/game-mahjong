@@ -6,7 +6,8 @@ import com.yude.game.common.model.MahjongOperation;
 import com.yude.game.common.model.MahjongSeat;
 import com.yude.game.common.model.Player;
 import com.yude.game.common.model.sichuan.SichuanMahjongSeat;
-import com.yude.game.xuezhan.domain.status.SeatStatusEnum;
+import com.yude.game.common.model.sichuan.constant.SeatStatusEnum;
+
 
 /**
  * @Author: HH

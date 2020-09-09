@@ -178,7 +178,7 @@ public enum MahjongProp {
         return false;
     }
 
-    public static Map<Integer, List<Integer>> getDealCardGroup(MahjongCard[] mahjongCards,Integer bankerPosId,List<Integer> cardWall) {
+    public static Map<Integer, List<Integer>> getDealCardGroup(MahjongCard[] mahjongCards,Integer bankerPosId,List<Integer> allCard) {
         if (OPEN_CONFIGURATION_CARD) {
             //用于本地配牌
             Map<Integer, List<Integer>> cardConfiguration = getCardConfiguration();
@@ -226,8 +226,9 @@ public enum MahjongProp {
 
         final PlayBoard playBoard = MJManager.INSTANCE.create(bankerPosId, cardWall, cardGroup);*/
 
-        cardWall.addAll(allCardList);
+        allCard.addAll(allCardList);
         cardGroup.put(4, cardWallRamaining);
+
         return cardGroup;
     }
 

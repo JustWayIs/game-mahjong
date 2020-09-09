@@ -65,7 +65,7 @@ public class GameZoneController implements BaseController {
             log.warn("玩家已经不在游戏中: userId={}", userId);
             return;
         }
-        room.operation(request.getCard(), request.getOperationType(), userId);
+        room.operation(request.getCard(), request.getOperationType(), userId,false);
        /* Integer operationType = request.getOperationType();
         XueZhanMahjongOperationEnum operationEnum = XueZhanMahjongOperationEnum.matchByValue(request.getOperationType());
         switch (operationEnum) {

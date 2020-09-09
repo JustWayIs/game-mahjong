@@ -333,7 +333,7 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
         int alreadyHuCount = 0;
         for(SichuanMahjongSeat seat : playerSeats){
             MahjongSeat mahjongSeat = seat.getMahjongSeat();
-            boolean alreadyHu = mahjongSeat.existsStatus(SeatStatusEnum.ALREADY_HU.status());
+            boolean alreadyHu = mahjongSeat.existsStatus(SeatStatusEnum.ALREADY_HU);
             if(alreadyHu){
                 alreadyHuCount++;
             }

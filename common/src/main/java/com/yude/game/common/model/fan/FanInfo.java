@@ -10,6 +10,9 @@ import com.yude.game.common.model.fan.param.HuFanParam;
  * @Declare:
  */
 public  class FanInfo<T extends FanType> {
+    public static final int  ADDITION = 1;
+    public static final int MULTIPLICATION = 0;
+
     private T fanType;
     /**
      * 番数
@@ -33,6 +36,22 @@ public  class FanInfo<T extends FanType> {
     public boolean judgeFan(HuFanParam param){
         FanType fanType = fan.judge(param);
         return fanType == null ? false : true;
+    }
+
+    public T getFanType() {
+        return fanType;
+    }
+
+    public Integer getFanScore() {
+        return fanScore;
+    }
+
+    public Integer getCalculationType() {
+        return calculationType;
+    }
+
+    public Fan getFan() {
+        return fan;
     }
 
     @Override

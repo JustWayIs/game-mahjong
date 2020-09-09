@@ -21,7 +21,7 @@ public enum HuTypeEnum implements FanType {
 
     @Override
     public int getId() {
-        return 2000+this.ordinal();
+        return 1000+this.ordinal();
     }
 
     @Override

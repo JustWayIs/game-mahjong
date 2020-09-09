@@ -91,4 +91,6 @@ public abstract class RuleConfig {
         this.canAnGang = canAnGang;
         return this;
     }
+
+
 }

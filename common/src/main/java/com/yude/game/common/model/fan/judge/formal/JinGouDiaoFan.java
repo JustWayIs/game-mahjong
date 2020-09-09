@@ -31,10 +31,10 @@ public enum JinGouDiaoFan implements Fan<FormalFanParam> {
         List<Integer> tongList = param.getTongList();
         List<Integer> tiaoList = param.getTiaoList();
 
-        int wanCount = wanList == null ? 0 : wanList.size();
-        int tongCount = tongList == null ? 0 : tongList.size();
-        int tiaoCount = tiaoList == null ? 0 : tiaoList.size();
-        if(wanCount + tongCount + tiaoCount == 1){
+        int wanCount = wanList.size();
+        int tongCount = tongList.size();
+        int tiaoCount = tiaoList.size();
+        if (wanCount + tongCount + tiaoCount == 2) {
             return fantype;
         }
         return null;

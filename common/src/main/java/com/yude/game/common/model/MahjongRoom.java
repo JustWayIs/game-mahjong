@@ -9,7 +9,7 @@ import com.yude.game.common.timeout.TimeoutTaskPool;
  * @Version: 1.0
  * @Declare:
  */
-public  class MahjongRoom extends AbstractRoomModel<MahjongZone,MahjongSeat, TimeoutTaskPool> implements CommonAction, Cloneable {
+public class MahjongRoom extends AbstractRoomModel<MahjongZone, MahjongSeat, TimeoutTaskPool> implements CommonAction, Cloneable {
     private MahjongCard[] mahjongCard;
 
     @Override
@@ -19,7 +19,7 @@ public  class MahjongRoom extends AbstractRoomModel<MahjongZone,MahjongSeat, Tim
 
     @Override
     public MahjongSeat getPracticalSeatModle(Player player, int posId) {
-        return new MahjongSeat(player,posId);
+        return new MahjongSeat(player, posId);
     }
 
     @Override
@@ -65,7 +65,7 @@ public  class MahjongRoom extends AbstractRoomModel<MahjongZone,MahjongSeat, Tim
     }
 
     @Override
-    public void hu(Integer card, Integer posId) {
+    public void hu(Integer card, Integer posId, boolean cardFromSelf) {
 
     }
 

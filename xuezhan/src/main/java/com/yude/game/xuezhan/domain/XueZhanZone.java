@@ -7,11 +7,11 @@ import com.yude.game.common.model.*;
 import com.yude.game.common.model.history.GameStepModel;
 import com.yude.game.common.model.history.OperationCardStep;
 import com.yude.game.common.model.history.Step;
-import com.yude.game.common.model.sichuan.constant.SichuanGameStatusEnum;
 import com.yude.game.common.model.sichuan.SichuanMahjongCard;
 import com.yude.game.common.model.sichuan.SichuanMahjongZone;
+import com.yude.game.common.model.sichuan.constant.SeatStatusEnum;
+import com.yude.game.common.model.sichuan.constant.SichuanGameStatusEnum;
 import com.yude.game.xuezhan.constant.XueZhanMahjongOperationEnum;
-import com.yude.game.xuezhan.domain.status.SeatStatusEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -301,7 +301,7 @@ public class XueZhanZone extends AbstractGameZoneModel<XueZhanSeat, SichuanGameS
         MahjongSeat mahjongSeat = xueZhanSeat.getMahjongSeat();
         mahjongSeat.appendCard(card);
 
-        List<Integer> standCardList = mahjongSeat.getStandCardList();
+        List<Integer> standCardList = new ArrayList<>(mahjongSeat.getStandCardList());
         OperationCardStep step = new OperationCardStep();
         StepAction stepAction = new StepAction();
         stepAction.setTargetCard(card)
@@ -329,7 +329,7 @@ public class XueZhanZone extends AbstractGameZoneModel<XueZhanSeat, SichuanGameS
         int alreadyHuCount = 0;
         for(XueZhanSeat xueZhanSeat : playerSeats){
             MahjongSeat mahjongSeat = xueZhanSeat.getMahjongSeat();
-            boolean alreadyHu = mahjongSeat.existsStatus(SeatStatusEnum.ALREADY_HU.status());
+            boolean alreadyHu = mahjongSeat.existsStatus(SeatStatusEnum.ALREADY_HU);
             if(alreadyHu){
                 alreadyHuCount++;
             }

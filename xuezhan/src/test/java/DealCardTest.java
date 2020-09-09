@@ -2,6 +2,7 @@ import com.yude.game.common.model.MahjongProp;
 import com.yude.game.common.model.sichuan.SichuanMahjongCard;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -15,6 +16,7 @@ public class DealCardTest {
     public static void main(String[] args) {
         List<Integer> cardWall = new ArrayList<>();
         Map<Integer, List<Integer>> dealCardGroup = MahjongProp.getDealCardGroup(SichuanMahjongCard.values(), 2,cardWall);
+        Collections.sort(cardWall);
         System.out.println();
     }
 }

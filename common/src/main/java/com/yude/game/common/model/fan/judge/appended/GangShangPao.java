@@ -25,6 +25,9 @@ public enum GangShangPao implements Fan<AppendedFanParam> {
 
     @Override
     public FanType judge(AppendedFanParam param) {
+        if(!param.isZiMo() && param.isBeforeOperationIsGang()){
+            return appendedType;
+        }
         return null;
     }
 }

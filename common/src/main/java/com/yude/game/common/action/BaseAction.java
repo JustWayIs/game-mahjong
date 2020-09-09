@@ -10,7 +10,7 @@ public interface BaseAction {
 
     void outCard(Integer card,Integer posId);
 
-    void hu(Integer card,Integer posId);
+    void hu(Integer card,Integer posId,boolean isRestore);
 
     void cancel(Integer card,Integer podId);
 }
