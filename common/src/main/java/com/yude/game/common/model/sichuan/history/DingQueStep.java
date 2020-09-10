@@ -87,6 +87,7 @@ public class DingQueStep implements Step {
     public String toString() {
         return "DingQueStep{" +
                 "step=" + step +
+                ", posId=" + posId +
                 ", color=" + color +
                 ", handCards=" + handCards +
                 ", handCardConvertList=" + handCardConvertList +

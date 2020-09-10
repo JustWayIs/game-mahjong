@@ -12,6 +12,7 @@ import com.yude.game.common.model.sichuan.constant.SeatStatusEnum;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -103,6 +104,21 @@ public class MahjongSeat extends AbstractSeatModel {
 
     public void clearOperation() {
         canOperations.clear();
+    }
+
+    /**
+     * 自摸胡牌的时候，点过不能把出牌权限也去掉
+     * @param excludeOperation
+     */
+    public void clearOperation(Integer excludeOperation){
+        Iterator<StepAction> iterator = canOperations.iterator();
+        while (iterator.hasNext()){
+            StepAction next = iterator.next();
+            Integer type = next.getOperationType().value();
+            if(!type.equals(excludeOperation)){
+                iterator.remove();
+            }
+        }
     }
 
     public boolean canOperation() {
@@ -234,11 +250,12 @@ public class MahjongSeat extends AbstractSeatModel {
             if (OperationEnum.TOOK_CARD.value().equals(action.getOperationType().value()) && !action.getTargetCard().equals(card)) {
                 Collections.sort(standCardList);
                 solution();
+                return;
             }
-        } else {
-            solution();
         }
 
+        solution();
+        return;
     }
 
     public void addStep(OperationCardStep step) {

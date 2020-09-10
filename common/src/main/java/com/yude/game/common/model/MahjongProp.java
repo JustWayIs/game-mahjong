@@ -81,8 +81,8 @@ public enum MahjongProp {
             String colorStr = null;
             switch (color){
                 case 1 : colorStr = realValue+"万";break;
-                case 2 : colorStr = realValue+"筒";break;
-                case 3 : colorStr = realValue+"条";break;
+                case 2 : colorStr = realValue+"条";break;
+                case 3 : colorStr = realValue+"筒";break;
                 case 4 : colorStr = FENG_STR[realValue];break;
                 case 5 : colorStr = JIAN_STR[realValue];break;
                 case 6 : colorStr = HUA_STR[realValue];break;

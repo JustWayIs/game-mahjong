@@ -57,11 +57,13 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
         seat.setQueColor(color);
 
         DingQueStep step = new DingQueStep();
+        List<Integer> standCardList = new ArrayList<>(seat.getMahjongSeat().getStandCardList());
         step.setStep(mahjongZone.getStepCount())
                 .setPosId(seat.getMahjongSeat().getPosId())
                 .setColor(color)
                 .setGameStatus(mahjongZone.getGameStatus())
-                .setHandCards(seat.getMahjongSeat().getStandCardList());
+                .setHandCards(standCardList)
+                .setHandCardConvertList(MahjongProp.cardConvertName(standCardList));
         GameStepModel<DingQueStep> gameStepModel = new GameStepModel<>(zoneId, seat.getPlayer(), step);
         historyList.add(gameStepModel);
         mahjongZone.stepAdd();
@@ -88,7 +90,7 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
 
 
 
-            gameStatus = SichuanGameStatusEnum.OPERATION_CARD;
+            mahjongZone.setGameStatus(SichuanGameStatusEnum.OPERATION_CARD);
             //初始化当前操作人为庄家
             mahjongZone. initCurrentOperator();
 
@@ -122,11 +124,12 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
         }
         ExchangeCardStep exchangeCardStep = new ExchangeCardStep();
         MahjongSeat mahjongSeat = seat.getMahjongSeat();
+        List<Integer> stepStandList = new ArrayList<>(mahjongSeat.getStandCardList());
         exchangeCardStep.setStep(mahjongZone.getStepCount())
                 .setPosId(mahjongSeat.getPosId())
                 .setDiscardCards(cards)
                 .setGameStatus(mahjongZone.getGameStatus())
-                .setStandCards(mahjongSeat.getStandCardList());
+                .setStandCards(stepStandList);
         GameStepModel<ExchangeCardStep> gameStepModel = new GameStepModel<>(zoneId, mahjongSeat.getPlayer(), exchangeCardStep);
         historyList.add(gameStepModel);
 
@@ -179,7 +182,7 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
             Collections.sort(playerSeat.getMahjongSeat().getStandCardList());
 
             List<Integer> standCardList = playerSeats[curExchangeCardStep.getPosId()].getMahjongSeat().getStandCardList();
-            curExchangeCardStep.setStandCards(standCardList)
+            curExchangeCardStep.setStandCards(new ArrayList<>(standCardList))
                     .setExchangeType(exchangeType)
                     .setGainedCards(playerSeat.getGainedCards())
                     .setStandCardConvertList(MahjongProp.cardConvertName(standCardList))
@@ -342,6 +345,22 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
             return true;
         }
         return false;
+    }
+
+    public List<MahjongSeat> findNotHuSeat(){
+        List<MahjongSeat> list = new ArrayList<>();
+        for(SichuanMahjongSeat sichuanMahjongSeat : playerSeats){
+            MahjongSeat mahjongSeat = sichuanMahjongSeat.getMahjongSeat();
+            //胡牌的玩家已经增加了 已经胡牌 的状态
+            /*if(mahjongSeat.getPosId() == posId){
+                continue;
+            }*/
+            if(mahjongSeat.existsStatus(SeatStatusEnum.ALREADY_HU)){
+                continue;
+            }
+            list.add(mahjongSeat);
+        }
+        return list;
     }
 
     public MahjongZone getMahjongZone() {

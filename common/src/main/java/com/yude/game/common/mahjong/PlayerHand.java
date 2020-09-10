@@ -156,7 +156,10 @@ public class PlayerHand {
             for(Solution solution : solutions){
                 List<Tile> canWin = solution.canWin;
                 for(Tile tile : canWin){
-                    canHuSolutions.add(solution);
+                    if(tile.id == card){
+                        canHuSolutions.add(solution);
+                    }
+
                 }
             }
         } else {

@@ -536,14 +536,20 @@ public enum MJManager {
          */
         /*tiles =  Arrays.asList(Tile.t1,Tile.t1,Tile.b2,Tile.b2,Tile.b5,Tile.b5,Tile.t3,Tile.t3,Tile.w8,Tile.w8,Tile.t7,Tile.t7,Tile.t9,Tile.t9);*/
 
+        tiles = Arrays.asList(Tile.t2,Tile.t3,Tile.t4,Tile.b1,Tile.b2,Tile.b3,Tile.b5,Tile.b5,Tile.b6,Tile.b7,Tile.b8,Tile.b8,Tile.b9);
+
         //tiles = Arrays.asList(Tile.t1,Tile.t9,Tile.b1,Tile.b9,)
 //        // 四饼 四饼 四饼 七饼 一条 六条 九条 九条 三万 六万 東 中 發
 //        //List<Tile> tiles = Arrays.asList(Tile.b4, Tile.b4, Tile.b4, Tile.b7, Tile.t1, Tile.t6, Tile.t9, Tile.t9, Tile.w3, Tile.w6, Tile.E, Tile.Z, Tile.F);
         List<Solution> solutions = MJManager.INSTANCE.solutions(tiles);
+        List<Solution> tingSolutions = new ArrayList<>();
         for (Solution solution : solutions) {
             if(solution.isWin){
                 System.out.println(solution.toString());
 
+            }
+            if(solution.canWin.size() > 0){
+                tingSolutions.add(solution);
             }
         }
         long end = System.nanoTime();

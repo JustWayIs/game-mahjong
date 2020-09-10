@@ -7,6 +7,7 @@ import com.yude.game.common.mahjong.PlayBoard;
 import com.yude.game.common.model.history.GameStartStep;
 import com.yude.game.common.model.history.GameStepModel;
 import com.yude.game.common.model.history.OperationCardStep;
+import com.yude.game.common.model.sichuan.constant.SeatStatusEnum;
 import com.yude.game.exception.SystemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -171,7 +172,7 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         standCardList.add(card);
         Collections.sort(standCardList);
         //playerSeat.solution();
-
+        playerSeat.addStatus(SeatStatusEnum.ALREADY_HU);
         GameStepModel<OperationCardStep> huStepModel = operation(card, posId, OperationEnum.HU);
         return huStepModel;
     }
@@ -204,7 +205,7 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
 
         GameStepModel<OperationCardStep> gameStepModel = new GameStepModel<>(zoneId, playerSeat.getPlayer(), step);
         stepCount++;
-        playerSeat.clearOperation();
+        playerSeat.clearOperation(OperationEnum.OUT_CARD.value());
 
         if (needJoinTempActionZone()) {
             TempAction tempAction = new TempAction(posId, playerSeat.getUserId(), stepAction);
@@ -567,6 +568,7 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
     public void setOperationStatus(Status gameStatus) {
         this.gameStatus = gameStatus;
     }
+
 
     public void canChi(MahjongSeat mahjongSeat, Integer card) {
     }

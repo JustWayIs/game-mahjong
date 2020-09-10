@@ -42,5 +42,8 @@ public interface XueZhanPushCommandCode extends PushCommandCode {
      */
     int FORMAL_PROCESS_NOTICE = 0x2008;
 
+    /**
+     * 结算通知
+     */
     int SETTLEMENT_NOTICE = 0x2009;
 }
