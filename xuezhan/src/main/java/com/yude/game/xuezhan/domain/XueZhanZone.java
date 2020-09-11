@@ -413,7 +413,7 @@ public class XueZhanZone extends AbstractGameZoneModel<XueZhanSeat, SichuanGameS
         List<Step> list = new ArrayList<>();
         for (GameStepModel gameStepModel : historyList) {
             Step operationStep = gameStepModel.getOperationStep();
-            if (operationStep.stepType().equals(statusEnum)) {
+            if (operationStep.gameStatus().equals(statusEnum)) {
                 list.add(operationStep);
             }
         }

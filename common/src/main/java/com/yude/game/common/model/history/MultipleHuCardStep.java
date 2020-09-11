@@ -14,7 +14,12 @@ public class MultipleHuCardStep implements Step {
     List<HuCardStep> list;
 
     @Override
-    public Status stepType() {
+    public Status gameStatus() {
+        return null;
+    }
+
+    @Override
+    public Integer actionType() {
         return null;
     }
 

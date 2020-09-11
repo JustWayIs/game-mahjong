@@ -150,7 +150,7 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         GameStepModel<OperationCardStep> stepModel = new GameStepModel<>(zoneId, mahjongSeat.getPlayer(), step);
 
         mahjongSeat.clearOperation();
-        //出牌完成后，该玩家就变成了前一个摸牌玩家
+        //出牌完成后，该玩家就变成了前一个摸牌玩家 -- 实际在后面都没有对这两个值做过修改
         beforeTookCardPlayerPosId = mahjongSeat.getPosId();
         beforeOperatorPosId = mahjongSeat.getPosId();
         cardPool.add(card);
@@ -544,16 +544,31 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
      * @return
      */
     public Integer getNextObtainCardPosId() {
-        Integer nextPosId = (curOperatorPosId + 1) % playerSeats.length;
+        return getNexPosId(curOperatorPosId);
+    }
+
+    public int getNexPosId(int posId){
+        Integer nextPosId = (posId + 1) % playerSeats.length;
         return nextPosId;
     }
 
     /**
+     * 出牌后
      * 通常下一个摸牌玩家是当前操作玩家的下一个，除了杠牌外
      */
     public void refreshObtaionCardPosId() {
-        curTookCardPlayerPosId = (curOperatorPosId + 1) % playerSeats.length;
+        curTookCardPlayerPosId = getNexPosId(curOperatorPosId);
         curOperatorPosId = curTookCardPlayerPosId;
+    }
+
+    public void refreshCurrentPosId(int posId) {
+        curTookCardPlayerPosId = posId;
+        curOperatorPosId = posId;
+    }
+
+    public void pengAfterRefresh(int pengSeatPosId){
+        int nexPosId = getNexPosId(pengSeatPosId);
+        curOperatorPosId = pengSeatPosId;
     }
 
     public Integer TookCardFromCardWall() {

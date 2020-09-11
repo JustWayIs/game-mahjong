@@ -43,8 +43,13 @@ public class SichuanGameStartStep implements Step {
     }
 
     @Override
-    public Status stepType() {
+    public Status gameStatus() {
         return gameStartStep.getGameStatus();
+    }
+
+    @Override
+    public Integer actionType() {
+        return null;
     }
 
     @Override

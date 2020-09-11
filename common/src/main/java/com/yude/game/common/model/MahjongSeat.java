@@ -151,12 +151,35 @@ public class MahjongSeat extends AbstractSeatModel {
 
     public List<StepAction> getFuLu(){
         List<Integer> fuluList = OperationEnum.getFuluList();
+        List<StepAction> list = getDesinateTypeAction(fuluList);
+        return list;
+    }
+
+
+    /**
+     *
+     * @param desinateTypeList 操作枚举的值的集合
+     * @return
+     */
+    public List<StepAction> getDesinateTypeAction(List<Integer> desinateTypeList){
         List<StepAction> list = new ArrayList<>();
         for(OperationCardStep operationCardStep : operationHistory){
             StepAction stepAction = operationCardStep.getAction();
             Integer value = stepAction.getOperationType().value();
-            if(fuluList.contains(value)){
+            if(desinateTypeList.contains(value)){
                 list.add(stepAction);
+            }
+        }
+        return list;
+    }
+
+    public List<OperationCardStep> getDesinateStep(List<Integer> desinateTypeList){
+        List<OperationCardStep> list = new ArrayList<>();
+        for(OperationCardStep operationCardStep : operationHistory){
+            StepAction stepAction = operationCardStep.getAction();
+            Integer value = stepAction.getOperationType().value();
+            if(desinateTypeList.contains(value)){
+                list.add(operationCardStep);
             }
         }
         return list;

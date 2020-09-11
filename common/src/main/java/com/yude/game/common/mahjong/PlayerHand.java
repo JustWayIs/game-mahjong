@@ -175,6 +175,15 @@ public class PlayerHand {
         return canHuSolutions;
     }
 
+    public boolean isTing(){
+        for(Solution solution : solutions){
+            if(solution.canWin.size() > 0){
+                return true;
+            }
+        }
+        return false;
+    }
+
     // ===========================================================
     // Inner and Anonymous Classes
     // ===========================================================

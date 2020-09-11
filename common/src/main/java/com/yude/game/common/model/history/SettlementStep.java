@@ -9,7 +9,7 @@ import java.util.Map;
  * @Author: HH
  * @Date: 2020/8/20 11:12
  * @Version: 1.0
- * @Declare:
+ * @Declare: 结算没法像发牌一样用多个Step对象记录一次step，因为所有玩家都要拿到相同的数据
  */
 public class SettlementStep implements Step {
     private int step;
@@ -28,8 +28,13 @@ public class SettlementStep implements Step {
     }
 
     @Override
-    public Status stepType() {
+    public Status gameStatus() {
         return gameStatus;
+    }
+
+    @Override
+    public Integer actionType() {
+        return action.getOperationType().value();
     }
 
     @Override

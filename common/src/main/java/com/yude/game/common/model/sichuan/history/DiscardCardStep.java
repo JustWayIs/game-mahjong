@@ -26,8 +26,13 @@ public class DiscardCardStep implements Step {
     private Status gameStatus;
 
     @Override
-    public Status stepType() {
+    public Status gameStatus() {
         return gameStatus;
+    }
+
+    @Override
+    public Integer actionType() {
+        return null;
     }
 
     @Override

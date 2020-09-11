@@ -5,22 +5,19 @@ import com.yude.game.common.contant.OperationEnum;
 import com.yude.game.common.mahjong.PlayerHand;
 import com.yude.game.common.mahjong.Solution;
 import com.yude.game.common.model.*;
-import com.yude.game.common.model.history.GameStepModel;
-import com.yude.game.common.model.history.OperationCardStep;
-import com.yude.game.common.model.history.Step;
+import com.yude.game.common.model.history.*;
 import com.yude.game.common.model.sichuan.constant.ExchangeTypeEnum;
 import com.yude.game.common.model.sichuan.constant.SeatStatusEnum;
 import com.yude.game.common.model.sichuan.constant.SichuanGameStatusEnum;
 import com.yude.game.common.model.sichuan.history.DingQueStep;
 import com.yude.game.common.model.sichuan.history.ExchangeCardStep;
+import com.yude.game.common.model.sichuan.history.RebateInfo;
+import com.yude.game.common.model.sichuan.history.RebateStep;
 import com.yude.game.exception.BizException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 /**
  * @Author: HH
@@ -346,6 +343,70 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
         }
         return false;
     }
+
+    private RebateStep rebate(List<SettlementStep> gangSettlementHistory, SichuanRoomConfig ruleConfig){
+        RebateStep rebatStep = new RebateStep();
+        Map<Integer, List<RebateInfo>> seatRebateMap = new HashMap<>();
+        rebatStep.setSeatRebateMap(seatRebateMap);
+
+        GameStepModel<RebateStep> rebateStepGameStepModel = new GameStepModel<>(mahjongZone.getZoneId(),null,rebatStep);
+
+        for(SichuanMahjongSeat sichuanMahjongSeat : playerSeats){
+            MahjongSeat mahjongSeat = sichuanMahjongSeat.getMahjongSeat();
+            if(mahjongSeat.existsStatus(SeatStatusEnum.ALREADY_HU)){
+                continue;
+            }
+            PlayerHand playerHand = mahjongSeat.getPlayerHand();
+            if (playerHand.isTing()) {
+                continue;
+            }
+
+            for(SettlementStep settlementStep : gangSettlementHistory){
+                /**
+                 * 找出当前遍历的需要退税玩家的 杠分结算记录
+                 */
+                if(settlementStep.getPosId() != mahjongSeat.getPosId()){
+                    continue;
+                }
+                /**
+                 * 在一次杠牌结算Step中，Map中，所有玩家都 - changeSocore，再封装成rebateInfo
+                 */
+                for(Map.Entry<Integer,SettlementInfo> entry : settlementStep.getSeatSettlementInfoMap().entrySet()){
+                    StepAction action = settlementStep.getAction();
+                    MahjongOperation operationType = action.getOperationType();
+                    SettlementInfo settlementInfo = entry.getValue();
+                    Integer posId = settlementInfo.getPosId();
+                    SichuanMahjongSeat playerSeat = playerSeats[posId];
+                    Player player = playerSeat.getPlayer();
+                    long beforeScore = player.getScore();
+                    int changeScore = (int) -settlementInfo.getChangeScore();
+                    player.scoreSettle(changeScore);
+                    long remainingScore = player.getScore();
+
+                    RebateInfo rebateInfo = new RebateInfo();
+                    rebateInfo.setPosId(settlementInfo.getPosId())
+                            .setBeforeScore(beforeScore)
+                            .setChangeScore(changeScore)
+                            .setRemainingScore(remainingScore)
+                            .setRebateActions(action)
+                            .setFanNum(ruleConfig.getGangFan(operationType.value()));
+
+
+                    List<RebateInfo> rebateInfos = seatRebateMap.get(mahjongSeat.getPosId());
+                    if(rebateInfos == null){
+                        rebateInfos = new ArrayList<>();
+                    }
+                    rebateInfos.add(rebateInfo);
+                }
+
+            }
+        }
+        return rebatStep;
+    }
+    private void chaJiao(){}
+
+    private void chaHuazhu(){}
+
 
     public List<MahjongSeat> findNotHuSeat(){
         List<MahjongSeat> list = new ArrayList<>();

@@ -31,8 +31,13 @@ public class OperationCardStep implements Step {
     }
 
     @Override
-    public Status stepType() {
+    public Status gameStatus() {
         return gameStatus;
+    }
+
+    @Override
+    public Integer actionType() {
+        return action.getOperationType().value();
     }
 
     @Override

@@ -81,6 +81,16 @@ public enum  OperationEnum implements MahjongOperation {
         return fuLuList;
     }
 
+    public static List<Integer> getGangList(){
+        List<Integer> allGangTypeList = new ArrayList<>();
+        for(OperationEnum operationEnum : OperationEnum.values()){
+            if(OperationEnum.ZHI_GANG.equals(operationEnum) || OperationEnum.BU_GANG.equals(operationEnum) || OperationEnum.AN_GANG.equals(operationEnum)){
+                allGangTypeList.add(operationEnum.value());
+            }
+        }
+        return allGangTypeList;
+    }
+
     @Override
     public Integer value() {
         return this.ordinal();

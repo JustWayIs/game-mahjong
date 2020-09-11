@@ -17,7 +17,13 @@ public enum SichuanGameStatusEnum implements Status {
     EXCHANGE_CARD,
     DING_QUE,
     OPERATION_CARD,
-    SETTLEMENT;
+    SETTLEMENT,
+    /**
+     * 没有必要设置游戏状态为下面几个，只是在构建Step对象的时候用到
+     */
+    REBATE_SETTLEMENT,
+    CHA_JIAO_SETTLEMENT,
+    CHA_HUA_ZHU_SETTLEMENT;
 
 
     @Override
