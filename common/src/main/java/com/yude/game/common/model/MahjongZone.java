@@ -457,7 +457,6 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
      */
     public void cleanTempAction() {
         tempActions.clear();
-        ;
     }
 
     public List<TempAction> getTempActions() {

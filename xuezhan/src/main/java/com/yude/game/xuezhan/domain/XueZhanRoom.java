@@ -204,7 +204,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                 roomManager.pushToUser(XueZhanPushCommandCode.OPERATION_NOTICE, canOperationSeat.getUserId(), noticeResponse, roomId);
             }
         } else {
-            Integer needTookCardPosId = mahjongZone.getNextObtainCardPosId();
+            Integer needTookCardPosId = sichuanMahjongZone.refreshTookPlayer();
             nextPalyerTookCard(needTookCardPosId);
         }
 
@@ -218,9 +218,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             settlement();
             return;
         }
-        //当抓牌的时候，当前摸牌人 和 当前操作人要同时刷新为同一个
-        //因为杠牌后，摸牌人是自己，所以这个刷新操作在方法内做，而不是调用方做
-        mahjongZone.refreshCurrentPosId(needTookCardPosId);
+
         GameStepModel<OperationCardStep> tookCardStep = sichuanMahjongZone.tookCardStep(needTookCardPosId);
         historyList.add(tookCardStep);
         TookCardNoticeResponse tookCardNoticeResponse = new TookCardNoticeResponse(needTookCardPosId);
@@ -272,8 +270,6 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
          * 或者下一个玩家摸牌
          */
         if (!restoreAction()) {
-            //是否应该放在确定执行操作之后呢，对当前操作人的修改
-            mahjongZone.setCurOperatorPosId(posId);
             //如果不是还原出来的操作，这里的清理其实是第二次执行了，但是多清理一次也没有影响
             huSeat.clearOperation();
             OperationResultResponse operationResultResponse = new OperationResultResponse();
@@ -290,7 +286,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             huSettlement(xueZhanSeat.getMahjongSeat(),action.getOperationType().value(),action,fanInfos);
             mahjongZone.stepAdd();
 
-            Integer needTookCardPosId = mahjongZone.getNextObtainCardPosId();
+            Integer needTookCardPosId = sichuanMahjongZone.refreshTookPlayer();
             nextPalyerTookCard(needTookCardPosId);
         }
     }
@@ -412,7 +408,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                     .setTargetCard(card);
             roomManager.pushToUser(XueZhanPushCommandCode.OPERATION_RESULT_NOTICE, xueZhanSeat.getUserId(), operationResultResponse, roomId);
 
-            Integer needTookCardPosId = mahjongZone.getNextObtainCardPosId();
+            Integer needTookCardPosId = sichuanMahjongZone.refreshTookPlayer();
             nextPalyerTookCard(needTookCardPosId);
         }
     }
@@ -425,7 +421,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
      * @param operationType
      */
     public void operation(Integer card, Integer posId, MahjongOperation operationType, boolean isRestore) {
-        log.info("请求操作： roomId={} zoneId={} 方位=[{},posId={}] type={} card={}", roomId, gameZone.getZoneId(), getSeatDirection(posId), posId, operationType,card);
+        log.info("请求操作：  roomId={} zoneId={} 方位=[{},posId={}] type={} card={}", roomId, gameZone.getZoneId(), getSeatDirection(posId),posId,operationType, card);
         XueZhanSeat xueZhanSeat = posIdSeatMap.get(posId);
         boolean canCancel = xueZhanSeat.canOperation(operationType);
         if (!canCancel) {
@@ -491,6 +487,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
          * 或者下一个玩家摸牌
          */
         if (!restoreAction()) {
+            log.info("不需要还原操作： roomId={} zoneId={} 方位=[{},posId={}] action={}",roomId,gameZone.getZoneId(),getSeatDirection(xueZhanSeat.getPosId()),xueZhanSeat.getPosId(),action);
             MahjongSeat operationSeat = xueZhanSeat.getMahjongSeat();
             //historyList.add(stepModel);
             OperationResultResponse operationResultResponse = new OperationResultResponse();
@@ -509,6 +506,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             Integer type = action.getOperationType().value();
             if(XueZhanMahjongOperationEnum.PENG.value().equals(type)){
                 //碰完要出牌
+                operationSeat.addOperation(XueZhanMahjongOperationEnum.OUT_CARD);
                 OperationDTO operationDTO = new OperationDTO();
                 operationDTO.setOpreation(XueZhanMahjongOperationEnum.OUT_CARD.value());
                 List<OperationDTO> operationList = new ArrayList<>();
@@ -981,6 +979,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
     private boolean restoreAction() {
         List<TempAction> tempActions = mahjongZone.getTempActions();
         if (tempActions.size() > 0) {
+            log.info("需要进行还原操作 roomId={} zoneId={} tempActions={}",roomId, gameZone.getZoneId(),tempActions);
             /**
              * 已经有玩家在当前回合操作过
              * 找出临时操作区里，操作级别最高的操作（以目前对麻将的认知而言，一个回合的所有操作中，只有胡牌这个操作等级会可能有多次，碰和杠无论如何只有一次，并且优先级又高于吃牌）
