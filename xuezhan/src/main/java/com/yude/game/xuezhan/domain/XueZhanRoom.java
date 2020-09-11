@@ -40,6 +40,7 @@ import com.yude.protocol.common.response.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -421,7 +422,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
      * @param operationType
      */
     public void operation(Integer card, Integer posId, MahjongOperation operationType, boolean isRestore) {
-        log.info("请求操作： type={} roomId={} zoneId={} 方位=[{},posId={}] type={} card={} posId={}", operationType, roomId, gameZone.getZoneId(), getSeatDirection(posId), card, posId);
+        log.info("请求操作：  roomId={} zoneId={} 方位=[{},posId={}] type={} card={}", roomId, gameZone.getZoneId(), getSeatDirection(posId),posId,operationType, card);
         XueZhanSeat xueZhanSeat = posIdSeatMap.get(posId);
         boolean canCancel = xueZhanSeat.canOperation(operationType);
         if (!canCancel) {
@@ -487,6 +488,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
          * 或者下一个玩家摸牌
          */
         if (!restoreAction()) {
+            log.info("不需要还原操作： roomId={} zoneId={} 方位=[{},posId={}] action={}",roomId,gameZone.getZoneId(),getSeatDirection(xueZhanSeat.getPosId()),xueZhanSeat.getPosId(),action);
             MahjongSeat operationSeat = xueZhanSeat.getMahjongSeat();
             //historyList.add(stepModel);
             OperationResultResponse operationResultResponse = new OperationResultResponse();
@@ -501,8 +503,9 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
 
             //H2 如果是杠操作 还要触发小结算。 既然要在这里做具体类型判断，那么其实胡牌也可以直接用operation方法
             Integer type = action.getOperationType().value();
-            if(XueZhanMahjongOperationEnum.PENG.equals(type)){
+            if(XueZhanMahjongOperationEnum.PENG.value().equals(type)){
                 //碰完要出牌
+                operationSeat.addOperation(XueZhanMahjongOperationEnum.OUT_CARD);
                 OperationDTO operationDTO = new OperationDTO();
                 operationDTO.setOpreation(XueZhanMahjongOperationEnum.OUT_CARD.value());
                 List<OperationDTO> operationList = new ArrayList<>();
@@ -519,7 +522,6 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                 //在这里实现的话  hu()方法还有存在必要么
 
             }
-
             mahjongZone.stepAdd();
             //杠完要摸牌
             nextPalyerTookCard(operationSeat.getPosId());
@@ -958,6 +960,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
     private boolean restoreAction() {
         List<TempAction> tempActions = mahjongZone.getTempActions();
         if (tempActions.size() > 0) {
+            log.info("需要进行还原操作 roomId={} zoneId={} tempActions={}",roomId, gameZone.getZoneId(),tempActions);
             /**
              * 已经有玩家在当前回合操作过
              * 找出临时操作区里，操作级别最高的操作（以目前对麻将的认知而言，一个回合的所有操作中，只有胡牌这个操作等级会可能有多次，碰和杠无论如何只有一次，并且优先级又高于吃牌）
