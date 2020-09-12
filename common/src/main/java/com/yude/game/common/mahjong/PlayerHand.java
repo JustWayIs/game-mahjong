@@ -111,21 +111,44 @@ public class PlayerHand {
      * 可能有多个暗杠，所以把stepActionsc传进来
      * @param stepActions
      */
-    public void canAnGang(List<StepAction> stepActions) {
-        // 判断手上有暗杠，但是没有开杠的牌
-        int cardNum = 0;
-        int tempCard = 0;
-        for (Tile card : tiles) {
-            if (tempCard != card.id) {
-                cardNum = 0;
+    public void canAnGang(List<StepAction> stepActions,Integer tookCard) {
+        if(tookCard == null){
+            // 判断手上有暗杠，但是没有开杠的牌
+            int cardNum = 0;
+            int tempCard = 0;
+            for (Tile card : tiles) {
+                if (tempCard != card.id) {
+                    cardNum = 0;
+                }
+                tempCard = card.id;
+                cardNum++;
+                if (cardNum >= 4) {
+                    StepAction stepAction = new StepAction();
+                    stepAction.setTargetCard(card.id);
+                    //.setOperationType(XueZhanMahjongOperationEnum.AN_GANG);
+                    stepActions.add(stepAction);
+                }
             }
-            tempCard = card.id;
-            cardNum++;
-            if (cardNum >= 4) {
-                StepAction stepAction = new StepAction();
-                stepAction.setTargetCard(card.id);
-                        //.setOperationType(XueZhanMahjongOperationEnum.AN_GANG);
-                stepActions.add(stepAction);
+        }else{
+            // 判断手上有暗杠，但是没有开杠的牌
+            int cardNum = 0;
+            int tempCard = 0;
+            for (Tile card : tiles) {
+                if(card.id != tookCard){
+                    cardNum = 0;
+                    continue;
+                }
+                if (tempCard != card.id) {
+                    cardNum = 0;
+                }
+                tempCard = card.id;
+                cardNum++;
+                if (cardNum >= 4) {
+                    StepAction stepAction = new StepAction();
+                    stepAction.setTargetCard(card.id);
+                    //.setOperationType(XueZhanMahjongOperationEnum.AN_GANG);
+                    stepActions.add(stepAction);
+                }
             }
         }
 

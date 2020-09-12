@@ -203,7 +203,7 @@ public class XueZhanZone extends AbstractGameZoneModel<XueZhanSeat, SichuanGameS
 
         List<StepAction> stepActions = new ArrayList<>();
         PlayerHand playerHand = mahjongSeat.getPlayerHand();
-        playerHand.canAnGang(stepActions);
+        playerHand.canAnGang(stepActions,card);
         for(StepAction stepAction : stepActions){
             stepAction.setCardSource(mahjongSeat.getPosId())
                     .setOperationType(XueZhanMahjongOperationEnum.AN_GANG);

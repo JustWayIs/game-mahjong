@@ -255,7 +255,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             throw new BizException(MahjongStatusCodeEnum.HU_PARAM_ERROR);
         }
         if (!isRestore) {
-            GameStepModel<OperationCardStep> stepModel = mahjongZone.hu(card, posId);
+            GameStepModel<HuCardStep> stepModel = mahjongZone.hu(card, posId);
             historyList.add(stepModel);
         }
 

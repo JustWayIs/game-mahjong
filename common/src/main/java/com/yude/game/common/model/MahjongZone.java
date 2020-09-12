@@ -6,6 +6,7 @@ import com.yude.game.common.contant.OperationEnum;
 import com.yude.game.common.mahjong.PlayBoard;
 import com.yude.game.common.model.history.GameStartStep;
 import com.yude.game.common.model.history.GameStepModel;
+import com.yude.game.common.model.history.HuCardStep;
 import com.yude.game.common.model.history.OperationCardStep;
 import com.yude.game.common.model.sichuan.constant.SeatStatusEnum;
 import com.yude.game.exception.SystemException;
@@ -163,7 +164,7 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
      * @param posId
      * @return
      */
-    public GameStepModel<OperationCardStep> hu(Integer card, Integer posId) {
+    public GameStepModel<HuCardStep> hu(Integer card, Integer posId) {
         /**
          * 把胡的牌 加入到立牌中
          */
@@ -173,7 +174,23 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         Collections.sort(standCardList);
         //playerSeat.solution();
         playerSeat.addStatus(SeatStatusEnum.ALREADY_HU);
-        GameStepModel<OperationCardStep> huStepModel = operation(card, posId, OperationEnum.HU);
+        GameStepModel<OperationCardStep> operation = operation(card, posId, OperationEnum.HU);
+
+        OperationCardStep operationStep = operation.getOperationStep();
+        HuCardStep huCardStep = new HuCardStep();
+        huCardStep.setAction(operationStep.getAction())
+                .setGameStatus(operationStep.getGameStatus())
+                .setStandCardConvertList(operationStep.getStandCardConvertList())
+                .setStandCardList(operationStep.getStandCardList())
+                .setRemainingCardSize(operationStep.getRemainingCardSize())
+                .setStep(operationStep.getStep())
+                .setPosId(operationStep.getPosId());
+
+        //要删掉胡牌的 OperationCardStep 改成用 HuCardStep
+        List<OperationCardStep> operationHistory = playerSeat.getOperationHistory();
+        operationHistory.remove(operation);
+        playerSeat.addStep(huCardStep);
+        GameStepModel<HuCardStep> huStepModel =  new GameStepModel<>(zoneId,operation.getPlayers(),huCardStep);
         return huStepModel;
     }
 
