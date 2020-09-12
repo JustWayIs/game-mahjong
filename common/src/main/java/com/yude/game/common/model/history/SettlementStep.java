@@ -13,6 +13,9 @@ import java.util.Map;
  */
 public class SettlementStep implements Step {
     private int step;
+    /**
+     * 触发结算的玩家
+     */
     private int posId;
     private StepAction action;
     private Map<Integer,SettlementInfo> seatSettlementInfoMap;

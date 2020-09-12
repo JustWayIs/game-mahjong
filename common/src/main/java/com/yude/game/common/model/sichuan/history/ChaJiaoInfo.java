@@ -1,5 +1,9 @@
 package com.yude.game.common.model.sichuan.history;
 
+import com.yude.game.common.model.fan.FanInfo;
+
+import java.util.List;
+
 /**
  * @Author: HH
  * @Date: 2020/9/10 21:09
@@ -9,10 +13,11 @@ package com.yude.game.common.model.sichuan.history;
 public class ChaJiaoInfo {
     private Integer posId;
     private Integer compensationToPosId;
-    private int fanNum;
     private long beforeScore;
     private long changeScore;
     private long remainingScore;
+    private List<FanInfo> fanInfoList;
+    private int fanNum;
 
 
     public Integer getPosId() {
@@ -69,15 +74,25 @@ public class ChaJiaoInfo {
         return this;
     }
 
+    public List<FanInfo> getFanInfoList() {
+        return fanInfoList;
+    }
+
+    public ChaJiaoInfo setFanInfoList(List<FanInfo> fanInfoList) {
+        this.fanInfoList = fanInfoList;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "ChaJiaoInfo{" +
                 "posId=" + posId +
                 ", compensationToPosId=" + compensationToPosId +
-                ", fanNum=" + fanNum +
                 ", beforeScore=" + beforeScore +
                 ", changeScore=" + changeScore +
                 ", remainingScore=" + remainingScore +
+                ", fanInfoList=" + fanInfoList +
+                ", fanNum=" + fanNum +
                 '}';
     }
 }

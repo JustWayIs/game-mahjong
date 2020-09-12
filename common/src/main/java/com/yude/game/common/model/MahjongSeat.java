@@ -261,6 +261,10 @@ public class MahjongSeat extends AbstractSeatModel {
         return false;
     }
 
+    public void removeCard(Integer card){
+        standCardList.remove(card);
+    }
+
     public void removeCardFromStandCards(Integer card) {
         standCardList.remove(card);
 
@@ -276,7 +280,7 @@ public class MahjongSeat extends AbstractSeatModel {
                 return;
             }
         }
-
+        Collections.sort(standCardList);
         solution();
         return;
     }

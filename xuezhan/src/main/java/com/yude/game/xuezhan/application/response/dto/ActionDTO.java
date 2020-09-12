@@ -14,6 +14,7 @@ import com.baidu.bjf.remoting.protobuf.annotation.ProtobufClass;
 public class ActionDTO {
     private Integer operationType;
     private Integer targetCard;
+    private Integer cardSourcePosId;
 
     public Integer getOperationType() {
         return operationType;
@@ -33,11 +34,21 @@ public class ActionDTO {
         return this;
     }
 
+    public Integer getCardSourcePosId() {
+        return cardSourcePosId;
+    }
+
+    public ActionDTO setCardSourcePosId(Integer cardSourcePosId) {
+        this.cardSourcePosId = cardSourcePosId;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "ActionDTO{" +
                 "operationType=" + operationType +
                 ", targetCard=" + targetCard +
+                ", cardSourcePosId=" + cardSourcePosId +
                 '}';
     }
 }

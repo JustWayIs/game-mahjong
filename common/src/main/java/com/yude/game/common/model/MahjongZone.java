@@ -276,19 +276,45 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         MahjongSeat playerSeat = playerSeats[posId];
         List<Integer> cardCombination = null;
         OperationEnum value = OperationEnum.values()[operationType.value()];
+        List<Integer> standCardListSort = playerSeat.getStandCardList();
         switch (value) {
             case PENG:
                 cardCombination = new ArrayList<>(Arrays.asList(card, card, card));
+                playerSeat.removeCard(card);
+                playerSeat.removeCard(card);
+                Collections.sort(standCardListSort);
+                playerSeat.solution();
                 break;
             case ZHI_GANG:
+                cardCombination = new ArrayList<>(Arrays.asList(card, card, card, card));
+                playerSeat.removeCard(card);
+                playerSeat.removeCard(card);
+                playerSeat.removeCard(card);
+                Collections.sort(standCardListSort);
+                break;
             case BU_GANG:
+                cardCombination = new ArrayList<>(Arrays.asList(card, card, card, card));
+                playerSeat.removeCard(card);
+                Collections.sort(standCardListSort);
+                break;
             case AN_GANG:
                 cardCombination = new ArrayList<>(Arrays.asList(card, card, card, card));
+                playerSeat.removeCard(card);
+                playerSeat.removeCard(card);
+                playerSeat.removeCard(card);
+                playerSeat.removeCard(card);
+                Collections.sort(standCardListSort);
+                playerSeat.solution();
                 break;
             case CHI:
                 cardCombination = new ArrayList<>(Arrays.asList(card - 1, card, card + 1));
+                playerSeat.removeCard(card - 1);
+                playerSeat.removeCard(card + 1);
+                Collections.sort(standCardListSort);
+                playerSeat.solution();
                 break;
             case HU:
+                cardCombination = new ArrayList<>();
                 cardCombination.addAll(playerSeat.getStandCardList());
                 //应该不需要把副露拼回手牌
                 /*List<StepAction> fuLuOperations = playerSeat.getFuLuOperationsByType();
@@ -327,6 +353,8 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
                 .setAction(stepAction);
 
         GameStepModel<OperationCardStep> gameStepModel = new GameStepModel<>(zoneId, playerSeat.getPlayer(), step);
+        playerSeat.addStep(step);
+
         stepCount++;
         playerSeat.clearOperation();
 
@@ -546,7 +574,7 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         return getNexPosId(curOperatorPosId);
     }
 
-    public int getNexPosId(int posId){
+    public int getNexPosId(int posId) {
         Integer nextPosId = (posId + 1) % playerSeats.length;
         return nextPosId;
     }
@@ -565,7 +593,7 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         curOperatorPosId = posId;
     }
 
-    public void pengAfterRefresh(int pengSeatPosId){
+    public void pengAfterRefresh(int pengSeatPosId) {
         int nexPosId = getNexPosId(pengSeatPosId);
         curOperatorPosId = pengSeatPosId;
     }

@@ -4,6 +4,7 @@ import com.yude.game.common.constant.Status;
 import com.yude.game.common.model.history.Step;
 import com.yude.game.common.model.sichuan.constant.SichuanGameStatusEnum;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -13,14 +14,14 @@ import java.util.Map;
  * @Declare:
  */
 public class ChaJiaoStep implements Step {
-    private Map<Integer,ChaJiaoInfo> chaJiaoInfoMap;
+    private Map<Integer, List<ChaJiaoInfo>> chaJiaoInfoMap;
     private Status gameStatus = SichuanGameStatusEnum.CHA_JIAO_SETTLEMENT;
 
-    public Map<Integer, ChaJiaoInfo> getChaJiaoInfoMap() {
+    public Map<Integer, List<ChaJiaoInfo>> getChaJiaoInfoMap() {
         return chaJiaoInfoMap;
     }
 
-    public ChaJiaoStep setChaJiaoInfoMap(Map<Integer, ChaJiaoInfo> chaJiaoInfoMap) {
+    public ChaJiaoStep setChaJiaoInfoMap(Map<Integer, List<ChaJiaoInfo>> chaJiaoInfoMap) {
         this.chaJiaoInfoMap = chaJiaoInfoMap;
         return this;
     }
@@ -47,5 +48,13 @@ public class ChaJiaoStep implements Step {
     @Override
     public int posId() {
         return 0;
+    }
+
+    @Override
+    public String toString() {
+        return "ChaJiaoStep{" +
+                "chaJiaoInfoMap=" + chaJiaoInfoMap +
+                ", gameStatus=" + gameStatus +
+                '}';
     }
 }

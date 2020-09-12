@@ -1,6 +1,7 @@
 package com.yude.game.common.model.sichuan;
 
 import com.yude.game.common.model.AbstractSeatModel;
+import com.yude.game.common.model.CardEnum;
 import com.yude.game.common.model.MahjongSeat;
 import com.yude.game.common.model.Player;
 
@@ -30,7 +31,7 @@ public class SichuanMahjongSeat extends AbstractSeatModel {
      */
     private Integer queColor;
 
-    private boolean isHu;
+    private boolean alreadyHu;
 
     private List<Integer> huCards;
 
@@ -46,6 +47,18 @@ public class SichuanMahjongSeat extends AbstractSeatModel {
     @Override
     public void clean() {
 
+    }
+
+    public boolean isHuaZhu(){
+        List<Integer> standCardList = mahjongSeat.getStandCardList();
+        CardEnum queColorEnum = CardEnum.judgeCardColor(this.queColor);
+        for(Integer card : standCardList){
+            CardEnum cardEnum = CardEnum.judgeCardColor(card);
+            if(queColorEnum.equals(cardEnum)){
+                return true;
+            }
+        }
+        return false;
     }
 
     public void setMahjongSeat(MahjongSeat seat){
@@ -84,4 +97,11 @@ public class SichuanMahjongSeat extends AbstractSeatModel {
         return mahjongSeat;
     }
 
+    public boolean isAlreadyHu() {
+        return alreadyHu;
+    }
+
+    public List<Integer> getHuCards() {
+        return huCards;
+    }
 }

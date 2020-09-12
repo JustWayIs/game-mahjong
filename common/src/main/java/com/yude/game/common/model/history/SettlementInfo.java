@@ -16,6 +16,7 @@ public class SettlementInfo {
     private Long beforeScore;
     private Long changeScore;
     private Long remaningScore;
+    private int fanNum;
     private List<Integer> standCards;
     private List<String> standCardsConvertList;
     private List<StepAction> fuluList;
@@ -93,6 +94,15 @@ public class SettlementInfo {
         return this;
     }
 
+    public int getFanNum() {
+        return fanNum;
+    }
+
+    public SettlementInfo setFanNum(int fanNum) {
+        this.fanNum = fanNum;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "SettlementInfo{" +
@@ -100,6 +110,7 @@ public class SettlementInfo {
                 ", beforeScore=" + beforeScore +
                 ", changeScore=" + changeScore +
                 ", remaningScore=" + remaningScore +
+                ", fanNum=" + fanNum +
                 ", standCards=" + standCards +
                 ", standCardsConvertList=" + standCardsConvertList +
                 ", fuluList=" + fuluList +

@@ -46,4 +46,19 @@ public interface XueZhanPushCommandCode extends PushCommandCode {
      * 结算通知
      */
     int SETTLEMENT_NOTICE = 0x2009;
+
+    /**
+     * 退税
+     */
+    int REBATE_SETTLEMENT = 0x2010;
+
+    /**
+     * 查叫
+     */
+    int CHA_JIAO = 0x200A;
+
+    /**
+     * 查花猪
+     */
+    int CHA_HUA_ZHU = 0x201B;
 }
