@@ -313,12 +313,14 @@ public enum MJManager {
                                     Tile t = Tile.getTileByID(a.id - 1);
                                     if (!solution.canWin.contains(t)) {
                                         solution.canWin.add(t);
+                                        solution.setBaseHuType(BaseHuTypeEnum.平胡);
                                     }
                                 }
                                 if (b.id % 10 != 9) {
                                     Tile t = Tile.getTileByID(b.id + 1);
                                     if (!solution.canWin.contains(t)) {
                                         solution.canWin.add(t);
+                                        solution.setBaseHuType(BaseHuTypeEnum.平胡);
                                     }
                                 }
                             } else {
@@ -326,6 +328,7 @@ public enum MJManager {
                                 Tile t = Tile.getTileByID((a.id + b.id) / 2);
                                 if (!solution.canWin.contains(t)) {
                                     solution.canWin.add(t);
+                                    solution.setBaseHuType(BaseHuTypeEnum.平胡);
                                 }
                             }
                         }
@@ -534,7 +537,7 @@ public enum MJManager {
         /**
          * 七小对
          */
-        /*tiles =  Arrays.asList(Tile.t1,Tile.t1,Tile.b2,Tile.b2,Tile.b5,Tile.b5,Tile.t3,Tile.t3,Tile.w8,Tile.w8,Tile.t7,Tile.t7,Tile.t9,Tile.t9);*/
+        tiles =  Arrays.asList(Tile.t1,Tile.t1,Tile.b2,Tile.b2,Tile.b5,Tile.b5,Tile.t3,Tile.t3,Tile.w8,Tile.w8,Tile.t7,Tile.t7,Tile.t9);
 
         //tiles = Arrays.asList(Tile.t2,Tile.t3,Tile.t4,Tile.b1,Tile.b2,Tile.b3,Tile.b5,Tile.b5,Tile.b6,Tile.b7,Tile.b8,Tile.b8,Tile.b9);
 

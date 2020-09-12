@@ -24,10 +24,7 @@ import com.yude.game.common.model.history.*;
 import com.yude.game.common.model.sichuan.*;
 import com.yude.game.common.model.sichuan.constant.SeatStatusEnum;
 import com.yude.game.common.model.sichuan.constant.SichuanGameStatusEnum;
-import com.yude.game.common.model.sichuan.history.ExchangeCardStep;
-import com.yude.game.common.model.sichuan.history.RebateInfo;
-import com.yude.game.common.model.sichuan.history.RebateStep;
-import com.yude.game.common.model.sichuan.history.SichuanGameStartStep;
+import com.yude.game.common.model.sichuan.history.*;
 import com.yude.game.common.timeout.MahjongTimeoutTaskPool;
 import com.yude.game.exception.BizException;
 import com.yude.game.exception.SystemException;
@@ -234,7 +231,6 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
         Integer tookCard = tookCardStep.getOperationStep().getAction().getTargetCard();
         //因为在pushToRoomUser方法中，需要推送的数据已经被序列化了，所以这里修改相同的response不会影响之前的推送
         tookCardNoticeResponse.setCard(tookCard);
-        needTookCardSeat.getMahjongSeat().addOperation(XueZhanMahjongOperationEnum.OUT_CARD);
         roomManager.pushToUser(XueZhanPushCommandCode.TOOK_CARD_NOTICE, userId, tookCardNoticeResponse, roomId);
 
         //sichuanMahjongZone.whatCanYouDo(tookCard);
@@ -530,6 +526,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                 //在这里实现的话  hu()方法还有存在必要么
 
             }
+            mahjongZone.refreshCurrentPosId(operationSeat.getPosId());
             //杠完要摸牌
             nextPalyerTookCard(operationSeat.getPosId());
         }
@@ -962,6 +959,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
     }
 
     private void rebate(){
+        log.info("退税结算： roomId={} zoneId={}",roomId,gameZone.getZoneId());
         List<SettlementStep> settlementStepList = new ArrayList<>();
         for(GameStepModel gameStepModel : historyList){
             Step operationStep = gameStepModel.getOperationStep();
@@ -1006,7 +1004,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
     }
     private void chaJiao(){
         log.info("查叫结算： roomId={} zoneId={}",roomId,gameZone.getZoneId());
-        sichuanMahjongZone.chaJiao(rule);
+        GameStepModel<ChaJiaoStep> chaJiaoStepGameStepModel = sichuanMahjongZone.chaJiao(rule);
     }
 
     private void chaHuazhu(){

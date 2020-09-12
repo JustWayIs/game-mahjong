@@ -51,7 +51,7 @@ public enum MahjongProp {
     public static final int XU_LENGTH = 9;
 
     //H2 用于测试时在本地配牌
-    public static final boolean OPEN_CONFIGURATION_CARD = false;
+    public static final boolean OPEN_CONFIGURATION_CARD = true;
 
     public static List<String> cardConvertName(Integer... card) {
         List<String> list = new ArrayList<>();

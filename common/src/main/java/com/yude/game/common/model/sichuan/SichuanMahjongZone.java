@@ -325,6 +325,7 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
 
         Solution solution = solutions.get(0);
         BaseHuTypeEnum certaintyBaseHuType = solution.getBaseHuType();
+        certaintyBaseHuType = certaintyBaseHuType == null ? BaseHuTypeEnum.七对 : certaintyBaseHuType;
         HuTypeEnum huType = cardFromSelf ? HuTypeEnum.自摸 : HuTypeEnum.点炮胡;
         List<FanInfo> certaintyFanList = new ArrayList<>();
         for (FanInfo<BaseHuTypeEnum> fanInfo : rule.getBaseHuList()) {
