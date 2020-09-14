@@ -11,41 +11,54 @@ import java.util.List;
  * @Version: 1.0
  * @Declare:
  */
-public enum  OperationEnum implements MahjongOperation {
+public enum OperationEnum implements MahjongOperation {
     /**
      * 过
      */
-    CANCEL(false,1),
+    CANCEL(false, 1),
     /**
      * 补花
      */
-    BU_HUA(false,0),
+    BU_HUA(false, 0),
     /**
      * 换牌：可能是换三张、可能是换四张
      */
-    EXCHANGE_CARD(false,0),
+    EXCHANGE_CARD(false, 0),
     /**
      * 定缺
      */
-    DING_QUE(false,0),
+    DING_QUE(false, 0),
     /**
      * 出牌
      */
-    OUT_CARD(false,0),
-    CHI(true,2),
-    PENG(true,3),
-    ZHI_GANG(true,3),
-    BU_GANG(true,3),
-    AN_GANG(true,3),
-    HU(false,4),
+    OUT_CARD(false, 0),
+    CHI(true, 2),
+    PENG(true, 3),
+    ZHI_GANG(true, 3),
+    BU_GANG(true, 3),
+    AN_GANG(true, 3),
+    HU(false, 4),
     /**
      * 一炮多响
      */
-    YI_PAO_DUO_XIANG(false,4),
+    YI_PAO_DUO_XIANG(false, 4),
     /**
      * 抓牌
      */
-    TOOK_CARD(false,0);
+    TOOK_CARD(false, 0),
+    /**
+     * 退税
+     */
+    REBATE(false, 0),
+    /**
+     * 查叫
+     */
+    CHA_JIAO(false, 0),
+    /**
+     * 查花猪
+     */
+    CHA_HUA_ZHU(false, 0),
+    ;
 
     /**
      * 该操作是否能产生副露，就是对操作类型做进一步的区分
@@ -62,29 +75,29 @@ public enum  OperationEnum implements MahjongOperation {
         this.priority = priority;
     }
 
-    public static OperationEnum matchByValue(Integer value){
-        for(OperationEnum operationEnum : OperationEnum.values()){
-            if(operationEnum.ordinal() == value){
+    public static OperationEnum matchByValue(Integer value) {
+        for (OperationEnum operationEnum : OperationEnum.values()) {
+            if (operationEnum.ordinal() == value) {
                 return operationEnum;
             }
         }
         return null;
     }
 
-    public static List<Integer> getFuluList(){
+    public static List<Integer> getFuluList() {
         List<Integer> fuLuList = new ArrayList<>();
-        for(OperationEnum operationEnum : OperationEnum.values()){
-            if(operationEnum.canProductFulu){
+        for (OperationEnum operationEnum : OperationEnum.values()) {
+            if (operationEnum.canProductFulu) {
                 fuLuList.add(operationEnum.value());
             }
         }
         return fuLuList;
     }
 
-    public static List<Integer> getGangList(){
+    public static List<Integer> getGangList() {
         List<Integer> allGangTypeList = new ArrayList<>();
-        for(OperationEnum operationEnum : OperationEnum.values()){
-            if(OperationEnum.ZHI_GANG.equals(operationEnum) || OperationEnum.BU_GANG.equals(operationEnum) || OperationEnum.AN_GANG.equals(operationEnum)){
+        for (OperationEnum operationEnum : OperationEnum.values()) {
+            if (OperationEnum.ZHI_GANG.equals(operationEnum) || OperationEnum.BU_GANG.equals(operationEnum) || OperationEnum.AN_GANG.equals(operationEnum)) {
                 allGangTypeList.add(operationEnum.value());
             }
         }

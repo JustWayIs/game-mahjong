@@ -84,7 +84,7 @@ public class MahjongSeat extends AbstractSeatModel {
     }
 
     /**
-     * 牌来源是自己
+     * 牌来源是自己 并且 不需要记录牌值
      * @param operation
      */
     public void addOperation(MahjongOperation operation) {

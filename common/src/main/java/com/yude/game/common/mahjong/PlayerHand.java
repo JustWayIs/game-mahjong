@@ -143,7 +143,8 @@ public class PlayerHand {
                 }
                 tempCard = card.id;
                 cardNum++;
-                if (cardNum >= 4) {
+                //因为这张牌没有加入到PlayerHand对象中
+                if (cardNum >= 3) {
                     StepAction stepAction = new StepAction();
                     stepAction.setTargetCard(card.id);
                     //.setOperationType(XueZhanMahjongOperationEnum.AN_GANG);
@@ -198,6 +199,10 @@ public class PlayerHand {
         return canHuSolutions;
     }
 
+    /**
+     * 已经胡牌的玩家 貌似一定会有一种理牌 是可以听的
+     * @return
+     */
     public boolean isTing(){
         for(Solution solution : solutions){
             if(solution.canWin.size() > 0){

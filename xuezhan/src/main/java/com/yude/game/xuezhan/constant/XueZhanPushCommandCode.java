@@ -61,4 +61,14 @@ public interface XueZhanPushCommandCode extends PushCommandCode {
      * 查花猪
      */
     int CHA_HUA_ZHU = 0x201B;
+
+    /**
+     * 游戏结束 ： 接下来是流局结算
+     */
+    int GAME_OVER = 0x201C;
+
+    /**
+     * 结算详情页面
+     */
+    int SETTLEMENT_DETAIL = 0x201D;
 }

@@ -23,7 +23,11 @@ public enum XueZhanMahjongOperationEnum implements MahjongOperation {
     AN_GANG(OperationEnum.AN_GANG),
     HU(OperationEnum.HU),
     YI_PAO_DUO_XIANG(OperationEnum.YI_PAO_DUO_XIANG),
-    TOOK_CARD(OperationEnum.TOOK_CARD);
+    TOOK_CARD(OperationEnum.TOOK_CARD),
+    REBATE(OperationEnum.REBATE),
+    CHA_JIAO(OperationEnum.CHA_JIAO),
+    CHA_HUA_ZHU(OperationEnum.CHA_HUA_ZHU),;
+
 
     private OperationEnum operationEnum;
 

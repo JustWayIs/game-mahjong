@@ -43,4 +43,13 @@ public enum CardEnum{
         }
         return null;
     }
+
+    public static CardEnum judgeCardColorByDingQueColor(int color){
+        for(CardEnum cardEnum : CardEnum.values()){
+            if(cardEnum.getColor() == (color)){
+                return cardEnum;
+            }
+        }
+        return null;
+    }
 }

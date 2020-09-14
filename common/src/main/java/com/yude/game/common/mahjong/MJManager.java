@@ -174,10 +174,12 @@ public enum MJManager {
                 }
             }
             parseSolutions(solutions, branch, pMelds);
-            solutions.sort((a, b) -> a.meldCount != b.meldCount ? // 面子多的排前
-                    (b.meldCount - a.meldCount) : (a.pairCount != b.pairCount ? // 对子多的排前
+            solutions.sort((a, b) -> a.isWin || b.isWin ?
+                    ((b.isWin ? 1 : 0) - (a.isWin ? 1 : 0)) : ((a.isReadyHand || b.isReadyHand) ?
+                    (b.canWin.size() - a.canWin.size()) : (a.meldCount != b.meldCount) ? // 对子多的排前
+                    (b.meldCount - a.meldCount) : (a.pairCount != b.pairCount ? // 面子多的排前
                     (b.pairCount - a.pairCount) : (b.meldingCount != a.meldingCount ? // 搭子的多的排前
-                    (b.meldingCount - a.meldingCount) : (a.tiles.size() - b.tiles.size())))); // 散牌少的排前
+                    (b.meldingCount - a.meldingCount) : (a.tiles.size() - b.tiles.size()))))); // 散牌少的排前
         }
         return solutions;
     }
@@ -539,9 +541,9 @@ public enum MJManager {
          */
         tiles =  Arrays.asList(Tile.t1,Tile.t1,Tile.b2,Tile.b2,Tile.b5,Tile.b5,Tile.t3,Tile.t3,Tile.w8,Tile.w8,Tile.t7,Tile.t7,Tile.t9);
 
-        //tiles = Arrays.asList(Tile.t2,Tile.t3,Tile.t4,Tile.b1,Tile.b2,Tile.b3,Tile.b5,Tile.b5,Tile.b6,Tile.b7,Tile.b8,Tile.b8,Tile.b9);
+        tiles = Arrays.asList(Tile.t2,Tile.t3,Tile.t4,Tile.b1,Tile.b2,Tile.b3,Tile.b5,Tile.b6,Tile.b7,Tile.b8,Tile.b8,Tile.b8,Tile.b9,Tile.b9);
 
-        tiles = Arrays.asList(Tile.w4,Tile.w4,Tile.b6,Tile.b7);
+        //tiles = Arrays.asList(Tile.w4,Tile.w4,Tile.b6,Tile.b7);
 
         //tiles = Arrays.asList(Tile.t1,Tile.t9,Tile.b1,Tile.b9,)
 //        // 四饼 四饼 四饼 七饼 一条 六条 九条 九条 三万 六万 東 中 發

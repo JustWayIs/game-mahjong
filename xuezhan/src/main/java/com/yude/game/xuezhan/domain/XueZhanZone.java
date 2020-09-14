@@ -321,8 +321,7 @@ public class XueZhanZone extends AbstractGameZoneModel<XueZhanSeat, SichuanGameS
     }
 
     public boolean gameover(){
-        List cardWall = mahjongZone.getCardWall();
-        if(cardWall.size() == 0){
+        if(!mahjongZone.cardWallHasCard()){
             return true;
         }
 

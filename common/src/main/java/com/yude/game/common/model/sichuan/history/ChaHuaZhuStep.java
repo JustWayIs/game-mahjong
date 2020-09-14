@@ -1,9 +1,11 @@
 package com.yude.game.common.model.sichuan.history;
 
 import com.yude.game.common.constant.Status;
+import com.yude.game.common.model.MahjongOperation;
 import com.yude.game.common.model.history.Step;
 import com.yude.game.common.model.sichuan.constant.SichuanGameStatusEnum;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -13,14 +15,15 @@ import java.util.Map;
  * @Declare:
  */
 public class ChaHuaZhuStep implements Step {
-    private Map<Integer,ChaHuaZhuInfo> chaHuaZhuInfoMap;
-    private Status gameStatus = SichuanGameStatusEnum.CHA_HUA_ZHU_SETTLEMENT;
+    private Map<Integer, List<ChaHuaZhuInfo>> chaHuaZhuInfoMap;
+    private MahjongOperation operation;
+    private Status gameStatus = SichuanGameStatusEnum.LIU_JU_SETTLEMENT;
 
-    public Map<Integer, ChaHuaZhuInfo> getChaHuaZhuInfoMap() {
+    public Map<Integer, List<ChaHuaZhuInfo>> getChaHuaZhuInfoMap() {
         return chaHuaZhuInfoMap;
     }
 
-    public ChaHuaZhuStep setChaHuaZhuInfoMap(Map<Integer, ChaHuaZhuInfo> chaHuaZhuInfoMap) {
+    public ChaHuaZhuStep setChaHuaZhuInfoMap(Map<Integer, List<ChaHuaZhuInfo>> chaHuaZhuInfoMap) {
         this.chaHuaZhuInfoMap = chaHuaZhuInfoMap;
         return this;
     }
@@ -31,6 +34,15 @@ public class ChaHuaZhuStep implements Step {
 
     public ChaHuaZhuStep setGameStatus(Status gameStatus) {
         this.gameStatus = gameStatus;
+        return this;
+    }
+
+    public MahjongOperation getOperation() {
+        return operation;
+    }
+
+    public ChaHuaZhuStep setOperation(MahjongOperation operation) {
+        this.operation = operation;
         return this;
     }
 
@@ -47,5 +59,14 @@ public class ChaHuaZhuStep implements Step {
     @Override
     public int posId() {
         return 0;
+    }
+
+    @Override
+    public String toString() {
+        return "ChaHuaZhuStep{" +
+                "chaHuaZhuInfoMap=" + chaHuaZhuInfoMap +
+                ", operation=" + operation +
+                ", gameStatus=" + gameStatus +
+                '}';
     }
 }

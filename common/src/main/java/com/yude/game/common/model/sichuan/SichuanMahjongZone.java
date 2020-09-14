@@ -200,26 +200,30 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
      * @param card
      * @return
      */
-    public List<StepAction> whatCanYouDo(Integer card) {
+    public List<StepAction> whatCanYouDo(final Integer card,SichuanRoomConfig roomConfig) {
         Integer curObtainCardPosId = mahjongZone.getCurTookCardPlayerPosId();
         SichuanMahjongSeat playerSeat = playerSeats[curObtainCardPosId];
         MahjongSeat mahjongSeat = playerSeat.getMahjongSeat();
 
         List<StepAction> stepActions = new ArrayList<>();
         PlayerHand playerHand = mahjongSeat.getPlayerHand();
-        playerHand.canAnGang(stepActions,card);
-        for (StepAction stepAction : stepActions) {
-            stepAction.setCardSource(mahjongSeat.getPosId())
-                    .setOperationType(OperationEnum.AN_GANG);
+        if(mahjongZone.cardWallHasCard() || !roomConfig.isLastCardProhibitGang()){
+            playerHand.canAnGang(stepActions, card);
+            for (StepAction stepAction : stepActions) {
+                stepAction.setCardSource(mahjongSeat.getPosId())
+                        .setTargetCard(card)
+                        .setOperationType(OperationEnum.AN_GANG);
+            }
+            boolean canBuGang = playerHand.canBuGang(card);
+            if (canBuGang) {
+                StepAction stepAction = new StepAction();
+                stepAction.setTargetCard(card)
+                        .setCardSource(mahjongSeat.getPosId())
+                        .setOperationType(OperationEnum.BU_GANG);
+                stepActions.add(stepAction);
+            }
         }
-        boolean canBuGang = playerHand.canBuGang(card);
-        if (canBuGang) {
-            StepAction stepAction = new StepAction();
-            stepAction.setTargetCard(card)
-                    .setCardSource(mahjongSeat.getPosId())
-                    .setOperationType(OperationEnum.BU_GANG);
-            stepActions.add(stepAction);
-        }
+
         List<Solution> solutions = playerHand.canHu(card, true);
         if (solutions.size() > 0) {
             StepAction stepAction = new StepAction();
@@ -237,18 +241,24 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
     }
 
     /**
-     * 对于某个玩家出的牌，其他玩家能做什么
-     *
      * @param outCardSet
      * @param card
+     * @param roomConfig
      * @return
      */
-    public List<MahjongSeat> otherPalyerCanDo(SichuanMahjongSeat outCardSet, Integer card) {
+    public List<MahjongSeat> otherPalyerCanDo(SichuanMahjongSeat outCardSet, Integer card, SichuanRoomConfig roomConfig) {
         List<MahjongSeat> canOperationSeats = new ArrayList<>();
         for (SichuanMahjongSeat seat : playerSeats) {
             if (outCardSet.equals(seat)) {
                 continue;
             }
+
+            //能否胡多次 -- 血流不知道可以不可以直杠
+            boolean canHus = roomConfig.isCanHus();
+            if (seat.isAlreadyHu() && !canHus) {
+                continue;
+            }
+
             MahjongSeat mahjongSeat = seat.getMahjongSeat();
             PlayerHand playerHand = mahjongSeat.getPlayerHand();
             boolean canPeng = playerHand.canPeng(card);
@@ -265,19 +275,24 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
                         .setCombinationRsult(Arrays.asList(card,card,card));
                 stepActions.add(stepAction);*/
             }
-            boolean canZhiGang = playerHand.canZhiGang(card);
-            if (canZhiGang) {
-                StepAction stepAction = new StepAction();
-                stepAction.setTargetCard(card)
-                        .setCardSource(outCardSet.getPosId())
-                        .setOperationType(OperationEnum.ZHI_GANG);
-                mahjongSeat.addOperation(stepAction);
+
+            boolean canZhiGang = false;
+            if(mahjongZone.cardWallHasCard() || !roomConfig.isLastCardProhibitGang()){
+                canZhiGang = playerHand.canZhiGang(card);
+                if (canZhiGang) {
+                    StepAction stepAction = new StepAction();
+                    stepAction.setTargetCard(card)
+                            .setCardSource(outCardSet.getPosId())
+                            .setOperationType(OperationEnum.ZHI_GANG);
+                    mahjongSeat.addOperation(stepAction);
                 /*StepAction stepAction = new StepAction();
                 stepAction.setCardSource(outCardSet.getPosId())
                             .setTargetCard(card)
                             .setOperationType(XueZhanMahjongOperationEnum.ZHI_GANG)
                             .setCombinationRsult(Arrays.asList(card,card,card,card));*/
+                }
             }
+
             List<Solution> solutions = playerHand.canHu(card, false);
             if (solutions.size() > 0) {
                 StepAction stepAction = new StepAction();
@@ -395,8 +410,16 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
     }
 
     public Integer refreshTookPlayer() {
-        mahjongZone.refreshObtaionCardPosId();
-        return mahjongZone.getCurTookCardPlayerPosId();
+        SichuanMahjongSeat playerSeat;
+        Integer curTookCardPlayerPosId;
+        do {
+            mahjongZone.refreshObtaionCardPosId();
+            curTookCardPlayerPosId = mahjongZone.getCurTookCardPlayerPosId();
+            playerSeat = playerSeats[curTookCardPlayerPosId];
+
+        } while (playerSeat.isAlreadyHu());
+
+        return curTookCardPlayerPosId;
     }
 
     public GameStepModel<OperationCardStep> tookCardStep(Integer posId) {
@@ -414,7 +437,7 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
         step.setStep(mahjongZone.getStepCount())
                 .setPosId(posId)
                 .setAction(stepAction)
-                .setGameStatus(gameStatus)
+                .setGameStatus(mahjongZone.getGameStatus())
                 .setRemainingCardSize(standCardList.size())
                 .setStandCardList(standCardList)
                 .setStandCardConvertList(MahjongProp.cardConvertName(standCardList));
@@ -424,9 +447,12 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
         return gameStepModel;
     }
 
+    /**
+     * 血战的判断方式
+     * @return
+     */
     public boolean gameover() {
-        List cardWall = mahjongZone.getCardWall();
-        if (cardWall.size() == 0) {
+        if (!mahjongZone.cardWallHasCard()) {
             return true;
         }
 
@@ -444,10 +470,11 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
         return false;
     }
 
-    public GameStepModel<RebateStep> rebate(List<SettlementStep> gangSettlementHistory, SichuanRoomConfig ruleConfig) {
+    public GameStepModel<RebateStep> rebate(List<SettlementStep> gangSettlementHistory, SichuanRoomConfig ruleConfig,MahjongOperation operation) {
         RebateStep rebatStep = new RebateStep();
         Map<Integer, List<RebateInfo>> seatRebateMap = new HashMap<>();
-        rebatStep.setSeatRebateMap(seatRebateMap);
+        rebatStep.setSeatRebateMap(seatRebateMap)
+                .setOperation(operation);
 
         GameStepModel<RebateStep> rebateStepGameStepModel = new GameStepModel<>(mahjongZone.getZoneId(), null, rebatStep);
 
@@ -476,7 +503,7 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
                     MahjongOperation operationType = action.getOperationType();
                     SettlementInfo settlementInfo = entry.getValue();
 
-                    //退分
+                    //退分 或者 拿回杠分（因为用的现有的SettlementStep 对于同一个StepAction 赋给了操作涉及的玩家，在杠牌玩家那里是 加分， 在被杠玩家那里是减分。本身就有多条记录）
                     Integer posId = settlementInfo.getPosId();
                     SichuanMahjongSeat playerSeat = playerSeats[posId];
                     Player player = playerSeat.getPlayer();
@@ -497,8 +524,10 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
                     List<RebateInfo> rebateInfos = seatRebateMap.get(mahjongSeat.getPosId());
                     if (rebateInfos == null) {
                         rebateInfos = new ArrayList<>();
+                        seatRebateMap.put(mahjongSeat.getPosId(), rebateInfos);
                     }
                     rebateInfos.add(rebateInfo);
+
                 }
 
             }
@@ -506,7 +535,7 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
         return rebateStepGameStepModel;
     }
 
-    public GameStepModel<ChaJiaoStep>  chaJiao(Rule<SichuanRoomConfig> rule) {
+    public GameStepModel<ChaJiaoStep> chaJiao(Rule<SichuanRoomConfig> rule,MahjongOperation operation) {
         List<SichuanMahjongSeat> lossScoreSeats = new ArrayList<>();
         List<SichuanMahjongSeat> winScoreSeats = new ArrayList<>();
 
@@ -522,15 +551,21 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
 
         ChaJiaoStep chaJiaoStep = new ChaJiaoStep();
         Map<Integer, List<ChaJiaoInfo>> chaJiaoInfoMap = new HashMap<>();
-        chaJiaoStep.setChaJiaoInfoMap(chaJiaoInfoMap);
+        chaJiaoStep.setChaJiaoInfoMap(chaJiaoInfoMap)
+                .setOperation(operation);
         for (SichuanMahjongSeat lossSiChuanSeat : lossScoreSeats) {
             MahjongSeat lossSeat = lossSiChuanSeat.getMahjongSeat();
             Player loserPlayer = lossSeat.getPlayer();
+            final int posId = lossSeat.getPosId();
             for (SichuanMahjongSeat winSichuanSeat : winScoreSeats) {
                 MahjongSeat winScoreSeat = winSichuanSeat.getMahjongSeat();
+                final int winPosId = winScoreSeat.getPosId();
                 Player winScorePlayer = winScoreSeat.getPlayer();
                 PlayerHand playerHand = winScoreSeat.getPlayerHand();
 
+                /**
+                 * 找出听牌玩家可胡的最大番
+                 */
                 int resultFanScore = 0;
                 int resultFanNum = 0;
                 List<FanInfo> resultFanInfos = null;
@@ -538,7 +573,7 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
                     List<Tile> canWin = solution.canWin;
                     if (canWin.size() > 0) {
                         for (Tile tile : canWin) {
-                            List<FanInfo> fanInfos = checkFan(winSichuanSeat, tile.id, OperationEnum.HU.value(), lossSiChuanSeat.getPosId(), rule);
+                            List<FanInfo> fanInfos = checkFan(winSichuanSeat, tile.id, OperationEnum.HU.value(), posId, rule);
                             final int sumFan = calculateFanNumByFanInfo(fanInfos);
                             SichuanRoomConfig ruleConfig = rule.getRuleConfig();
                             int fanScore = ruleConfig.getBaseScoreFactor() * sumFan;
@@ -551,13 +586,15 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
 
                     }
                 }
-                List<ChaJiaoInfo> loserChaJiaoInfos = chaJiaoInfoMap.get(lossSiChuanSeat.getPosId());
+                List<ChaJiaoInfo> loserChaJiaoInfos = chaJiaoInfoMap.get(posId);
                 if (loserChaJiaoInfos == null) {
                     loserChaJiaoInfos = new ArrayList<>();
+                    chaJiaoInfoMap.put(posId, loserChaJiaoInfos);
                 }
-                List<ChaJiaoInfo> winChaJiaoInfos = chaJiaoInfoMap.get(winScoreSeat.getPosId());
+                List<ChaJiaoInfo> winChaJiaoInfos = chaJiaoInfoMap.get(winPosId);
                 if (winChaJiaoInfos == null) {
                     winChaJiaoInfos = new ArrayList<>();
+                    chaJiaoInfoMap.put(winPosId, winChaJiaoInfos);
                 }
                 //被查叫玩家
                 long beforeScore = loserPlayer.getScore();
@@ -568,8 +605,8 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
                         .setRemainingScore(loserPlayer.getScore())
                         .setFanNum(resultFanNum)
                         .setFanInfoList(resultFanInfos)
-                        .setPosId(lossSeat.getPosId())
-                        .setCompensationToPosId(winScoreSeat.getPosId());
+                        .setPosId(posId)
+                        .setCompensationToPosId(winPosId);
                 loserChaJiaoInfos.add(chaJiaoInfo);
 
                 //查叫玩家
@@ -581,23 +618,138 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
                         .setRemainingScore(winScorePlayer.getScore())
                         .setFanNum(resultFanNum)
                         .setFanInfoList(resultFanInfos)
-                        .setPosId(winScoreSeat.getPosId())
-                        .setCompensationToPosId(lossSeat.getPosId());
+                        .setPosId(winPosId)
+                        .setCompensationToPosId(posId);
                 winChaJiaoInfos.add(winChaJiaoInfo);
             }
         }
-        GameStepModel<ChaJiaoStep> chaJiaoStepGameStepModel = new GameStepModel<>(mahjongZone.getZoneId(),null,chaJiaoStep);
+        GameStepModel<ChaJiaoStep> chaJiaoStepGameStepModel = new GameStepModel<>(mahjongZone.getZoneId(), null, chaJiaoStep);
         return chaJiaoStepGameStepModel;
     }
 
-    public void chaHuazhu() {
-        List<SichuanMahjongSeat> seats = huaZhuSeats();
-        ChaHuaZhuStep step = new ChaHuaZhuStep();
-        Map<Integer, ChaHuaZhuInfo> chaHuaZhuInfoMap = new HashMap<>();
-        step.setChaHuaZhuInfoMap(chaHuaZhuInfoMap);
-        for (SichuanMahjongSeat seat : seats) {
+    public GameStepModel<ChaHuaZhuStep> chaHuazhu(Rule<SichuanRoomConfig> rule,MahjongOperation operation) {
+        SichuanRoomConfig roomConfig = rule.getRuleConfig();
+        List<SichuanMahjongSeat> huaZhuSeats = new ArrayList<>();
+        List<SichuanMahjongSeat> winSichuanSeats = new ArrayList<>();
+        final int huaZhuBaseFan = roomConfig.getHuaZhuBaseFan();
+        final int baseScoreFactor = roomConfig.getBaseScoreFactor();
+        final int huaZhuBaseScore = huaZhuBaseFan * baseScoreFactor;
 
+        for (SichuanMahjongSeat sichuanMahjongSeat : playerSeats) {
+            if (sichuanMahjongSeat.isHuaZhu()) {
+                huaZhuSeats.add(sichuanMahjongSeat);
+            } else {
+                winSichuanSeats.add(sichuanMahjongSeat);
+            }
         }
+
+        ChaHuaZhuStep step = new ChaHuaZhuStep();
+        Map<Integer, List<ChaHuaZhuInfo>> chaHuaZhuInfoMap = new HashMap<>();
+        step.setChaHuaZhuInfoMap(chaHuaZhuInfoMap)
+                .setOperation(operation);
+        for (SichuanMahjongSeat seat : huaZhuSeats) {
+            final MahjongSeat huZhuSeat = seat.getMahjongSeat();
+            Player loserPlayer = huZhuSeat.getPlayer();
+            final int huaZhuPosId = huZhuSeat.getPosId();
+
+            List<ChaHuaZhuInfo> huaZhuInfos = chaHuaZhuInfoMap.get(huaZhuPosId);
+            if (huaZhuInfos == null) {
+                huaZhuInfos = new ArrayList<>();
+                chaHuaZhuInfoMap.put(huaZhuPosId, huaZhuInfos);
+            }
+
+            for (SichuanMahjongSeat winSichuanSeat : winSichuanSeats) {
+                final MahjongSeat winSeat = winSichuanSeat.getMahjongSeat();
+                final Player winPlayer = winSeat.getPlayer();
+                final PlayerHand playerHand = winSeat.getPlayerHand();
+                final int winSeatPosId = winSeat.getPosId();
+                List<ChaHuaZhuInfo> winChaHuaZhuInfoList = chaHuaZhuInfoMap.get(winSeatPosId);
+                if (winChaHuaZhuInfoList == null) {
+                    winChaHuaZhuInfoList = new ArrayList<>();
+                    chaHuaZhuInfoMap.put(winSeatPosId, winChaHuaZhuInfoList);
+
+                }
+                ChaHuaZhuInfo winInfo = new ChaHuaZhuInfo();
+                ChaHuaZhuInfo loserInfo = new ChaHuaZhuInfo();
+                //赢分玩家分为类：1.未胡牌的听牌玩家 2.已胡牌的玩家、未胡牌且未听牌的玩家
+                if (!winSichuanSeat.isAlreadyHu() && playerHand.isTing()) {
+                    /**
+                     * 找出听牌玩家可胡的最大番
+                     */
+                    int resultFanScore = 0;
+                    int resultFanNum = 0;
+                    List<FanInfo> resultFanInfos = null;
+                    for (Solution solution : playerHand.solutions) {
+                        List<Tile> canWin = solution.canWin;
+                        if (canWin.size() > 0) {
+                            for (Tile tile : canWin) {
+                                List<FanInfo> fanInfos = checkFan(winSichuanSeat, tile.id, OperationEnum.HU.value(), winSeatPosId, rule);
+                                final int sumFan = calculateFanNumByFanInfo(fanInfos);
+                                SichuanRoomConfig ruleConfig = rule.getRuleConfig();
+                                int fanScore = ruleConfig.getBaseScoreFactor() * sumFan;
+                                if (fanScore > resultFanScore) {
+                                    resultFanScore = fanScore;
+                                    resultFanInfos = fanInfos;
+                                    resultFanNum = sumFan;
+                                }
+                            }
+
+                        }
+
+                    }
+                    int resultChangeScore = huaZhuBaseScore + resultFanScore;
+                    int resultSettleFanNum = huaZhuBaseFan + resultFanNum;
+
+                    final long winnerBeforeScore = winPlayer.getScore();
+                    winPlayer.scoreSettle(resultChangeScore);
+                    final long winnerRemainingScore = winPlayer.getScore();
+                    winInfo.setBeforeScore(winnerBeforeScore)
+                            .setChangeScore(resultChangeScore)
+                            .setRemainingScore(winnerRemainingScore)
+                            .setCompensationToPosId(huaZhuPosId)
+                            .setFanNum(resultSettleFanNum)
+                            .setPosId(winSeatPosId);
+                    winChaHuaZhuInfoList.add(winInfo);
+
+                    final long loserBaseScore = loserPlayer.getScore();
+                    loserPlayer.scoreSettle(-resultChangeScore);
+                    final long loserRemainingScore = loserPlayer.getScore();
+                    winInfo.setBeforeScore(loserBaseScore)
+                            .setChangeScore(-resultChangeScore)
+                            .setRemainingScore(loserRemainingScore)
+                            .setCompensationToPosId(winSeatPosId)
+                            .setFanNum(resultSettleFanNum)
+                            .setPosId(huaZhuPosId);
+                    winChaHuaZhuInfoList.add(loserInfo);
+
+                }else{
+                    final long winnerBeforeScore = winPlayer.getScore();
+                    winPlayer.scoreSettle(huaZhuBaseScore);
+                    final long winnerRemainingScore = winPlayer.getScore();
+                    winInfo.setBeforeScore(winnerBeforeScore)
+                            .setChangeScore(huaZhuBaseScore)
+                            .setRemainingScore(winnerRemainingScore)
+                            .setCompensationToPosId(huaZhuPosId)
+                            .setFanNum(huaZhuBaseFan)
+                            .setPosId(winSeatPosId);
+                    winChaHuaZhuInfoList.add(winInfo);
+
+                    final long loserBaseScore = loserPlayer.getScore();
+                    loserPlayer.scoreSettle(-huaZhuBaseScore);
+                    final long loserRemainingScore = loserPlayer.getScore();
+                    winInfo.setBeforeScore(loserBaseScore)
+                            .setChangeScore(-huaZhuBaseScore)
+                            .setRemainingScore(loserRemainingScore)
+                            .setCompensationToPosId(winSeatPosId)
+                            .setFanNum(huaZhuBaseFan)
+                            .setPosId(huaZhuPosId);
+                    winChaHuaZhuInfoList.add(loserInfo);
+
+                }
+            }
+        }
+        GameStepModel<ChaHuaZhuStep> gameStepModel = new GameStepModel<>(mahjongZone.getZoneId(),null,step);
+        return gameStepModel;
     }
 
     private List<SichuanMahjongSeat> huaZhuSeats() {

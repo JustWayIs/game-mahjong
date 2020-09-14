@@ -188,7 +188,7 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
 
         //要删掉胡牌的 OperationCardStep 改成用 HuCardStep
         List<OperationCardStep> operationHistory = playerSeat.getOperationHistory();
-        operationHistory.remove(operation);
+        operationHistory.remove(operationStep);
         playerSeat.addStep(huCardStep);
         GameStepModel<HuCardStep> huStepModel =  new GameStepModel<>(zoneId,operation.getPlayers(),huCardStep);
         return huStepModel;
@@ -222,9 +222,9 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
 
         GameStepModel<OperationCardStep> gameStepModel = new GameStepModel<>(zoneId, playerSeat.getPlayer(), step);
         stepCount++;
-        playerSeat.clearOperation(OperationEnum.OUT_CARD.value());
+        playerSeat.clearOperation();
 
-        if (needJoinTempActionZone()) {
+        if (needJoinTempActionZone(OperationEnum.CANCEL)) {
             TempAction tempAction = new TempAction(posId, playerSeat.getUserId(), stepAction);
             tempActions.add(tempAction);
             Collections.sort(tempActions);
@@ -273,7 +273,7 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         stepCount++;
         playerSeat.clearOperation();
 
-        if (needJoinTempActionZone()) {
+        if (needJoinTempActionZone(OperationEnum.AN_GANG)) {
             TempAction tempAction = new TempAction(posId, playerSeat.getUserId(), stepAction);
             tempActions.add(tempAction);
             Collections.sort(tempActions);
@@ -375,7 +375,7 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         stepCount++;
         playerSeat.clearOperation();
 
-        if (needJoinTempActionZone()) {
+        if (needJoinTempActionZone(operationType)) {
             TempAction tempAction = new TempAction(posId, playerSeat.getUserId(), stepAction);
             tempActions.add(tempAction);
             Collections.sort(tempActions);
@@ -413,7 +413,7 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         stepCount++;
         playerSeat.clearOperation();
 
-        if (needJoinTempActionZone()) {
+        if (needJoinTempActionZone(OperationEnum.CHI)) {
             TempAction tempAction = new TempAction(posId, playerSeat.getUserId(), stepAction);
             tempActions.add(tempAction);
             Collections.sort(tempActions);
@@ -451,7 +451,7 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         stepCount++;
         playerSeat.clearOperation();
 
-        if (needJoinTempActionZone()) {
+        if (needJoinTempActionZone(OperationEnum.PENG)) {
             TempAction tempAction = new TempAction(posId, playerSeat.getUserId(), stepAction);
             tempActions.add(tempAction);
             Collections.sort(tempActions);
@@ -459,16 +459,13 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         return gameStepModel;
     }
 
-    public void canNextProcess() {
-        boolean needWait = existsCanOperation();
-    }
 
     /**
      * 如果还有玩家可以操作，或者已经有玩家操作过（当前回合）
      *
      * @return
      */
-    public boolean needJoinTempActionZone() {
+    public boolean needJoinTempActionZone(MahjongOperation operation) {
         /**
          * 是否已经有玩家先操作了，在该回合
          */
@@ -476,7 +473,7 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
             return true;
         }
 
-        if (existsCanOperation()) {
+        if (existsCanOperation(operation)) {
             return true;
         }
         return false;
@@ -487,11 +484,15 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
      *
      * @return
      */
-    public boolean existsCanOperation() {
+    public boolean existsCanOperation(MahjongOperation mahjongOperation) {
         for (MahjongSeat mahjongSeat : playerSeats) {
-
             if (mahjongSeat.canOperation()) {
-                return true;
+                for(StepAction stepAction : mahjongSeat.getCanOperations()){
+                    final MahjongOperation operationType = stepAction.getOperationType();
+                    if(operationType.priority() >= mahjongOperation.priority()){
+                        return true;
+                    }
+                }
             }
         }
         return false;
@@ -502,6 +503,10 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
      */
     public void cleanTempAction() {
         tempActions.clear();
+    }
+
+    public boolean cardWallHasCard(){
+        return cardWall.size() > 0;
     }
 
     public List<TempAction> getTempActions() {

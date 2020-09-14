@@ -8,6 +8,10 @@ package com.yude.game.common.model.sichuan.history;
  */
 public class ChaHuaZhuInfo {
     private Integer posId;
+    /**
+     * 如果changeCore是正数，这么这个属性标识的就是赔分给该玩家的玩家
+     * 如果是是负数，那么标识的就是要赔付给谁
+     */
     private Integer compensationToPosId;
     private int fanNum;
     private long beforeScore;

@@ -1,6 +1,7 @@
 package com.yude.game.common.model.sichuan.history;
 
 import com.yude.game.common.constant.Status;
+import com.yude.game.common.model.MahjongOperation;
 import com.yude.game.common.model.history.Step;
 import com.yude.game.common.model.sichuan.constant.SichuanGameStatusEnum;
 
@@ -15,7 +16,8 @@ import java.util.Map;
  */
 public class RebateStep implements Step {
     private Map<Integer, List<RebateInfo>> seatRebateMap;
-    private Status gameStatus = SichuanGameStatusEnum.REBATE_SETTLEMENT;
+    private MahjongOperation operation;
+    private Status gameStatus = SichuanGameStatusEnum.LIU_JU_SETTLEMENT;
 
     public Map<Integer, List<RebateInfo>> getSeatRebateMap() {
         return seatRebateMap;
@@ -35,6 +37,15 @@ public class RebateStep implements Step {
         return this;
     }
 
+    public MahjongOperation getOperation() {
+        return operation;
+    }
+
+    public RebateStep setOperation(MahjongOperation operation) {
+        this.operation = operation;
+        return this;
+    }
+
     @Override
     public Status gameStatus() {
         return null;
@@ -48,5 +59,14 @@ public class RebateStep implements Step {
     @Override
     public int posId() {
         return 0;
+    }
+
+    @Override
+    public String toString() {
+        return "RebateStep{" +
+                "seatRebateMap=" + seatRebateMap +
+                ", operation=" + operation +
+                ", gameStatus=" + gameStatus +
+                '}';
     }
 }

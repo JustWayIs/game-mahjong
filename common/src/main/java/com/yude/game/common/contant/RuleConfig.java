@@ -10,87 +10,85 @@ public abstract class RuleConfig {
     /**
      * 这个值后期会是动态的，相当于房间底注
      */
-    protected Integer baseScoreFactor = 1;
+    protected int baseScoreFactor = 1;
 
 
     /**
      * 快速出牌/托管 所需要的玩家连续超时次数
      */
-    protected Integer SERIAL_TIMEOUT_OUNT = 2;
+    protected int SERIAL_TIMEOUT_OUNT = 2;
 
-    protected Boolean canChi = true;
+    protected boolean canChi = true;
 
-    protected Boolean canPeng = true;
+    protected boolean canPeng = true;
 
-    protected Boolean canZhiGang = true;
+    protected boolean canZhiGang = true;
 
-    protected Boolean canBuGang = true;
+    protected boolean canBuGang = true;
 
-    protected Boolean canAnGang = true;
+    protected boolean canAnGang = true;
 
 
-    public Integer getBaseScoreFactor() {
+    public int getBaseScoreFactor() {
         return baseScoreFactor;
     }
 
-    public RuleConfig setBaseScoreFactor(Integer baseScoreFactor) {
+    public RuleConfig setBaseScoreFactor(int baseScoreFactor) {
         this.baseScoreFactor = baseScoreFactor;
         return this;
     }
 
-    public Integer getSERIAL_TIMEOUT_OUNT() {
+    public int getSERIAL_TIMEOUT_OUNT() {
         return SERIAL_TIMEOUT_OUNT;
     }
 
-    public RuleConfig setSERIAL_TIMEOUT_OUNT(Integer SERIAL_TIMEOUT_OUNT) {
+    public RuleConfig setSERIAL_TIMEOUT_OUNT(int SERIAL_TIMEOUT_OUNT) {
         this.SERIAL_TIMEOUT_OUNT = SERIAL_TIMEOUT_OUNT;
         return this;
     }
 
-    public Boolean getCanChi() {
+    public boolean isCanChi() {
         return canChi;
     }
 
-    public RuleConfig setCanChi(Boolean canChi) {
+    public RuleConfig setCanChi(boolean canChi) {
         this.canChi = canChi;
         return this;
     }
 
-    public Boolean getCanPeng() {
+    public boolean isCanPeng() {
         return canPeng;
     }
 
-    public RuleConfig setCanPeng(Boolean canPeng) {
+    public RuleConfig setCanPeng(boolean canPeng) {
         this.canPeng = canPeng;
         return this;
     }
 
-    public Boolean getCanZhiGang() {
+    public boolean isCanZhiGang() {
         return canZhiGang;
     }
 
-    public RuleConfig setCanZhiGang(Boolean canZhiGang) {
+    public RuleConfig setCanZhiGang(boolean canZhiGang) {
         this.canZhiGang = canZhiGang;
         return this;
     }
 
-    public Boolean getCanBuGang() {
+    public boolean isCanBuGang() {
         return canBuGang;
     }
 
-    public RuleConfig setCanBuGang(Boolean canBuGang) {
+    public RuleConfig setCanBuGang(boolean canBuGang) {
         this.canBuGang = canBuGang;
         return this;
     }
 
-    public Boolean getCanAnGang() {
+    public boolean isCanAnGang() {
         return canAnGang;
     }
 
-    public RuleConfig setCanAnGang(Boolean canAnGang) {
+    public RuleConfig setCanAnGang(boolean canAnGang) {
         this.canAnGang = canAnGang;
         return this;
     }
-
-
 }
