@@ -170,7 +170,7 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
          */
         MahjongSeat playerSeat = playerSeats[posId];
         List<Integer> standCardList = playerSeat.getStandCardList();
-        standCardList.add(card);
+
         Collections.sort(standCardList);
         //playerSeat.solution();
         playerSeat.addStatus(SeatStatusEnum.ALREADY_HU);
@@ -185,7 +185,8 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
                 .setRemainingCardSize(operationStep.getRemainingCardSize())
                 .setStep(operationStep.getStep())
                 .setPosId(operationStep.getPosId());
-
+        //最终应不应该把胡的牌从手牌中拿出来呢？
+        standCardList.add(card);
         //要删掉胡牌的 OperationCardStep 改成用 HuCardStep
         List<OperationCardStep> operationHistory = playerSeat.getOperationHistory();
         operationHistory.remove(operationStep);
@@ -313,6 +314,9 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
                 cardCombination = new ArrayList<>(Arrays.asList(card, card, card, card));
                 playerSeat.removeCard(card);
                 Collections.sort(standCardListSort);
+                //补杠把碰的step标记为无效，以免通过玩家位置获取副露信息的时候，还把碰作为副露
+                final OperationCardStep desinateStep = playerSeat.getDesinateStep(OperationEnum.PENG.value(), card);
+                desinateStep.setEffective(false);
                 break;
             case AN_GANG:
                 cardCombination = new ArrayList<>(Arrays.asList(card, card, card, card));
@@ -356,7 +360,7 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
             throw new SystemException("没有匹配的可操作信息");
         }
 
-        List<Integer> standCardList = playerSeat.getStandCardList();
+        List<Integer> standCardList = new ArrayList<>(playerSeat.getStandCardList());
         stepAction.setTargetCard(card)
                 .setOperationType(operationType)
                 .setCardSource(cardSource)

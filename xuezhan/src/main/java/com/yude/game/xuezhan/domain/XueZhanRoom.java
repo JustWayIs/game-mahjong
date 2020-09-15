@@ -3,6 +3,7 @@ package com.yude.game.xuezhan.domain;
 
 import com.yude.game.common.contant.MahjongStatusCodeEnum;
 import com.yude.game.common.contant.PushCommandCode;
+import com.yude.game.common.mahjong.PlayerHand;
 import com.yude.game.common.mahjong.Solution;
 import com.yude.game.common.manager.IPushManager;
 import com.yude.game.common.manager.IRoomManager;
@@ -25,6 +26,10 @@ import com.yude.game.common.model.sichuan.*;
 import com.yude.game.common.model.sichuan.constant.SeatStatusEnum;
 import com.yude.game.common.model.sichuan.constant.SichuanGameStatusEnum;
 import com.yude.game.common.model.sichuan.history.*;
+import com.yude.game.common.model.sichuan.history.info.ChaHuaZhuInfo;
+import com.yude.game.common.model.sichuan.history.info.ChaJiaoInfo;
+import com.yude.game.common.model.sichuan.history.info.RebateInfo;
+import com.yude.game.common.model.sichuan.history.info.SettlementDetailInfo;
 import com.yude.game.common.timeout.MahjongTimeoutTaskPool;
 import com.yude.game.exception.BizException;
 import com.yude.game.exception.SystemException;
@@ -267,6 +272,8 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             throw new BizException(MahjongStatusCodeEnum.HU_PARAM_ERROR);
         }
         if (!isRestore) {
+            final SichuanMahjongSeat sichuanMahjongSeat = xueZhanSeat.getSichuanMahjongSeat();
+            sichuanMahjongSeat.setHuCard(card);
             GameStepModel<HuCardStep> stepModel = mahjongZone.hu(card, posId);
             historyList.add(stepModel);
         }
@@ -1004,6 +1011,46 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             rebate();
         }
 
+        SettlementDetailStep settlementDetailStep = new SettlementDetailStep();
+        settlementDetailStep.setStepCount(mahjongZone.getStepCount());
+        Map<Integer, SettlementDetailInfo> map = new HashMap<>();
+
+        for(Map.Entry<Integer,XueZhanSeat> entry : posIdSeatMap.entrySet()){
+            final Integer posId = entry.getKey();
+            final XueZhanSeat value = entry.getValue();
+            final MahjongSeat mahjongSeat = value.getMahjongSeat();
+            final PlayerHand playerHand = mahjongSeat.getPlayerHand();
+
+            final SettlementDetailInfo settlementDetailInfo = new SettlementDetailInfo();
+
+            SettlementDetailResponse settlementDetailResponse = new SettlementDetailResponse();
+            if (playerHand.isTing()) {
+                settlementDetailResponse.setStandCardList(mahjongSeat.getStandCardList());
+            }
+            List<ActionDTO> actionDTOList = new ArrayList<>();
+
+            for(GameStepModel gameStepModel : historyList){
+
+                final Step operationStep = gameStepModel.getOperationStep();
+                final List<StepAction> fuLu = mahjongSeat.getFuLu();
+                for(StepAction stepAction : fuLu){
+                    ActionDTO actionDTO = new ActionDTO();
+                    actionDTO.setTargetCard(stepAction.getTargetCard())
+                            .setCardSourcePosId(stepAction.getCardSource())
+                            .setOperationType(stepAction.getOperationType().value());
+                    actionDTOList.add(actionDTO);
+                }
+                if(SichuanGameStatusEnum.SETTLEMENT.status() == operationStep.gameStatus().status()){
+                    SettlementStep settlementStep = (SettlementStep) operationStep;
+                    final StepAction action = settlementStep.getAction();
+                    if(operationStep.posId() == mahjongSeat.getPosId() || action.getCardSource().equals(mahjongSeat.getPosId())){
+
+                    }
+                }
+
+            }
+            settlementDetailResponse.setActionDTOList(actionDTOList);
+        }
 
     }
 

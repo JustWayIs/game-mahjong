@@ -23,4 +23,12 @@ public interface Step {
 
     int posId();
 
+    /**
+     * 补杠操作，会使之前的碰操作的step失效
+     * @return
+     */
+    default boolean isEffective(){
+        return true;
+    }
+
 }

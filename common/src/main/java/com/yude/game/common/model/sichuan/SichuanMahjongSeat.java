@@ -35,6 +35,14 @@ public class SichuanMahjongSeat extends AbstractSeatModel {
 
     private boolean alreadyHu;
 
+    /**
+     * 用于血战
+     */
+    private Integer huCard;
+
+    /**
+     * 用于血流
+     */
     private List<Integer> huCards;
 
     public SichuanMahjongSeat(Player player, int posId) {
@@ -107,7 +115,16 @@ public class SichuanMahjongSeat extends AbstractSeatModel {
         return huCards;
     }
 
-    public void addHuCard(Integer card){
+    public void addHuCardToHuCards(Integer card){
         huCards.add(card);
+    }
+
+    public Integer getHuCard() {
+        return huCard;
+    }
+
+    public SichuanMahjongSeat setHuCard(Integer huCard) {
+        this.huCard = huCard;
+        return this;
     }
 }

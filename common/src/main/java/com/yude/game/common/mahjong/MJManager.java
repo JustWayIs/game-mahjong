@@ -293,9 +293,20 @@ public enum MJManager {
                 }else if(solution.pairCount == 7){
                     solution.isWin = true;
                     solution.setBaseHuType(BaseHuTypeEnum.七对);
-                } else if (solution.meldCount == 4 || solution.pairCount == 6) {
+                } else if (solution.meldCount == 4 ) {
                     // 四面子，听单张，可杠上花
                     solution.canWin.addAll(solution.tiles);
+                    solution.setBaseHuType(BaseHuTypeEnum.平胡);
+                    for (Meld meld : solution.melds) {
+                        if (meld.type == Meld.TYPE_TRIPLET) {
+                            solution.canKong.add(meld.tiles.get(0));
+                        }
+                    }
+                    solution.isReadyHand = true;
+                }else if (solution.pairCount == 6) {
+                    // 四面子，听单张，可杠上花
+                    solution.canWin.addAll(solution.tiles);
+                    solution.setBaseHuType(BaseHuTypeEnum.七对);
                     for (Meld meld : solution.melds) {
                         if (meld.type == Meld.TYPE_TRIPLET) {
                             solution.canKong.add(meld.tiles.get(0));
@@ -541,11 +552,15 @@ public enum MJManager {
          */
         tiles =  Arrays.asList(Tile.t1,Tile.t1,Tile.b2,Tile.b2,Tile.b5,Tile.b5,Tile.t3,Tile.t3,Tile.w8,Tile.w8,Tile.t7,Tile.t7,Tile.t9);
 
-        tiles = Arrays.asList(Tile.t2,Tile.t3,Tile.t4,Tile.b1,Tile.b2,Tile.b3,Tile.b5,Tile.b6,Tile.b7,Tile.b8,Tile.b8,Tile.b8,Tile.b9,Tile.b9);
+        //tiles = Arrays.asList(Tile.t2,Tile.t3,Tile.t4,Tile.b1,Tile.b2,Tile.b3,Tile.b5,Tile.b6,Tile.b7,Tile.b8,Tile.b8,Tile.b8,Tile.b9,Tile.b9);
 
         //tiles = Arrays.asList(Tile.w4,Tile.w4,Tile.b6,Tile.b7);
 
         //tiles = Arrays.asList(Tile.t1,Tile.t9,Tile.b1,Tile.b9,)
+
+        tiles = Arrays.asList(Tile.w6,Tile.w7,Tile.w8,Tile.t5,Tile.t5,Tile.t5,Tile.t8,Tile.t9,Tile.t9,Tile.t9);
+        List<Meld> pMelds = new ArrayList<>();
+        Meld meld = new Meld();
 //        // 四饼 四饼 四饼 七饼 一条 六条 九条 九条 三万 六万 東 中 發
 //        //List<Tile> tiles = Arrays.asList(Tile.b4, Tile.b4, Tile.b4, Tile.b7, Tile.t1, Tile.t6, Tile.t9, Tile.t9, Tile.w3, Tile.w6, Tile.E, Tile.Z, Tile.F);
         List<Solution> solutions = MJManager.INSTANCE.solutions(tiles);

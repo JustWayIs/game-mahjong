@@ -4,6 +4,7 @@ import com.yude.game.common.constant.Status;
 import com.yude.game.common.model.MahjongOperation;
 import com.yude.game.common.model.history.Step;
 import com.yude.game.common.model.sichuan.constant.SichuanGameStatusEnum;
+import com.yude.game.common.model.sichuan.history.info.RebateInfo;
 
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import java.util.Map;
  * @Declare: 所有玩家的退税步骤。跟结算还不太一样，胡牌（不是一炮多响）结算、杠牌结算，收益方只会有一个。而退税记录的是相对的东西，既有自己退给别人的，也有别人退给自己的
  */
 public class RebateStep implements Step {
+    private int stepCount;
     private Map<Integer, List<RebateInfo>> seatRebateMap;
     private MahjongOperation operation;
     private Status gameStatus = SichuanGameStatusEnum.LIU_JU_SETTLEMENT;
@@ -46,14 +48,23 @@ public class RebateStep implements Step {
         return this;
     }
 
+    public int getStepCount() {
+        return stepCount;
+    }
+
+    public RebateStep setStepCount(int stepCount) {
+        this.stepCount = stepCount;
+        return this;
+    }
+
     @Override
     public Status gameStatus() {
-        return null;
+        return gameStatus;
     }
 
     @Override
     public Integer actionType() {
-        return null;
+        return operation.value();
     }
 
     @Override
@@ -64,7 +75,8 @@ public class RebateStep implements Step {
     @Override
     public String toString() {
         return "RebateStep{" +
-                "seatRebateMap=" + seatRebateMap +
+                "stepCount=" + stepCount +
+                ", seatRebateMap=" + seatRebateMap +
                 ", operation=" + operation +
                 ", gameStatus=" + gameStatus +
                 '}';

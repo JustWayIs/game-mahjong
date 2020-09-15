@@ -1,4 +1,4 @@
-package com.yude.game.common.model.sichuan.history;
+package com.yude.game.common.model.sichuan.history.info;
 
 import com.yude.game.common.model.StepAction;
 

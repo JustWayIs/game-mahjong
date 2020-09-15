@@ -16,6 +16,9 @@ import com.yude.game.common.model.sichuan.constant.ExchangeTypeEnum;
 import com.yude.game.common.model.sichuan.constant.SeatStatusEnum;
 import com.yude.game.common.model.sichuan.constant.SichuanGameStatusEnum;
 import com.yude.game.common.model.sichuan.history.*;
+import com.yude.game.common.model.sichuan.history.info.ChaHuaZhuInfo;
+import com.yude.game.common.model.sichuan.history.info.ChaJiaoInfo;
+import com.yude.game.common.model.sichuan.history.info.RebateInfo;
 import com.yude.game.exception.BizException;
 import com.yude.game.exception.SystemException;
 import com.yude.protocol.common.constant.StatusCodeEnum;
@@ -211,7 +214,6 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
             playerHand.canAnGang(stepActions, card);
             for (StepAction stepAction : stepActions) {
                 stepAction.setCardSource(mahjongSeat.getPosId())
-                        .setTargetCard(card)
                         .setOperationType(OperationEnum.AN_GANG);
             }
             boolean canBuGang = playerHand.canBuGang(card);
@@ -767,11 +769,11 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
         List<FanInfo> additionFan = new ArrayList<>();
         for (FanInfo fanInfo : fanInfos) {
             if (FanInfo.MULTIPLICATION == fanInfo.getCalculationType()) {
-                sumFan *= fanInfo.getFanScore();
+                sumFan *= fanInfo.getFanNum();
             }
         }
         for (FanInfo fanInfo : additionFan) {
-            sumFan += fanInfo.getFanScore();
+            sumFan += fanInfo.getFanNum();
         }
 
         return sumFan;

@@ -14,8 +14,8 @@ import com.baidu.bjf.remoting.protobuf.annotation.ProtobufClass;
 public class SettlementDetailInfoDTO {
     private Integer fanNum;
     private Integer fanScore;
-    private Integer actionType;
     private Integer fanId;
+    private Integer targetPosId;
 
     public Integer getFanNum() {
         return fanNum;
@@ -35,14 +35,6 @@ public class SettlementDetailInfoDTO {
         return this;
     }
 
-    public Integer getActionType() {
-        return actionType;
-    }
-
-    public SettlementDetailInfoDTO setActionType(Integer actionType) {
-        this.actionType = actionType;
-        return this;
-    }
 
     public Integer getFanId() {
         return fanId;
@@ -51,5 +43,24 @@ public class SettlementDetailInfoDTO {
     public SettlementDetailInfoDTO setFanId(Integer fanId) {
         this.fanId = fanId;
         return this;
+    }
+
+    public Integer getTargetPosId() {
+        return targetPosId;
+    }
+
+    public SettlementDetailInfoDTO setTargetPosId(Integer targetPosId) {
+        this.targetPosId = targetPosId;
+        return this;
+    }
+
+    @Override
+    public String toString() {
+        return "SettlementDetailInfoDTO{" +
+                "fanNum=" + fanNum +
+                ", fanScore=" + fanScore +
+                ", fanId=" + fanId +
+                ", targetPosId=" + targetPosId +
+                '}';
     }
 }

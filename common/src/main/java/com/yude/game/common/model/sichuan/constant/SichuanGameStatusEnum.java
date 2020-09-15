@@ -18,6 +18,11 @@ public enum SichuanGameStatusEnum implements Status {
     DING_QUE,
     OPERATION_CARD,
     SETTLEMENT,
+
+    /**
+     * 血战血流似乎需要一个这样的标识
+     */
+    GAME_OVER,
     /**
      * 没有必要设置游戏状态为下面几个，只是在构建Step对象的时候用到
      */

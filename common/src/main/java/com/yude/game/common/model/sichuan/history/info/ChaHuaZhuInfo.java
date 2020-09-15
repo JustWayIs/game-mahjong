@@ -1,30 +1,28 @@
-package com.yude.game.common.model.sichuan.history;
-
-import com.yude.game.common.model.fan.FanInfo;
-
-import java.util.List;
+package com.yude.game.common.model.sichuan.history.info;
 
 /**
  * @Author: HH
- * @Date: 2020/9/10 21:09
+ * @Date: 2020/9/10 20:29
  * @Version: 1.0
- * @Declare: 玩家不可能被查叫了，还能查叫别人,所以这个应该是被查叫信息
+ * @Declare: 同查叫一样，被查花猪的玩家，不可能查别人的花猪，所以这里的是被查花猪，也就是自己的扣分信息
  */
-public class ChaJiaoInfo {
+public class ChaHuaZhuInfo {
     private Integer posId;
+    /**
+     * 如果changeCore是正数，这么这个属性标识的就是赔分给该玩家的玩家
+     * 如果是是负数，那么标识的就是要赔付给谁
+     */
     private Integer compensationToPosId;
+    private int fanNum;
     private long beforeScore;
     private long changeScore;
     private long remainingScore;
-    private List<FanInfo> fanInfoList;
-    private int fanNum;
-
 
     public Integer getPosId() {
         return posId;
     }
 
-    public ChaJiaoInfo setPosId(Integer posId) {
+    public ChaHuaZhuInfo setPosId(Integer posId) {
         this.posId = posId;
         return this;
     }
@@ -33,7 +31,7 @@ public class ChaJiaoInfo {
         return compensationToPosId;
     }
 
-    public ChaJiaoInfo setCompensationToPosId(Integer compensationToPosId) {
+    public ChaHuaZhuInfo setCompensationToPosId(Integer compensationToPosId) {
         this.compensationToPosId = compensationToPosId;
         return this;
     }
@@ -42,7 +40,7 @@ public class ChaJiaoInfo {
         return fanNum;
     }
 
-    public ChaJiaoInfo setFanNum(int fanNum) {
+    public ChaHuaZhuInfo setFanNum(int fanNum) {
         this.fanNum = fanNum;
         return this;
     }
@@ -51,7 +49,7 @@ public class ChaJiaoInfo {
         return beforeScore;
     }
 
-    public ChaJiaoInfo setBeforeScore(long beforeScore) {
+    public ChaHuaZhuInfo setBeforeScore(long beforeScore) {
         this.beforeScore = beforeScore;
         return this;
     }
@@ -60,7 +58,7 @@ public class ChaJiaoInfo {
         return changeScore;
     }
 
-    public ChaJiaoInfo setChangeScore(long changeScore) {
+    public ChaHuaZhuInfo setChangeScore(long changeScore) {
         this.changeScore = changeScore;
         return this;
     }
@@ -69,30 +67,20 @@ public class ChaJiaoInfo {
         return remainingScore;
     }
 
-    public ChaJiaoInfo setRemainingScore(long remainingScore) {
+    public ChaHuaZhuInfo setRemainingScore(long remainingScore) {
         this.remainingScore = remainingScore;
-        return this;
-    }
-
-    public List<FanInfo> getFanInfoList() {
-        return fanInfoList;
-    }
-
-    public ChaJiaoInfo setFanInfoList(List<FanInfo> fanInfoList) {
-        this.fanInfoList = fanInfoList;
         return this;
     }
 
     @Override
     public String toString() {
-        return "ChaJiaoInfo{" +
+        return "ChaHuaZhuInfo{" +
                 "posId=" + posId +
                 ", compensationToPosId=" + compensationToPosId +
+                ", fanNum=" + fanNum +
                 ", beforeScore=" + beforeScore +
                 ", changeScore=" + changeScore +
                 ", remainingScore=" + remainingScore +
-                ", fanInfoList=" + fanInfoList +
-                ", fanNum=" + fanNum +
                 '}';
     }
 }

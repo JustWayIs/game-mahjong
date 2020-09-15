@@ -20,14 +20,11 @@ public class OperationCardStep implements Step {
     private List<Integer> standCardList;
     private List<String> standCardConvertList;
     private Status gameStatus;
+    private boolean effective;
 
-    public int getStep() {
-        return step;
-    }
 
-    public OperationCardStep setStep(int step) {
-        this.step = step;
-        return this;
+    public OperationCardStep() {
+        effective = true;
     }
 
     @Override
@@ -44,6 +41,21 @@ public class OperationCardStep implements Step {
     public int posId() {
         return posId;
     }
+
+    @Override
+    public boolean isEffective() {
+        return effective;
+    }
+
+    public int getStep() {
+        return step;
+    }
+
+    public OperationCardStep setStep(int step) {
+        this.step = step;
+        return this;
+    }
+
 
     public int getPosId() {
         return posId;
@@ -99,6 +111,11 @@ public class OperationCardStep implements Step {
         return this;
     }
 
+    public OperationCardStep setEffective(boolean effective) {
+        this.effective = effective;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "OperationCardStep{" +
@@ -109,6 +126,7 @@ public class OperationCardStep implements Step {
                 ", standCardList=" + standCardList +
                 ", standCardConvertList=" + standCardConvertList +
                 ", gameStatus=" + gameStatus +
+                ", effective=" + effective +
                 '}';
     }
 }

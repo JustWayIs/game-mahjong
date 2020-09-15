@@ -1,9 +1,11 @@
 package com.yude.game.common.model.sichuan.history;
 
 import com.yude.game.common.constant.Status;
+import com.yude.game.common.contant.OperationEnum;
 import com.yude.game.common.model.MahjongOperation;
 import com.yude.game.common.model.history.Step;
 import com.yude.game.common.model.sichuan.constant.SichuanGameStatusEnum;
+import com.yude.game.common.model.sichuan.history.info.ChaJiaoInfo;
 
 import java.util.List;
 import java.util.Map;
@@ -15,9 +17,10 @@ import java.util.Map;
  * @Declare:
  */
 public class ChaJiaoStep implements Step {
+    private int stepCount;
     private Map<Integer, List<ChaJiaoInfo>> chaJiaoInfoMap;
-    private MahjongOperation operation;
     private Status gameStatus = SichuanGameStatusEnum.LIU_JU_SETTLEMENT;
+    private MahjongOperation operation = OperationEnum.CHA_JIAO;
 
     public Map<Integer, List<ChaJiaoInfo>> getChaJiaoInfoMap() {
         return chaJiaoInfoMap;
@@ -46,14 +49,23 @@ public class ChaJiaoStep implements Step {
         return this;
     }
 
+    public int getStepCount() {
+        return stepCount;
+    }
+
+    public ChaJiaoStep setStepCount(int stepCount) {
+        this.stepCount = stepCount;
+        return this;
+    }
+
     @Override
     public Status gameStatus() {
-        return null;
+        return gameStatus;
     }
 
     @Override
     public Integer actionType() {
-        return null;
+        return operation.value();
     }
 
     @Override
@@ -64,7 +76,8 @@ public class ChaJiaoStep implements Step {
     @Override
     public String toString() {
         return "ChaJiaoStep{" +
-                "chaJiaoInfoMap=" + chaJiaoInfoMap +
+                "stepCount=" + stepCount +
+                ", chaJiaoInfoMap=" + chaJiaoInfoMap +
                 ", operation=" + operation +
                 ", gameStatus=" + gameStatus +
                 '}';

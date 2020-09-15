@@ -146,7 +146,7 @@ public class PlayerHand {
                 //因为这张牌没有加入到PlayerHand对象中
                 if (cardNum >= 3) {
                     StepAction stepAction = new StepAction();
-                    stepAction.setTargetCard(card.id);
+                    stepAction.setTargetCard(tookCard);
                     //.setOperationType(XueZhanMahjongOperationEnum.AN_GANG);
                     stepActions.add(stepAction);
                 }

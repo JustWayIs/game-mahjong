@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class MahjongSeat extends AbstractSeatModel {
 
+    private long carryScore;
 
     /**
      * 可操作权限，每次操作完要清空，直到轮到自己
@@ -72,6 +73,7 @@ public class MahjongSeat extends AbstractSeatModel {
         changce = new AtomicInteger(0);
         seatStatusList = new ArrayList<>();
         playerHand = new PlayerHand();
+        carryScore = player.getScore();
     }
 
     @Override
@@ -164,13 +166,26 @@ public class MahjongSeat extends AbstractSeatModel {
     public List<StepAction> getDesinateTypeAction(List<Integer> desinateTypeList){
         List<StepAction> list = new ArrayList<>();
         for(OperationCardStep operationCardStep : operationHistory){
-            StepAction stepAction = operationCardStep.getAction();
-            Integer value = stepAction.getOperationType().value();
-            if(desinateTypeList.contains(value)){
-                list.add(stepAction);
+            if (operationCardStep.isEffective()) {
+                StepAction stepAction = operationCardStep.getAction();
+                Integer value = stepAction.getOperationType().value();
+                if(desinateTypeList.contains(value)){
+                    list.add(stepAction);
+                }
             }
         }
         return list;
+    }
+
+    public OperationCardStep getDesinateStep(Integer type,Integer card){
+        for(OperationCardStep operationCardStep : operationHistory){
+            StepAction stepAction = operationCardStep.getAction();
+            Integer value = stepAction.getOperationType().value();
+            if(type.equals(value) && stepAction.getTargetCard().equals(card)){
+                return operationCardStep;
+            }
+        }
+        return null;
     }
 
     public List<OperationCardStep> getDesinateStep(List<Integer> desinateTypeList){

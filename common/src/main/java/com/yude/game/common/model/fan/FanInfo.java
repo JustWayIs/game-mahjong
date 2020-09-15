@@ -17,7 +17,7 @@ public  class FanInfo<T extends FanType> {
     /**
      * 番数
      */
-    private Integer fanScore;
+    private Integer fanNum;
     //乘法:0 或者 加法:1
     private Integer calculationType;
 
@@ -26,9 +26,9 @@ public  class FanInfo<T extends FanType> {
     public FanInfo() {
     }
 
-    public FanInfo(T fanType, Integer fanScore, Integer calculationType, Fan fan) {
+    public FanInfo(T fanType, Integer fanNum, Integer calculationType, Fan fan) {
         this.fanType = fanType;
-        this.fanScore = fanScore;
+        this.fanNum = fanNum;
         this.calculationType = calculationType;
         this.fan = fan;
     }
@@ -42,8 +42,8 @@ public  class FanInfo<T extends FanType> {
         return fanType;
     }
 
-    public Integer getFanScore() {
-        return fanScore;
+    public Integer getFanNum() {
+        return fanNum;
     }
 
     public Integer getCalculationType() {
@@ -58,7 +58,7 @@ public  class FanInfo<T extends FanType> {
     public String toString() {
         return "FanInfo{" +
                 "fanType=" + fanType +
-                ", fanScore=" + fanScore +
+                ", fanNum=" + fanNum +
                 ", calculationType=" + calculationType +
                 ", fan=" + fan +
                 '}';

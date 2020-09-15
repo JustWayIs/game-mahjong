@@ -10,7 +10,7 @@ import java.util.List;
  * @Author: HH
  * @Date: 2020/8/20 11:20
  * @Version: 1.0
- * @Declare:
+ * @Declare: 如果需要细化步骤，再使用DiscardCardStep 和 GainedCardStep
  */
 public class ExchangeCardStep implements Step {
     private int step;

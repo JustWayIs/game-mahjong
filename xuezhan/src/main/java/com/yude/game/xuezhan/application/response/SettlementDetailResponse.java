@@ -23,6 +23,12 @@ public class SettlementDetailResponse extends BaseResponse {
     private Integer settlementScore;
     private List<SettlementDetailInfoDTO> detailList;
 
+    /**
+     * 大牌展示：如果有胡过大于 等于16番 的牌再展示
+     */
+    private Integer bigFanNum;
+    private List<Integer> bigFanIds;
+
     public Integer getPosId() {
         return posId;
     }
@@ -56,6 +62,24 @@ public class SettlementDetailResponse extends BaseResponse {
 
     public SettlementDetailResponse setDetailList(List<SettlementDetailInfoDTO> detailList) {
         this.detailList = detailList;
+        return this;
+    }
+
+    public List<ActionDTO> getActionDTOList() {
+        return actionDTOList;
+    }
+
+    public SettlementDetailResponse setActionDTOList(List<ActionDTO> actionDTOList) {
+        this.actionDTOList = actionDTOList;
+        return this;
+    }
+
+    public Integer getHuCard() {
+        return huCard;
+    }
+
+    public SettlementDetailResponse setHuCard(Integer huCard) {
+        this.huCard = huCard;
         return this;
     }
 }
