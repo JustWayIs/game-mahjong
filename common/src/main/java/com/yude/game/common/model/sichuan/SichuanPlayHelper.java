@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 public class SichuanPlayHelper {
 
     public static void main(String[] args) {
-        List<Integer> cards = new ArrayList<>(Arrays.asList(34, 21, 25, 39, 29, 33, 33, 24, 37, 17, 24, 12, 33));
+        List<Integer> cards = new ArrayList<>(Arrays.asList(12,15,15,15,16,18,18,19,19,19,21,23,28,29));
         List<Integer> result = null;
         Integer color = null;
         long beforeTime = System.currentTimeMillis();

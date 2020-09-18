@@ -3,7 +3,9 @@ package com.yude.game.common.mahjong;
 import com.yude.game.common.model.StepAction;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -210,6 +212,18 @@ public class PlayerHand {
             }
         }
         return false;
+    }
+
+    public Set<Integer> getTingCards(){
+        Set<Integer> set = new HashSet<>();
+        for(Solution solution : solutions){
+            if(solution.canWin.size() > 0){
+                for(Tile tile : solution.canWin){
+                    set.add(tile.id);
+                }
+            }
+        }
+        return set;
     }
 
     // ===========================================================

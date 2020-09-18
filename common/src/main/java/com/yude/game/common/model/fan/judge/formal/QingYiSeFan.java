@@ -49,26 +49,29 @@ public enum  QingYiSeFan implements Fan<FormalFanParam> {
         if(wanList.size() > 0 && tiaoList.size() == 0 && tongList.size() == 0){
             for(Integer card : allFuluList){
                 CardEnum cardEnum = CardEnum.judgeCardColor(card);
-                if(CardEnum.万.equals(cardEnum)){
-                    return fanType;
+                if(!CardEnum.万.equals(cardEnum)){
+                    return null;
                 }
             }
+            return fanType;
         }
         if(tiaoList.size() > 0 && wanList.size() == 0 && tongList.size() == 0){
             for(Integer card : allFuluList){
                 CardEnum cardEnum = CardEnum.judgeCardColor(card);
-                if(CardEnum.条.equals(cardEnum)){
-                    return fanType;
+                if(!CardEnum.条.equals(cardEnum)){
+                    return null;
                 }
             }
+            return fanType;
         }
         if(tongList.size() > 0 && wanList.size() == 0 && tiaoList.size() == 0){
             for(Integer card : allFuluList){
                 CardEnum cardEnum = CardEnum.judgeCardColor(card);
-                if(CardEnum.筒.equals(cardEnum)){
-                    return fanType;
+                if(!CardEnum.筒.equals(cardEnum)){
+                    return null;
                 }
             }
+            return fanType;
         }
         return null;
     }

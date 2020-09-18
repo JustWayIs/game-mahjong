@@ -14,7 +14,7 @@ public class ChaJiaoInfo {
     private Integer posId;
     private Integer compensationToPosId;
     private long beforeScore;
-    private long changeScore;
+    private int changeScore;
     private long remainingScore;
     private List<FanInfo> fanInfoList;
     private int fanNum;
@@ -56,11 +56,11 @@ public class ChaJiaoInfo {
         return this;
     }
 
-    public long getChangeScore() {
+    public int getChangeScore() {
         return changeScore;
     }
 
-    public ChaJiaoInfo setChangeScore(long changeScore) {
+    public ChaJiaoInfo setChangeScore(int changeScore) {
         this.changeScore = changeScore;
         return this;
     }

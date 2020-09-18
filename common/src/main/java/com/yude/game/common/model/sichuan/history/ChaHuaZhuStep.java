@@ -21,6 +21,12 @@ public class ChaHuaZhuStep implements Step {
     private MahjongOperation operation;
     private Status gameStatus = SichuanGameStatusEnum.LIU_JU_SETTLEMENT;
 
+
+    public List<ChaHuaZhuInfo> getChaHuaZhuInfoListByPosId(Integer posId){
+        List<ChaHuaZhuInfo> chaHuaZhuInfos = chaHuaZhuInfoMap.get(posId);
+        return chaHuaZhuInfos;
+    }
+
     public Map<Integer, List<ChaHuaZhuInfo>> getChaHuaZhuInfoMap() {
         return chaHuaZhuInfoMap;
     }

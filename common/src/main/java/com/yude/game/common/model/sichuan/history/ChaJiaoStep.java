@@ -22,6 +22,10 @@ public class ChaJiaoStep implements Step {
     private Status gameStatus = SichuanGameStatusEnum.LIU_JU_SETTLEMENT;
     private MahjongOperation operation = OperationEnum.CHA_JIAO;
 
+    public List<ChaJiaoInfo> getChaJiaoInfoListByPosId(Integer posId){
+        return chaJiaoInfoMap.get(posId);
+    }
+
     public Map<Integer, List<ChaJiaoInfo>> getChaJiaoInfoMap() {
         return chaJiaoInfoMap;
     }

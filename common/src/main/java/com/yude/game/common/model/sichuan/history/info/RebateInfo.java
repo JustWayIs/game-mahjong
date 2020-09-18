@@ -13,8 +13,9 @@ public class RebateInfo {
     private StepAction rebateActions;
     private int fanNum;
     private long beforeScore;
-    private long changeScore;
+    private int changeScore;
     private long remainingScore;
+    private Integer compensationToPosId;
 
     public Integer getPosId() {
         return posId;
@@ -52,11 +53,11 @@ public class RebateInfo {
         return this;
     }
 
-    public long getChangeScore() {
+    public int getChangeScore() {
         return changeScore;
     }
 
-    public RebateInfo setChangeScore(long changeScore) {
+    public RebateInfo setChangeScore(int changeScore) {
         this.changeScore = changeScore;
         return this;
     }
@@ -68,5 +69,27 @@ public class RebateInfo {
     public RebateInfo setRemainingScore(long remainingScore) {
         this.remainingScore = remainingScore;
         return this;
+    }
+
+    public Integer getCompensationToPosId() {
+        return compensationToPosId;
+    }
+
+    public RebateInfo setCompensationToPosId(Integer compensationToPosId) {
+        this.compensationToPosId = compensationToPosId;
+        return this;
+    }
+
+    @Override
+    public String toString() {
+        return "RebateInfo{" +
+                "posId=" + posId +
+                ", rebateActions=" + rebateActions +
+                ", fanNum=" + fanNum +
+                ", beforeScore=" + beforeScore +
+                ", changeScore=" + changeScore +
+                ", remainingScore=" + remainingScore +
+                ", compensationToPosId=" + compensationToPosId +
+                '}';
     }
 }

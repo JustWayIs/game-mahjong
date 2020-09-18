@@ -203,14 +203,14 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
      * @param card
      * @return
      */
-    public List<StepAction> whatCanYouDo(final Integer card,SichuanRoomConfig roomConfig) {
+    public List<StepAction> whatCanYouDo(final Integer card, SichuanRoomConfig roomConfig) {
         Integer curObtainCardPosId = mahjongZone.getCurTookCardPlayerPosId();
         SichuanMahjongSeat playerSeat = playerSeats[curObtainCardPosId];
         MahjongSeat mahjongSeat = playerSeat.getMahjongSeat();
 
         List<StepAction> stepActions = new ArrayList<>();
         PlayerHand playerHand = mahjongSeat.getPlayerHand();
-        if(mahjongZone.cardWallHasCard() || !roomConfig.isLastCardProhibitGang()){
+        if (mahjongZone.cardWallHasCard() || !roomConfig.isLastCardProhibitGang()) {
             playerHand.canAnGang(stepActions, card);
             for (StepAction stepAction : stepActions) {
                 stepAction.setCardSource(mahjongSeat.getPosId())
@@ -279,7 +279,7 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
             }
 
             boolean canZhiGang = false;
-            if(mahjongZone.cardWallHasCard() || !roomConfig.isLastCardProhibitGang()){
+            if (mahjongZone.cardWallHasCard() || !roomConfig.isLastCardProhibitGang()) {
                 canZhiGang = playerHand.canZhiGang(card);
                 if (canZhiGang) {
                     StepAction stepAction = new StepAction();
@@ -323,7 +323,7 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
      * @param card
      * @param operationType 用于标识是否是一炮多响
      */
-    public List<FanInfo> checkFan(SichuanMahjongSeat seat, Integer card, Integer operationType, Integer cardSourcePosId, Rule<SichuanRoomConfig> rule) {
+    public List<FanInfo> checkFan(SichuanMahjongSeat seat, Integer card, MahjongOperation operationType, Integer cardSourcePosId, Rule<SichuanRoomConfig> rule) {
         MahjongSeat huPlayerSeat = seat.getMahjongSeat();
         huPlayerSeat.solution();
         boolean cardFromSelf = huPlayerSeat.getPosId() == cardSourcePosId;
@@ -365,6 +365,18 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
             boolean flag = fanInfo.judgeFan(formalFanParam);
             if (flag) {
                 certaintyFanList.add(fanInfo);
+                final FanType[] excludeFanTypes = fanInfo.getFanType().excludeFan();
+                if (excludeFanTypes != null) {
+                    for (FanType fanType : excludeFanTypes) {
+                        final Iterator<FanInfo> iterator = certaintyFanList.iterator();
+                        while (iterator.hasNext()) {
+                            final FanInfo next = iterator.next();
+                            if (next.getFanType().equals(fanType)) {
+                                iterator.remove();
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -381,7 +393,13 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
                 CompoundFanTypeEnum fanType = fanInfo.getFanType();
                 FanType[] fanTypes = fanType.excludeFan();
                 for (FanType excludeFan : fanTypes) {
-                    certaintyFanList.remove(excludeFan);
+                    final Iterator<FanInfo> iterator = certaintyFanList.iterator();
+                    while (iterator.hasNext()) {
+                        final FanInfo next = iterator.next();
+                        if (next.getFanType().equals(fanType)) {
+                            iterator.remove();
+                        }
+                    }
                 }
             }
         }
@@ -405,9 +423,7 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
                 certaintyFanList.add(fanInfo);
             }
         }
-        //这里要求一炮多响，不能立马修改step的Action类型，要走完这里，要不然checkFan方法没法区分是普通胡牌，还是一炮多响
-        HuCardStep huStep = (HuCardStep) huPlayerSeat.getOperationHistoryByTypeAndCard(OperationEnum.HU.value(), card);
-        huStep.setFanInfoList(certaintyFanList);
+
         return certaintyFanList;
     }
 
@@ -451,6 +467,7 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
 
     /**
      * 血战的判断方式
+     *
      * @return
      */
     public boolean gameover() {
@@ -472,7 +489,7 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
         return false;
     }
 
-    public GameStepModel<RebateStep> rebate(List<SettlementStep> gangSettlementHistory, SichuanRoomConfig ruleConfig,MahjongOperation operation) {
+    public GameStepModel<RebateStep> rebate(List<SettlementStep> gangSettlementHistory, MahjongOperation operation) {
         RebateStep rebatStep = new RebateStep();
         Map<Integer, List<RebateInfo>> seatRebateMap = new HashMap<>();
         rebatStep.setSeatRebateMap(seatRebateMap)
@@ -480,8 +497,13 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
 
         GameStepModel<RebateStep> rebateStepGameStepModel = new GameStepModel<>(mahjongZone.getZoneId(), null, rebatStep);
 
-        for (SichuanMahjongSeat sichuanMahjongSeat : playerSeats) {
-            MahjongSeat mahjongSeat = sichuanMahjongSeat.getMahjongSeat();
+
+        for (SettlementStep settlementStep : gangSettlementHistory) {
+            /**
+             * 找出当前遍历的需要退税玩家的 杠分结算记录
+             */
+
+            MahjongSeat mahjongSeat = playerSeats[settlementStep.getPosId()].getMahjongSeat();
             if (mahjongSeat.existsStatus(SeatStatusEnum.ALREADY_HU)) {
                 continue;
             }
@@ -489,62 +511,63 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
             if (playerHand.isTing()) {
                 continue;
             }
+            for (Map.Entry<Integer, SettlementInfo> entry : settlementStep.getSeatSettlementInfoMap().entrySet()) {
+                final Integer settlementPosId = entry.getKey();
+                final SettlementInfo settlementInfo = entry.getValue();
 
-            for (SettlementStep settlementStep : gangSettlementHistory) {
-                /**
-                 * 找出当前遍历的需要退税玩家的 杠分结算记录
-                 */
-                if (settlementStep.getPosId() != mahjongSeat.getPosId()) {
-                    continue;
-                }
                 /**
                  * 在一次杠牌结算Step中，Map中，所有玩家都 - changeSocore，再封装成rebateInfo
                  */
-                for (Map.Entry<Integer, SettlementInfo> entry : settlementStep.getSeatSettlementInfoMap().entrySet()) {
-                    StepAction action = settlementStep.getAction();
-                    MahjongOperation operationType = action.getOperationType();
-                    SettlementInfo settlementInfo = entry.getValue();
 
-                    //退分 或者 拿回杠分（因为用的现有的SettlementStep 对于同一个StepAction 赋给了操作涉及的玩家，在杠牌玩家那里是 加分， 在被杠玩家那里是减分。本身就有多条记录）
-                    Integer posId = settlementInfo.getPosId();
-                    SichuanMahjongSeat playerSeat = playerSeats[posId];
-                    Player player = playerSeat.getPlayer();
-                    long beforeScore = player.getScore();
-                    int changeScore = (int) -settlementInfo.getChangeScore();
-                    player.scoreSettle(changeScore);
-                    long remainingScore = player.getScore();
-
-                    RebateInfo rebateInfo = new RebateInfo();
-                    rebateInfo.setPosId(settlementInfo.getPosId())
-                            .setBeforeScore(beforeScore)
-                            .setChangeScore(changeScore)
-                            .setRemainingScore(remainingScore)
-                            .setRebateActions(action)
-                            .setFanNum(ruleConfig.getGangFan(operationType.value()));
-
-
-                    List<RebateInfo> rebateInfos = seatRebateMap.get(mahjongSeat.getPosId());
-                    if (rebateInfos == null) {
-                        rebateInfos = new ArrayList<>();
-                        seatRebateMap.put(mahjongSeat.getPosId(), rebateInfos);
-                    }
-                    rebateInfos.add(rebateInfo);
-
+                StepAction action = settlementStep.getAction();
+                MahjongOperation operationType = action.getOperationType();
+                Integer targetPosId = null;
+                if (settlementStep.getPosId() == settlementPosId) {
+                    targetPosId = action.getCardSource();
+                } else {
+                    targetPosId = settlementStep.getPosId();
                 }
 
+                //退分 或者 拿回杠分（因为用的现有的SettlementStep 对于同一个StepAction 赋给了操作涉及的玩家，在杠牌玩家那里是 加分， 在被杠玩家那里是减分。本身就有多条记录）
+                SichuanMahjongSeat playerSeat = playerSeats[settlementPosId];
+                Player player = playerSeat.getPlayer();
+                long beforeScore = player.getScore();
+                int changeScore = -settlementInfo.getChangeScore();
+                player.scoreSettle(changeScore);
+                long remainingScore = player.getScore();
+
+                RebateInfo rebateInfo = new RebateInfo();
+                rebateInfo.setPosId(settlementInfo.getPosId())
+                        .setBeforeScore(beforeScore)
+                        .setChangeScore(changeScore)
+                        .setRemainingScore(remainingScore)
+                        .setRebateActions(action)
+                        .setFanNum(settlementInfo.getFanNum())
+                        .setCompensationToPosId(targetPosId);
+
+                List<RebateInfo> rebateInfos = seatRebateMap.get(settlementPosId);
+                if (rebateInfos == null) {
+                    rebateInfos = new ArrayList<>();
+                    seatRebateMap.put(settlementPosId, rebateInfos);
+                }
+                rebateInfos.add(rebateInfo);
+
             }
+
         }
+
+
         return rebateStepGameStepModel;
     }
 
-    public GameStepModel<ChaJiaoStep> chaJiao(Rule<SichuanRoomConfig> rule,MahjongOperation operation) {
+    public GameStepModel<ChaJiaoStep> chaJiao(Rule<SichuanRoomConfig> rule, MahjongOperation operation) {
         List<SichuanMahjongSeat> lossScoreSeats = new ArrayList<>();
         List<SichuanMahjongSeat> winScoreSeats = new ArrayList<>();
 
         for (SichuanMahjongSeat sichuanMahjongSeat : playerSeats) {
             MahjongSeat mahjongSeat = sichuanMahjongSeat.getMahjongSeat();
             PlayerHand playerHand = mahjongSeat.getPlayerHand();
-            if (!sichuanMahjongSeat.isAlreadyHu() && !sichuanMahjongSeat.isHuaZhu() && playerHand.isTing()) {
+            if (!sichuanMahjongSeat.isAlreadyHu() && !sichuanMahjongSeat.isHuaZhu() && !playerHand.isTing()) {
                 lossScoreSeats.add(sichuanMahjongSeat);
             } else if (!sichuanMahjongSeat.isAlreadyHu() && playerHand.isTing()) {
                 winScoreSeats.add(sichuanMahjongSeat);
@@ -575,7 +598,7 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
                     List<Tile> canWin = solution.canWin;
                     if (canWin.size() > 0) {
                         for (Tile tile : canWin) {
-                            List<FanInfo> fanInfos = checkFan(winSichuanSeat, tile.id, OperationEnum.HU.value(), posId, rule);
+                            List<FanInfo> fanInfos = checkFan(winSichuanSeat, tile.id, OperationEnum.HU, posId, rule);
                             final int sumFan = calculateFanNumByFanInfo(fanInfos);
                             SichuanRoomConfig ruleConfig = rule.getRuleConfig();
                             int fanScore = ruleConfig.getBaseScoreFactor() * sumFan;
@@ -629,7 +652,7 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
         return chaJiaoStepGameStepModel;
     }
 
-    public GameStepModel<ChaHuaZhuStep> chaHuazhu(Rule<SichuanRoomConfig> rule,MahjongOperation operation) {
+    public GameStepModel<ChaHuaZhuStep> chaHuazhu(Rule<SichuanRoomConfig> rule, MahjongOperation operation) {
         SichuanRoomConfig roomConfig = rule.getRuleConfig();
         List<SichuanMahjongSeat> huaZhuSeats = new ArrayList<>();
         List<SichuanMahjongSeat> winSichuanSeats = new ArrayList<>();
@@ -673,7 +696,9 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
                 }
                 ChaHuaZhuInfo winInfo = new ChaHuaZhuInfo();
                 ChaHuaZhuInfo loserInfo = new ChaHuaZhuInfo();
-                //赢分玩家分为类：1.未胡牌的听牌玩家 2.已胡牌的玩家、未胡牌且未听牌的玩家
+                /**
+                 *  赢分玩家分为类：1.未胡牌的听牌玩家 2.已胡牌的玩家、未胡牌且未听牌的玩家
+                 */
                 if (!winSichuanSeat.isAlreadyHu() && playerHand.isTing()) {
                     /**
                      * 找出听牌玩家可胡的最大番
@@ -685,7 +710,7 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
                         List<Tile> canWin = solution.canWin;
                         if (canWin.size() > 0) {
                             for (Tile tile : canWin) {
-                                List<FanInfo> fanInfos = checkFan(winSichuanSeat, tile.id, OperationEnum.HU.value(), winSeatPosId, rule);
+                                List<FanInfo> fanInfos = checkFan(winSichuanSeat, tile.id, OperationEnum.HU, winSeatPosId, rule);
                                 final int sumFan = calculateFanNumByFanInfo(fanInfos);
                                 SichuanRoomConfig ruleConfig = rule.getRuleConfig();
                                 int fanScore = ruleConfig.getBaseScoreFactor() * sumFan;
@@ -716,15 +741,15 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
                     final long loserBaseScore = loserPlayer.getScore();
                     loserPlayer.scoreSettle(-resultChangeScore);
                     final long loserRemainingScore = loserPlayer.getScore();
-                    winInfo.setBeforeScore(loserBaseScore)
+                    loserInfo.setBeforeScore(loserBaseScore)
                             .setChangeScore(-resultChangeScore)
                             .setRemainingScore(loserRemainingScore)
                             .setCompensationToPosId(winSeatPosId)
                             .setFanNum(resultSettleFanNum)
                             .setPosId(huaZhuPosId);
-                    winChaHuaZhuInfoList.add(loserInfo);
+                    huaZhuInfos.add(loserInfo);
 
-                }else{
+                } else {
                     final long winnerBeforeScore = winPlayer.getScore();
                     winPlayer.scoreSettle(huaZhuBaseScore);
                     final long winnerRemainingScore = winPlayer.getScore();
@@ -739,18 +764,18 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
                     final long loserBaseScore = loserPlayer.getScore();
                     loserPlayer.scoreSettle(-huaZhuBaseScore);
                     final long loserRemainingScore = loserPlayer.getScore();
-                    winInfo.setBeforeScore(loserBaseScore)
+                    loserInfo.setBeforeScore(loserBaseScore)
                             .setChangeScore(-huaZhuBaseScore)
                             .setRemainingScore(loserRemainingScore)
                             .setCompensationToPosId(winSeatPosId)
                             .setFanNum(huaZhuBaseFan)
                             .setPosId(huaZhuPosId);
-                    winChaHuaZhuInfoList.add(loserInfo);
+                    huaZhuInfos.add(loserInfo);
 
                 }
             }
         }
-        GameStepModel<ChaHuaZhuStep> gameStepModel = new GameStepModel<>(mahjongZone.getZoneId(),null,step);
+        GameStepModel<ChaHuaZhuStep> gameStepModel = new GameStepModel<>(mahjongZone.getZoneId(), null, step);
         return gameStepModel;
     }
 

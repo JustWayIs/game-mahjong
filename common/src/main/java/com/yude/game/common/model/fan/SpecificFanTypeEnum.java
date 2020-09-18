@@ -27,6 +27,10 @@ public enum SpecificFanTypeEnum implements FanType {
         this.actionType = actionType;
     }
 
+    public Integer getActionType() {
+        return actionType;
+    }
+
     @Override
     public int getId() {
         return 6000 + this.ordinal();

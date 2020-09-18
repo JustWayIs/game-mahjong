@@ -14,7 +14,7 @@ import java.util.List;
 public class SettlementInfo {
     private Integer posId;
     private Long beforeScore;
-    private Long changeScore;
+    private int changeScore;
     private Long remaningScore;
     private int fanNum;
     private List<Integer> standCards;
@@ -40,11 +40,11 @@ public class SettlementInfo {
         return this;
     }
 
-    public Long getChangeScore() {
+    public int getChangeScore() {
         return changeScore;
     }
 
-    public SettlementInfo setChangeScore(Long changeScore) {
+    public SettlementInfo setChangeScore(int changeScore) {
         this.changeScore = changeScore;
         return this;
     }

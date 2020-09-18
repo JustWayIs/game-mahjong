@@ -10,12 +10,14 @@ import java.util.List;
  * @Version: 1.0
  * @Declare:
  */
-public  class Rule<T extends RuleConfig> {
+public class Rule<T extends RuleConfig> {
     protected List<FanInfo<BaseHuTypeEnum>> baseHuList;
     protected List<FanInfo<HuTypeEnum>> huTypeList;
     protected List<FanInfo<FormalFanTypeEnum>> formalFanTypeEnumList;
     protected List<FanInfo<AppendedTypeEnum>> appendedTypeEnumList;
     protected List<FanInfo<CompoundFanTypeEnum>> compoundFanTypeEnumList;
+
+    protected List<FanInfo<SpecificFanTypeEnum>> specificFanTypeList;
 
     protected T ruleConfig;
 
@@ -70,6 +72,15 @@ public  class Rule<T extends RuleConfig> {
 
     public Rule<T> setRuleConfig(T ruleConfig) {
         this.ruleConfig = ruleConfig;
+        return this;
+    }
+
+    public List<FanInfo<SpecificFanTypeEnum>> getSpecificFanTypeList() {
+        return specificFanTypeList;
+    }
+
+    public Rule<T> setSpecificFanTypeList(List<FanInfo<SpecificFanTypeEnum>> specificFanTypeList) {
+        this.specificFanTypeList = specificFanTypeList;
         return this;
     }
 }

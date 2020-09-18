@@ -15,7 +15,7 @@ public class ChaHuaZhuInfo {
     private Integer compensationToPosId;
     private int fanNum;
     private long beforeScore;
-    private long changeScore;
+    private int changeScore;
     private long remainingScore;
 
     public Integer getPosId() {
@@ -54,11 +54,11 @@ public class ChaHuaZhuInfo {
         return this;
     }
 
-    public long getChangeScore() {
+    public int getChangeScore() {
         return changeScore;
     }
 
-    public ChaHuaZhuInfo setChangeScore(long changeScore) {
+    public ChaHuaZhuInfo setChangeScore(int changeScore) {
         this.changeScore = changeScore;
         return this;
     }

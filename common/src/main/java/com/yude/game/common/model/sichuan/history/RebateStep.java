@@ -21,6 +21,10 @@ public class RebateStep implements Step {
     private MahjongOperation operation;
     private Status gameStatus = SichuanGameStatusEnum.LIU_JU_SETTLEMENT;
 
+    public List<RebateInfo> getRebateInfoListByPosId(Integer posId){
+        return seatRebateMap.get(posId);
+    }
+
     public Map<Integer, List<RebateInfo>> getSeatRebateMap() {
         return seatRebateMap;
     }

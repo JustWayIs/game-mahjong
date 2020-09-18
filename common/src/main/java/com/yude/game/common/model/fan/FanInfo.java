@@ -10,7 +10,13 @@ import com.yude.game.common.model.fan.param.HuFanParam;
  * @Declare:
  */
 public  class FanInfo<T extends FanType> {
+    /**
+     * 加法
+     */
     public static final int  ADDITION = 1;
+    /**
+     * 乘法
+     */
     public static final int MULTIPLICATION = 0;
 
     private T fanType;

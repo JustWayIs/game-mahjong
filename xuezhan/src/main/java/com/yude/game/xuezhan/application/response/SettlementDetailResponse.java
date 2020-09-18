@@ -20,13 +20,14 @@ public class SettlementDetailResponse extends BaseResponse {
     /**
      * 输赢分
      */
-    private Integer settlementScore;
+    private Long settlementScore;
     private List<SettlementDetailInfoDTO> detailList;
 
     /**
      * 大牌展示：如果有胡过大于 等于16番 的牌再展示
      */
     private Integer bigFanNum;
+    private Integer bigFanScore;
     private List<Integer> bigFanIds;
 
     public Integer getPosId() {
@@ -47,11 +48,11 @@ public class SettlementDetailResponse extends BaseResponse {
         return this;
     }
 
-    public Integer getSettlementScore() {
+    public Long getSettlementScore() {
         return settlementScore;
     }
 
-    public SettlementDetailResponse setSettlementScore(Integer settlementScore) {
+    public SettlementDetailResponse setSettlementScore(Long settlementScore) {
         this.settlementScore = settlementScore;
         return this;
     }
@@ -81,5 +82,47 @@ public class SettlementDetailResponse extends BaseResponse {
     public SettlementDetailResponse setHuCard(Integer huCard) {
         this.huCard = huCard;
         return this;
+    }
+
+    public Integer getBigFanNum() {
+        return bigFanNum;
+    }
+
+    public SettlementDetailResponse setBigFanNum(Integer bigFanNum) {
+        this.bigFanNum = bigFanNum;
+        return this;
+    }
+
+    public List<Integer> getBigFanIds() {
+        return bigFanIds;
+    }
+
+    public SettlementDetailResponse setBigFanIds(List<Integer> bigFanIds) {
+        this.bigFanIds = bigFanIds;
+        return this;
+    }
+
+    public Integer getBigFanScore() {
+        return bigFanScore;
+    }
+
+    public SettlementDetailResponse setBigFanScore(Integer bigFanScore) {
+        this.bigFanScore = bigFanScore;
+        return this;
+    }
+
+    @Override
+    public String toString() {
+        return "SettlementDetailResponse{" +
+                "posId=" + posId +
+                ", standCardList=" + standCardList +
+                ", actionDTOList=" + actionDTOList +
+                ", huCard=" + huCard +
+                ", settlementScore=" + settlementScore +
+                ", detailList=" + detailList +
+                ", bigFanNum=" + bigFanNum +
+                ", bigFanScore=" + bigFanScore +
+                ", bigFanIds=" + bigFanIds +
+                '}';
     }
 }

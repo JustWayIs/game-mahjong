@@ -45,6 +45,11 @@ public class SettlementStep implements Step {
         return posId;
     }
 
+    public SettlementInfo getSettlementInfoByPosId(Integer posId){
+        return seatSettlementInfoMap.get(posId);
+    }
+
+
     public int getPosId() {
         return posId;
     }

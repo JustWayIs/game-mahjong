@@ -204,6 +204,11 @@ public class MahjongSeat extends AbstractSeatModel {
         changce.incrementAndGet();
     }
 
+    public long getCarryScore() {
+        return carryScore;
+    }
+
+
     public boolean winChangce() {
         return changce.compareAndSet(1, 0);
     }
@@ -333,6 +338,9 @@ public class MahjongSeat extends AbstractSeatModel {
 
         for (OperationCardStep step : operationHistory) {
             if (!step.getAction().getOperationType().canProductFulu()) {
+                continue;
+            }
+            if(!step.isEffective()){
                 continue;
             }
             Meld meld = new Meld();
