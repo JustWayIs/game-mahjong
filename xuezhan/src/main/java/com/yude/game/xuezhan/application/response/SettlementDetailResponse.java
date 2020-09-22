@@ -1,6 +1,6 @@
 package com.yude.game.xuezhan.application.response;
 
-import com.yude.game.xuezhan.application.response.dto.ActionDTO;
+import com.yude.game.xuezhan.application.response.dto.BaseSettlementDetailDTO;
 import com.yude.game.xuezhan.application.response.dto.SettlementDetailInfoDTO;
 import com.yude.protocol.common.response.BaseResponse;
 
@@ -14,13 +14,7 @@ import java.util.List;
  */
 public class SettlementDetailResponse extends BaseResponse {
     private Integer posId;
-    private List<Integer> standCardList;
-    private List<ActionDTO> actionDTOList;
-    private Integer huCard;
-    /**
-     * 输赢分
-     */
-    private Long settlementScore;
+    private List<BaseSettlementDetailDTO> baseSettlementDetailList;
     private List<SettlementDetailInfoDTO> detailList;
 
     /**
@@ -39,50 +33,6 @@ public class SettlementDetailResponse extends BaseResponse {
         return this;
     }
 
-    public List<Integer> getStandCardList() {
-        return standCardList;
-    }
-
-    public SettlementDetailResponse setStandCardList(List<Integer> standCardList) {
-        this.standCardList = standCardList;
-        return this;
-    }
-
-    public Long getSettlementScore() {
-        return settlementScore;
-    }
-
-    public SettlementDetailResponse setSettlementScore(Long settlementScore) {
-        this.settlementScore = settlementScore;
-        return this;
-    }
-
-    public List<SettlementDetailInfoDTO> getDetailList() {
-        return detailList;
-    }
-
-    public SettlementDetailResponse setDetailList(List<SettlementDetailInfoDTO> detailList) {
-        this.detailList = detailList;
-        return this;
-    }
-
-    public List<ActionDTO> getActionDTOList() {
-        return actionDTOList;
-    }
-
-    public SettlementDetailResponse setActionDTOList(List<ActionDTO> actionDTOList) {
-        this.actionDTOList = actionDTOList;
-        return this;
-    }
-
-    public Integer getHuCard() {
-        return huCard;
-    }
-
-    public SettlementDetailResponse setHuCard(Integer huCard) {
-        this.huCard = huCard;
-        return this;
-    }
 
     public Integer getBigFanNum() {
         return bigFanNum;
@@ -111,14 +61,29 @@ public class SettlementDetailResponse extends BaseResponse {
         return this;
     }
 
+    public List<BaseSettlementDetailDTO> getBaseSettlementDetailList() {
+        return baseSettlementDetailList;
+    }
+
+    public SettlementDetailResponse setBaseSettlementDetailList(List<BaseSettlementDetailDTO> baseSettlementDetailList) {
+        this.baseSettlementDetailList = baseSettlementDetailList;
+        return this;
+    }
+
+    public List<SettlementDetailInfoDTO> getDetailList() {
+        return detailList;
+    }
+
+    public SettlementDetailResponse setDetailList(List<SettlementDetailInfoDTO> detailList) {
+        this.detailList = detailList;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "SettlementDetailResponse{" +
                 "posId=" + posId +
-                ", standCardList=" + standCardList +
-                ", actionDTOList=" + actionDTOList +
-                ", huCard=" + huCard +
-                ", settlementScore=" + settlementScore +
+                ", baseSettlementDetailList=" + baseSettlementDetailList +
                 ", detailList=" + detailList +
                 ", bigFanNum=" + bigFanNum +
                 ", bigFanScore=" + bigFanScore +

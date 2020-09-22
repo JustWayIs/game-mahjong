@@ -71,4 +71,19 @@ public interface XueZhanPushCommandCode extends PushCommandCode {
      * 结算详情页面
      */
     int SETTLEMENT_DETAIL = 0x201D;
+
+    /**
+     * 一炮多响
+     */
+    int YI_PAO_DUO_XIANG = 0x201E;
+
+    /**
+     * 听牌信息:出完牌后再提示
+     */
+    int TING_CARDS = 0x201F;
+
+    /**
+     * 游戏牌桌界面上的 积分流水
+     */
+    int SCORE_WATER_FLOW = 0x2021;
 }

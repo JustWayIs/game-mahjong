@@ -3,6 +3,8 @@ package com.yude.game.xuezhan.application.response.dto;
 import com.baidu.bjf.remoting.protobuf.annotation.EnableZigZap;
 import com.baidu.bjf.remoting.protobuf.annotation.ProtobufClass;
 
+import java.util.List;
+
 /**
  * @Author: HH
  * @Date: 2020/9/14 19:45
@@ -14,7 +16,7 @@ import com.baidu.bjf.remoting.protobuf.annotation.ProtobufClass;
 public class SettlementDetailInfoDTO {
     private Integer fanNum;
     private Integer fanScore;
-    private Integer fanId;
+    private List<Integer> fanIdList;
     private Integer targetPosId;
 
     public Integer getFanNum() {
@@ -36,12 +38,12 @@ public class SettlementDetailInfoDTO {
     }
 
 
-    public Integer getFanId() {
-        return fanId;
+    public List<Integer> getFanIdList() {
+        return fanIdList;
     }
 
-    public SettlementDetailInfoDTO setFanId(Integer fanId) {
-        this.fanId = fanId;
+    public SettlementDetailInfoDTO setFanIdList(List<Integer> fanIdList) {
+        this.fanIdList = fanIdList;
         return this;
     }
 
@@ -59,7 +61,7 @@ public class SettlementDetailInfoDTO {
         return "SettlementDetailInfoDTO{" +
                 "fanNum=" + fanNum +
                 ", fanScore=" + fanScore +
-                ", fanId=" + fanId +
+                ", fanIdList=" + fanIdList +
                 ", targetPosId=" + targetPosId +
                 '}';
     }

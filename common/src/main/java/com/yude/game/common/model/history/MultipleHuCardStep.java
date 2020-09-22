@@ -27,4 +27,20 @@ public class MultipleHuCardStep implements Step {
     public int posId() {
         return 0;
     }
+
+    public List<HuCardStep> getList() {
+        return list;
+    }
+
+    public MultipleHuCardStep setList(List<HuCardStep> list) {
+        this.list = list;
+        return this;
+    }
+
+    @Override
+    public String toString() {
+        return "MultipleHuCardStep{" +
+                "list=" + list +
+                '}';
+    }
 }

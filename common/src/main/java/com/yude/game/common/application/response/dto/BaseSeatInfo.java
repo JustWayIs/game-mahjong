@@ -13,46 +13,15 @@ import com.baidu.bjf.remoting.protobuf.annotation.ProtobufClass;
 @ProtobufClass
 @EnableZigZap
 public class BaseSeatInfo{
-    protected Long userId;
-    protected String nickName;
-    protected String headUrl;
-    protected Long score;
     protected Integer posId;
+    protected PlayerDTO playerDTO;
 
-    public Long getUserId() {
-        return userId;
+    public BaseSeatInfo() {
     }
 
-    public BaseSeatInfo setUserId(Long userId) {
-        this.userId = userId;
-        return this;
-    }
-
-    public String getNickName() {
-        return nickName;
-    }
-
-    public BaseSeatInfo setNickName(String nickName) {
-        this.nickName = nickName;
-        return this;
-    }
-
-    public String getHeadUrl() {
-        return headUrl;
-    }
-
-    public BaseSeatInfo setHeadUrl(String headUrl) {
-        this.headUrl = headUrl;
-        return this;
-    }
-
-    public Long getScore() {
-        return score;
-    }
-
-    public BaseSeatInfo setScore(Long score) {
-        this.score = score;
-        return this;
+    public BaseSeatInfo(Integer posId, PlayerDTO playerDTO) {
+        this.posId = posId;
+        this.playerDTO = playerDTO;
     }
 
     public Integer getPosId() {
@@ -64,14 +33,20 @@ public class BaseSeatInfo{
         return this;
     }
 
+    public PlayerDTO getPlayerDTO() {
+        return playerDTO;
+    }
+
+    public BaseSeatInfo setPlayerDTO(PlayerDTO playerDTO) {
+        this.playerDTO = playerDTO;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "BaseSeatInfo{" +
-                "userId=" + userId +
-                ", nickName='" + nickName + '\'' +
-                ", headUrl='" + headUrl + '\'' +
-                ", score=" + score +
-                ", posId=" + posId +
+                "posId=" + posId +
+                ", playerDTO=" + playerDTO +
                 '}';
     }
 }

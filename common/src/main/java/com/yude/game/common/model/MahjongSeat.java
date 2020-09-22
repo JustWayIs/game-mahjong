@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @Version: 1.0
  * @Declare:
  */
-public class MahjongSeat extends AbstractSeatModel {
+public class MahjongSeat extends AbstractSeatModel implements Cloneable{
 
     private long carryScore;
 
@@ -65,6 +65,11 @@ public class MahjongSeat extends AbstractSeatModel {
 
     private List<SeatStatusEnum> seatStatusList;
 
+    /**
+     * 出过的牌：不能包含被吃碰杠的牌
+     */
+    private List<Integer> cardPool;
+
 
     public MahjongSeat(Player player, int posId) {
         super(player, posId);
@@ -74,6 +79,7 @@ public class MahjongSeat extends AbstractSeatModel {
         seatStatusList = new ArrayList<>();
         playerHand = new PlayerHand();
         carryScore = player.getScore();
+        cardPool = new ArrayList<>();
     }
 
     @Override
@@ -83,6 +89,10 @@ public class MahjongSeat extends AbstractSeatModel {
     @Override
     public void clean() {
 
+    }
+
+    public void addOperations(List<StepAction> canOperations){
+        this.canOperations.addAll(canOperations);
     }
 
     /**
@@ -136,8 +146,9 @@ public class MahjongSeat extends AbstractSeatModel {
         return false;
     }
 
+
     /**
-     *
+     *  获取指定的权限
      * @param type 不用MahjongOperation是因为 不确定用的是MahjongOperation 还是地方麻将的 Operation.但是他们的值是一样的
      * @param card ： 因为可能有多个暗杠操作权限，需要用具体牌来区分
      * @return
@@ -326,6 +337,21 @@ public class MahjongSeat extends AbstractSeatModel {
 
     public void removeStatus(Integer status) {
         standCardList.remove(status);
+    }
+
+    public void outCard(Integer card){
+        cardPool.add(card);
+    }
+
+    public void removeLastOutCard(){
+        cardPool.remove(cardPool.size()-1);
+    }
+
+    @Override
+    public MahjongSeat clone() throws CloneNotSupportedException {
+        final MahjongSeat cloneMahjongSeat = (MahjongSeat) super.clone();
+        cloneMahjongSeat.playerHand = cloneMahjongSeat.playerHand.clone();
+        return cloneMahjongSeat;
     }
 
     public void solution() {

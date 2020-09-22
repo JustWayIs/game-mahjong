@@ -67,7 +67,7 @@ public enum MJManager {
         //Collections.shuffle(tiles);
 
         List<Tile> tiles = new ArrayList<>();
-        for(Integer card : cardWall){
+        for (Integer card : cardWall) {
             final Tile tile = Tile.getTileByID(card);
             tiles.add(tile);
         }
@@ -95,9 +95,9 @@ public enum MJManager {
 
     public String encode(PlayerHand pPlayerHand) {
         StringBuilder encoded = new StringBuilder();
-        for(Meld meld : pPlayerHand.melds){
+        for (Meld meld : pPlayerHand.melds) {
             encoded.append("[");
-            switch (meld.type){
+            switch (meld.type) {
                 case Meld.TYPE_PAIR: {
                     Tile tile = meld.tiles.get(0);
                     encoded.append(tile.value).append(tile.value).append(tile.suffix);
@@ -122,7 +122,7 @@ public enum MJManager {
                     encoded.append(",").append(meld.player);
                     break;
                 }
-                case Meld.TYPE_KONG:{
+                case Meld.TYPE_KONG: {
                     Tile tile = meld.tiles.get(0);
                     encoded.append(tile.value);
                     encoded.append(tile.value);
@@ -173,7 +173,7 @@ public enum MJManager {
                     attachTileBranch(branch, tile, pBannedSuit);
                 }
             }
-            parseSolutions(solutions, branch, pMelds);
+            parseSolutions(solutions, branch, pMelds, pBannedSuit);
             solutions.sort((a, b) -> a.isWin || b.isWin ?
                     ((b.isWin ? 1 : 0) - (a.isWin ? 1 : 0)) : ((a.isReadyHand || b.isReadyHand) ?
                     (b.canWin.size() - a.canWin.size()) : (a.meldCount != b.meldCount) ? // 对子多的排前
@@ -184,24 +184,23 @@ public enum MJManager {
         return solutions;
     }
 
-    private void parseSolutions(List<Solution> pSolutions, TileBranch pBranch, List<Meld> pMelds) {
+    private void parseSolutions(List<Solution> pSolutions, TileBranch pBranch, List<Meld> pMelds, int pBannedSuit) {
         if (pBranch != null) {
             if (pBranch.meld != null) {
-                parseSolutions(pSolutions, pBranch.meld, pMelds);
+                parseSolutions(pSolutions, pBranch.meld, pMelds, pBannedSuit);
             }
             if (pBranch.next != null) {
-                parseSolutions(pSolutions, pBranch.next, pMelds);
+                parseSolutions(pSolutions, pBranch.next, pMelds, pBannedSuit);
             }
             if (pBranch.meld == null && pBranch.next == null) {
                 // 回溯牌路
-                Solution   solution = new Solution();
-                for(Meld meld : pMelds){
+                Solution solution = new Solution();
+                for (Meld meld : pMelds) {
                     meld.isStable = true;
                     // 已成型的面子，通过吃杠碰得到
-                    solution.melding.add(meld);
-                    solution.
-                            meldCount++;
-                    switch (meld.type){
+                    solution.melds.add(meld);
+                    solution.meldCount++;
+                    switch (meld.type) {
                         case Meld.TYPE_SEQUENCE:
                             solution.sequenceCount++;
                             break;
@@ -213,7 +212,7 @@ public enum MJManager {
                             break;
                     }
                 }
-                TileBranch current  = pBranch;
+                TileBranch current = pBranch;
                 do {
                     switch (current.type) {
                         case Meld.TYPE_SINGLE_TILE:    // 单张
@@ -290,29 +289,37 @@ public enum MJManager {
                     solution.isWin = true;
                     solution.setBaseHuType(BaseHuTypeEnum.平胡);
 
-                }else if(solution.pairCount == 7){
+                } else if (solution.pairCount == 7) {
                     solution.isWin = true;
                     solution.setBaseHuType(BaseHuTypeEnum.七对);
-                } else if (solution.meldCount == 4 ) {
+                } else if (solution.meldCount == 4) {
                     // 四面子，听单张，可杠上花
-                    solution.canWin.addAll(solution.tiles);
+                    for(Tile tile : solution.tiles){
+                        if(tile.suit != pBannedSuit){
+                            solution.canWin.add(tile);
+                        }
+                    }
                     solution.setBaseHuType(BaseHuTypeEnum.平胡);
                     for (Meld meld : solution.melds) {
                         if (meld.type == Meld.TYPE_TRIPLET) {
                             solution.canKong.add(meld.tiles.get(0));
                         }
                     }
-                    solution.isReadyHand = true;
-                }else if (solution.pairCount == 6) {
+                    solution.isReadyHand = solution.canWin.size() > 0;
+                } else if (solution.pairCount == 6) {
                     // 四面子，听单张，可杠上花
-                    solution.canWin.addAll(solution.tiles);
+                    for(Tile tile : solution.tiles){
+                        if(tile.suit != pBannedSuit){
+                            solution.canWin.add(tile);
+                        }
+                    }
                     solution.setBaseHuType(BaseHuTypeEnum.七对);
                     for (Meld meld : solution.melds) {
                         if (meld.type == Meld.TYPE_TRIPLET) {
                             solution.canKong.add(meld.tiles.get(0));
                         }
                     }
-                    solution.isReadyHand = true;
+                    solution.isReadyHand = solution.canWin.size() > 0;
                 } else if (solution.meldCount == 3 && solution.pairCount == 1 && solution.meldingCount == 1) {
                     // 听搭子张
                     for (Meld meld : solution.melding) {
@@ -358,6 +365,7 @@ public enum MJManager {
                         if (meld.type == Meld.TYPE_PAIR) {
                             if (!solution.canWin.contains(meld.tiles.get(0))) {
                                 solution.canWin.add(meld.tiles.get(0));
+                                solution.setBaseHuType(BaseHuTypeEnum.平胡);
                             } else {
                                 // 暗杠被拆，放弃此方案，因为同3面子、1杠的方案代替
                                 return;
@@ -423,36 +431,38 @@ public enum MJManager {
                             return;
                         }
                         // 改良张
-                        switch (tile.suit) {
-                            case Tile.SUIT_DOTS:
-                            case Tile.SUIT_BAMBOO:
-                            case Tile.SUIT_CHARACTERS:
-                                if (!solution.improve.contains(tile)) {
-                                    solution.improve.add(tile);
-                                }
-                                // 相邻张
-                                int index = tile.id % 10;
-                                boolean hasLeft = index != 1;
-                                boolean hasRight = index != 9;
-                                if (hasLeft) {
-                                    Tile left = Tile.getTileByID(tile.id - 1);
-                                    if (!solution.improve.contains(left)) {
-                                        solution.improve.add(left);
+                        if(tile.suit != pBannedSuit) {
+                            switch (tile.suit) {
+                                case Tile.SUIT_DOTS:
+                                case Tile.SUIT_BAMBOO:
+                                case Tile.SUIT_CHARACTERS:
+                                    if (!solution.improve.contains(tile)) {
+                                        solution.improve.add(tile);
                                     }
-                                }
-                                if (hasRight) {
-                                    Tile right = Tile.getTileByID(tile.id + 1);
-                                    if (!solution.improve.contains(right)) {
-                                        solution.improve.add(right);
+                                    // 相邻张
+                                    int index = tile.id % 10;
+                                    boolean hasLeft = index != 1;
+                                    boolean hasRight = index != 9;
+                                    if (hasLeft) {
+                                        Tile left = Tile.getTileByID(tile.id - 1);
+                                        if (!solution.improve.contains(left)) {
+                                            solution.improve.add(left);
+                                        }
                                     }
-                                }
-                                break;
-                            case Tile.SUIT_WINDS:
-                            case Tile.SUIT_DRAGONS:
-                                if (!solution.improve.contains(tile)) {
-                                    solution.improve.add(tile);
-                                }
-                                break;
+                                    if (hasRight) {
+                                        Tile right = Tile.getTileByID(tile.id + 1);
+                                        if (!solution.improve.contains(right)) {
+                                            solution.improve.add(right);
+                                        }
+                                    }
+                                    break;
+                                case Tile.SUIT_WINDS:
+                                case Tile.SUIT_DRAGONS:
+                                    if (!solution.improve.contains(tile)) {
+                                        solution.improve.add(tile);
+                                    }
+                                    break;
+                            }
                         }
                     }
                 }
@@ -497,6 +507,11 @@ public enum MJManager {
                             // 外部保证 Tile 已经排序，那么在嵌张的情况下不可能成面子
                             if (pTile.id - pBranch.tile.id == 1 && pBranch.tile.id - pBranch.prev.tile.id == 1) {
                                 pBranch.meld = new TileBranch(pTile, pBranch, 3, Meld.TYPE_SEQUENCE);
+                                // 如果当前节点（pBranch.tile）存在next，需要移动此next到挂载节点的next，以确保不会丢失牌张
+                                // 举例： 3，4，4，5，当挂载到5时，345成顺，同时4会挂载第二个4
+                                if (pBranch.next != null) {
+                                    pBranch.meld.next = new TileBranch(pBranch.next.tile, pBranch.meld, 1, Meld.TYPE_SINGLE_TILE);
+                                }
                             }
                         } else if (pBranch.type == Meld.TYPE_PAIR && pBranch.tile.id == pTile.id) {
                             // 对子
@@ -550,7 +565,7 @@ public enum MJManager {
         /**
          * 七小对
          */
-        tiles =  Arrays.asList(Tile.t1,Tile.t1,Tile.b2,Tile.b2,Tile.b5,Tile.b5,Tile.t3,Tile.t3,Tile.w8,Tile.w8,Tile.t7,Tile.t7,Tile.t9);
+        tiles = Arrays.asList(Tile.t1, Tile.t1, Tile.b2, Tile.b2, Tile.b5, Tile.b5, Tile.t3, Tile.t3, Tile.w8, Tile.w8, Tile.t7, Tile.t7, Tile.t9);
 
         //tiles = Arrays.asList(Tile.t2,Tile.t3,Tile.t4,Tile.b1,Tile.b2,Tile.b3,Tile.b5,Tile.b6,Tile.b7,Tile.b8,Tile.b8,Tile.b8,Tile.b9,Tile.b9);
 
@@ -558,19 +573,19 @@ public enum MJManager {
 
         //tiles = Arrays.asList(Tile.t1,Tile.t9,Tile.b1,Tile.b9,)
 
-        tiles = Arrays.asList(Tile.w6,Tile.w7,Tile.w8,Tile.t5,Tile.t5,Tile.t5,Tile.t8,Tile.t9,Tile.t9,Tile.t9);
+        tiles = Arrays.asList(Tile.w6, Tile.w7, Tile.w8, Tile.t5, Tile.t5, Tile.t5, Tile.t8, Tile.t9, Tile.t9, Tile.t9);
         List<Meld> pMelds = new ArrayList<>();
-        Meld meld = new Meld();
+        Meld       meld   = new Meld();
 //        // 四饼 四饼 四饼 七饼 一条 六条 九条 九条 三万 六万 東 中 發
 //        //List<Tile> tiles = Arrays.asList(Tile.b4, Tile.b4, Tile.b4, Tile.b7, Tile.t1, Tile.t6, Tile.t9, Tile.t9, Tile.w3, Tile.w6, Tile.E, Tile.Z, Tile.F);
-        List<Solution> solutions = MJManager.INSTANCE.solutions(tiles);
+        List<Solution> solutions     = MJManager.INSTANCE.solutions(tiles);
         List<Solution> tingSolutions = new ArrayList<>();
         for (Solution solution : solutions) {
-            if(solution.isWin){
+            if (solution.isWin) {
                 System.out.println(solution.toString());
 
             }
-            if(solution.canWin.size() > 0){
+            if (solution.canWin.size() > 0) {
                 tingSolutions.add(solution);
             }
         }

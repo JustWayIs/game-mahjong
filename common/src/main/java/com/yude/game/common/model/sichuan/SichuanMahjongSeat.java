@@ -15,7 +15,7 @@ import java.util.List;
  * @Version: 1.0
  * @Declare:
  */
-public class SichuanMahjongSeat extends AbstractSeatModel {
+public class SichuanMahjongSeat extends AbstractSeatModel{
     private MahjongSeat mahjongSeat;
 
     /**
@@ -127,4 +127,5 @@ public class SichuanMahjongSeat extends AbstractSeatModel {
         this.huCard = huCard;
         return this;
     }
+
 }

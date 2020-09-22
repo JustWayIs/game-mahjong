@@ -1,5 +1,6 @@
 package com.yude.game.common.mahjong;
 
+import com.yude.game.common.model.CardEnum;
 import com.yude.game.common.model.StepAction;
 
 import java.util.ArrayList;
@@ -12,7 +13,7 @@ import java.util.stream.IntStream;
 /**
  * Created by someone on 2020/8/6 10:52.
  */
-public class PlayerHand {
+public class PlayerHand implements Cloneable {
     // ===========================================================
     // Constants
     // ===========================================================
@@ -21,11 +22,11 @@ public class PlayerHand {
     // ===========================================================
     // Fields
     // ===========================================================
-    public List<Meld>     melds; // 副露
-    public List<Tile>     tiles; // 立牌
-    public List<Tile>     discards; // 打掉的牌
+    public List<Meld> melds; // 副露
+    public List<Tile> tiles; // 立牌
+    public List<Tile> discards; // 打掉的牌
     public List<Solution> solutions;
-    public int            bannedSuit;
+    public int bannedSuit;
 
     // ===========================================================
     // Constructors
@@ -68,15 +69,23 @@ public class PlayerHand {
         return s.toString();
     }
 
+    public boolean canOperation(Integer card) {
+        final CardEnum cardEnum = CardEnum.judgeCardColor(card);
+        int color = cardEnum.getColor();
+        if (color == bannedSuit) {
+            return false;
+        }
+        return true;
+    }
 
     // ===========================================================
     // Methods
     // ===========================================================
     public boolean canChi(Integer card) {
-        for(Solution solution : solutions){
+        for (Solution solution : solutions) {
             List<Tile> canChow = solution.canChow;
-            for(Tile tile : canChow){
-                if(tile.id == card){
+            for (Tile tile : canChow) {
+                if (tile.id == card) {
                     return true;
                 }
             }
@@ -85,84 +94,74 @@ public class PlayerHand {
     }
 
     public boolean canPeng(Integer card) {
-        for(Solution solution : solutions){
-            List<Tile> canChow = solution.canPong;
-            for(Tile tile : canChow){
-                if(tile.id == card){
-                    return true;
-                }
+        if (!canOperation(card)) {
+            return false;
+        }
+        int num = 0;
+        for (Tile tile : tiles) {
+            if (tile.id == card) {
+                num++;
             }
+        }
+        if (num == 2) {
+            return true;
         }
         return false;
     }
 
     public boolean canZhiGang(Integer card) {
-        for(Solution solution : solutions){
-            if(solution.tripletCount != 0){
-                for(Meld meld : solution.melds){
-                    if(meld.type == Meld.TYPE_TRIPLET && meld.tiles.get(0).id == card){
-                        return true;
-                    }
-                }
+        if (!canOperation(card)) {
+            return false;
+        }
+        int num = 0;
+        for (Tile tile : tiles) {
+            if (tile.id == card) {
+                num++;
             }
+        }
+        if (num == 3) {
+            return true;
         }
         return false;
     }
 
     /**
      * 可能有多个暗杠，所以把stepActionsc传进来
+     *
      * @param stepActions
      */
-    public void canAnGang(List<StepAction> stepActions,Integer tookCard) {
-        if(tookCard == null){
-            // 判断手上有暗杠，但是没有开杠的牌
-            int cardNum = 0;
-            int tempCard = 0;
-            for (Tile card : tiles) {
-                if (tempCard != card.id) {
-                    cardNum = 0;
-                }
-                tempCard = card.id;
-                cardNum++;
-                if (cardNum >= 4) {
-                    StepAction stepAction = new StepAction();
-                    stepAction.setTargetCard(card.id);
-                    //.setOperationType(XueZhanMahjongOperationEnum.AN_GANG);
-                    stepActions.add(stepAction);
-                }
+    public void canAnGang(List<StepAction> stepActions, Integer tookCard) {
+
+        // 判断手上有暗杠，但是没有开杠的牌
+        int cardNum = 0;
+        int tempCard = 0;
+        for (Tile card : tiles) {
+            if (tempCard != card.id || CardEnum.judgeCardColor(tempCard).getColor() == bannedSuit) {
+                cardNum = 0;
             }
-        }else{
-            // 判断手上有暗杠，但是没有开杠的牌
-            int cardNum = 0;
-            int tempCard = 0;
-            for (Tile card : tiles) {
-                if(card.id != tookCard){
-                    cardNum = 0;
-                    continue;
-                }
-                if (tempCard != card.id) {
-                    cardNum = 0;
-                }
-                tempCard = card.id;
-                cardNum++;
-                //因为这张牌没有加入到PlayerHand对象中
-                if (cardNum >= 3) {
-                    StepAction stepAction = new StepAction();
-                    stepAction.setTargetCard(tookCard);
-                    //.setOperationType(XueZhanMahjongOperationEnum.AN_GANG);
-                    stepActions.add(stepAction);
-                }
+            tempCard = card.id;
+            cardNum++;
+            //摸上来的牌并没有立即更新到PalyerHand对象的tiles里。
+            if (cardNum == 4 || (cardNum == 3 && tempCard == tookCard)) {
+                StepAction stepAction = new StepAction();
+                stepAction.setTargetCard(card.id);
+                //.setOperationType(XueZhanMahjongOperationEnum.AN_GANG);
+                stepActions.add(stepAction);
             }
         }
+
 
     }
 
     public boolean canBuGang(Integer card) {
-        if(card == null){
+        if (card == null) {
             return false;
         }
-        for(Meld meld : melds){
-            if(meld.type == Meld.TYPE_TRIPLET && meld.tiles.get(0).id == card){
+        if (!canOperation(card)) {
+            return false;
+        }
+        for (Meld meld : melds) {
+            if (meld.type == Meld.TYPE_TRIPLET && meld.tiles.get(0).id == card) {
                 return true;
             }
         }
@@ -172,17 +171,18 @@ public class PlayerHand {
     /**
      * 通知胡牌的时候不需要告诉客户端胡什么
      * 但是客户端请求胡的时候需要知道胡什么，并且找出胡牌的最大番，因为solutions里面可能不止有一种立牌方式可以胡牌
+     *
      * @param card
      * @param cardFromSelf
      * @return
      */
     public List<Solution> canHu(Integer card, boolean cardFromSelf) {
         List<Solution> canHuSolutions = new ArrayList<>();
-        if (card != null ) { //&& !cardFromSelf 因为下面所说
-            for(Solution solution : solutions){
+        if (card != null) { //&& !cardFromSelf 因为下面所说
+            for (Solution solution : solutions) {
                 List<Tile> canWin = solution.canWin;
-                for(Tile tile : canWin){
-                    if(tile.id == card){
+                for (Tile tile : canWin) {
+                    if (tile.id == card) {
                         canHuSolutions.add(solution);
                     }
 
@@ -192,8 +192,8 @@ public class PlayerHand {
             //庄家第一次判断胡没胡牌是没有摸牌的
 
             //H2 玩家摸牌后判断胡不胡牌，这个时候因为牌已经加入到手牌里了，所以直接判断能不能胡就行了，问题在于有没有solution。如果加入手牌后，没有立马solution 【也没有必要立马solution，像点炮胡一样，直接判断听牌列表就行了，出牌的时候再solution】，就要走上面的逻辑
-            for(Solution solution : solutions){
-                if(solution.isWin){
+            for (Solution solution : solutions) {
+                if (solution.isWin) {
                     canHuSolutions.add(solution);
                 }
             }
@@ -203,28 +203,36 @@ public class PlayerHand {
 
     /**
      * 已经胡牌的玩家 貌似一定会有一种理牌 是可以听的
+     *
      * @return
      */
-    public boolean isTing(){
-        for(Solution solution : solutions){
-            if(solution.canWin.size() > 0){
+    public boolean isTing() {
+        for (Solution solution : solutions) {
+            if (solution.canWin.size() > 0) {
                 return true;
             }
         }
         return false;
     }
 
-    public Set<Integer> getTingCards(){
+    public Set<Integer> getTingCards() {
         Set<Integer> set = new HashSet<>();
-        for(Solution solution : solutions){
-            if(solution.canWin.size() > 0){
-                for(Tile tile : solution.canWin){
+        for (Solution solution : solutions) {
+            if (solution.canWin.size() > 0) {
+                for (Tile tile : solution.canWin) {
                     set.add(tile.id);
                 }
             }
         }
         return set;
     }
+
+    @Override
+    public PlayerHand clone() throws CloneNotSupportedException {
+        PlayerHand playerHand = (PlayerHand) super.clone();
+        return playerHand;
+    }
+
 
     // ===========================================================
     // Inner and Anonymous Classes

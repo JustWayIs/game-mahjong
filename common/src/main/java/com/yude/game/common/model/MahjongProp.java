@@ -1,6 +1,8 @@
 package com.yude.game.common.model;
 
 import cn.hutool.core.util.XmlUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -52,6 +54,8 @@ public enum MahjongProp {
 
     //H2 用于测试时在本地配牌
     public static final boolean OPEN_CONFIGURATION_CARD = true;
+
+    private static final Logger log = LoggerFactory.getLogger(MahjongProp.class);
 
     public static List<String> cardConvertName(Integer... card) {
         List<String> list = new ArrayList<>();
@@ -179,12 +183,16 @@ public enum MahjongProp {
     }
 
     public static Map<Integer, List<Integer>> getDealCardGroup(MahjongCard[] mahjongCards,Integer bankerPosId,List<Integer> allCard) {
-        if (OPEN_CONFIGURATION_CARD) {
-            //用于本地配牌
-            Map<Integer, List<Integer>> cardConfiguration = getCardConfiguration();
-            if (cardConfiguration != null) {
-                return cardConfiguration;
+        try {
+            if (OPEN_CONFIGURATION_CARD) {
+                //用于本地配牌
+                Map<Integer, List<Integer>> cardConfiguration = getCardConfiguration();
+                if (cardConfiguration != null) {
+                    return cardConfiguration;
+                }
             }
+        } catch (Exception e) {
+            log.info("================配牌失败：使用随机发牌========================");
         }
         List<Integer> allCardList = getAllCard(mahjongCards);
         Collections.shuffle(allCardList);

@@ -3,6 +3,8 @@ package com.yude.game.common.mahjong;
 import com.google.common.collect.ImmutableList;
 import com.yude.game.common.contant.OperationEnum;
 
+import java.util.List;
+
 /**
  * Created by someone on 2020/8/6 10:57.
  */
@@ -39,7 +41,19 @@ public class Meld {
     // ===========================================================
     // Constructors
     // ===========================================================
+    public Meld(){
 
+    }
+
+    public Meld(List<Tile> pTiles, int pType, int pFrom, int pPlayer, int pIndex, boolean pIsPlusKong, boolean pIsStable){
+        this.tiles = ImmutableList.copyOf(pTiles);
+        this.type = pType;
+        this.from = pFrom;
+        this.player = pPlayer;
+        this.index = pIndex;
+        this.isPlusKong = pIsPlusKong;
+        this.isStable = pIsStable;
+    }
 
     // ===========================================================
     // Getter &amp; Setter

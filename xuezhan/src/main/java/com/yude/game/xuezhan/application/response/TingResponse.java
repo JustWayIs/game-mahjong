@@ -14,6 +14,13 @@ import java.util.List;
 public class TingResponse extends BaseResponse {
     private List<TingInfoDTO> tingList;
 
+    public TingResponse() {
+    }
+
+    public TingResponse(List<TingInfoDTO> tingList) {
+        this.tingList = tingList;
+    }
+
     public List<TingInfoDTO> getTingList() {
         return tingList;
     }

@@ -15,7 +15,7 @@ import com.yude.game.common.model.sichuan.constant.SeatStatusEnum;
  * @Version: 1.0
  * @Declare:
  */
-public class XueZhanSeat extends AbstractSeatModel {
+public class XueZhanSeat extends AbstractSeatModel implements Cloneable{
     private SichuanMahjongSeat sichuanMahjongSeat;
     private MahjongSeat mahjongSeat;
 
@@ -60,5 +60,13 @@ public class XueZhanSeat extends AbstractSeatModel {
 
     public void appendCard(Integer card){
         mahjongSeat.appendCard(card);
+    }
+
+    @Override
+    public XueZhanSeat clone() throws CloneNotSupportedException {
+        final XueZhanSeat xueZhanSeat = (XueZhanSeat) super.clone();
+        xueZhanSeat.mahjongSeat = xueZhanSeat.mahjongSeat.clone();
+        xueZhanSeat.sichuanMahjongSeat.setMahjongSeat(xueZhanSeat.mahjongSeat);
+        return xueZhanSeat;
     }
 }

@@ -3,6 +3,7 @@ package com.yude.game.common.model.sichuan.history.info;
 import com.yude.game.common.model.StepAction;
 import com.yude.game.common.model.fan.FanInfo;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -26,9 +27,23 @@ public class SettlementDetailInfo {
     private long remainingScore;
 
     /**
+     * 大牌展示：如果有胡过大于 等于16番 的牌再展示
+     */
+    private Integer bigFanNum;
+    private Integer bigFanScore;
+    private List<FanInfo> bigFan;
+
+    /**
      * 知道番数后，通过房间配置的底注就可以算出 分值了
      */
-    private List<FanInfo> list;
+    private List<SingleSettlementInfo> singleSettlementInfos;
+
+    public void addSingleSttlementInfo(SingleSettlementInfo singleSettlementInfo){
+        if(this.singleSettlementInfos == null){
+            this.singleSettlementInfos = new ArrayList<>();
+        }
+        this.singleSettlementInfos.add(singleSettlementInfo);
+    }
 
     public int getPosId() {
         return posId;
@@ -102,12 +117,39 @@ public class SettlementDetailInfo {
         return this;
     }
 
-    public List<FanInfo> getList() {
-        return list;
+    public Integer getBigFanNum() {
+        return bigFanNum;
     }
 
-    public SettlementDetailInfo setList(List<FanInfo> list) {
-        this.list = list;
+    public SettlementDetailInfo setBigFanNum(Integer bigFanNum) {
+        this.bigFanNum = bigFanNum;
+        return this;
+    }
+
+    public Integer getBigFanScore() {
+        return bigFanScore;
+    }
+
+    public SettlementDetailInfo setBigFanScore(Integer bigFanScore) {
+        this.bigFanScore = bigFanScore;
+        return this;
+    }
+
+    public List<FanInfo> getBigFan() {
+        return bigFan;
+    }
+
+    public SettlementDetailInfo setBigFan(List<FanInfo> bigFan) {
+        this.bigFan = bigFan;
+        return this;
+    }
+
+    public List<SingleSettlementInfo> getSingleSettlementInfos() {
+        return singleSettlementInfos;
+    }
+
+    public SettlementDetailInfo setSingleSettlementInfos(List<SingleSettlementInfo> singleSettlementInfos) {
+        this.singleSettlementInfos = singleSettlementInfos;
         return this;
     }
 }

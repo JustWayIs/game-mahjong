@@ -71,6 +71,6 @@ public class SettlementResponse extends BaseResponse {
                 ", cardSourcePosId=" + cardSourcePosId +
                 ", operationType=" + operationType +
                 ", settlementInfoDTOS=" + settlementInfoDTOS +
-                "} " + super.toString();
+                "} ";
     }
 }

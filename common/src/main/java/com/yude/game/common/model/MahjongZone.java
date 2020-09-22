@@ -41,7 +41,7 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
      */
     private List<Integer> cardWall;
     /**
-     * 出的牌：不包括被吃碰杠的牌
+     * 出的牌：不包括被吃碰杠的牌 -- 并没有做这样的处理，现在是包含的
      * 服务器不应该直接信任客户端传上来的目标牌，而是应该使用 cardPool里的最后一张牌？  或者从hitory里面取最后一个操作，那里有更完整的最后一次操作的信息。验证的时候用cardPool。响应的时候用hisory ???
      * 额，其实可以不用这个和history来判断，因为玩家的可操作权限集合里面，保存了可以进行的操作的具体信息
      */
@@ -64,6 +64,8 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
 
     private List<GameStepModel> gameHistory;
 
+    private Map<Integer,Integer> cardRemainingMap;
+
     /**
      * 即使把玩家的操作级别按从大到小牌型，还是免不了遍历的过程，因为可能有多个的操作级别是一样的（多人胡 ）
      */
@@ -80,6 +82,7 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         cardPool = new ArrayList<>();
         tempActions = new ArrayList<>();
         allCard = new ArrayList<>();
+        cardRemainingMap = new HashMap<>();
     }
 
     @Override
@@ -92,6 +95,17 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         rollingDice();
 
         Map<Integer, List<Integer>> dealCardGroup = MahjongProp.getDealCardGroup(mahjongCards, bankerPosId, allCard);
+        //对allCard进行分组，用于标识 某张牌的剩余张数
+        //cardRemainingMap = allCard.stream().collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+        for(Integer card : allCard){
+            cardRemainingMap.compute(card,(k,num) -> {
+                if(num == null){
+                    num = 0;
+                }
+                return ++num;
+            });
+        }
+
         cardWall.addAll(dealCardGroup.get(4));
         for (MahjongSeat mahjongSeat : playerSeats) {
             int posId = mahjongSeat.getPosId();
@@ -155,6 +169,8 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         beforeTookCardPlayerPosId = mahjongSeat.getPosId();
         beforeOperatorPosId = mahjongSeat.getPosId();
         cardPool.add(card);
+        Integer remaining = cardRemainingMap.get(card);
+        cardRemainingMap.put(card,--remaining);
         stepCount++;
         return stepModel;
     }
@@ -164,14 +180,13 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
      * @param posId
      * @return
      */
-    public GameStepModel<HuCardStep> hu(Integer card, Integer posId) {
+    public GameStepModel<HuCardStep> hu(Integer card, Integer posId,boolean isZiMo) {
         /**
          * 把胡的牌 加入到立牌中
          */
         MahjongSeat playerSeat = playerSeats[posId];
         List<Integer> standCardList = playerSeat.getStandCardList();
 
-        Collections.sort(standCardList);
         //playerSeat.solution();
         playerSeat.addStatus(SeatStatusEnum.ALREADY_HU);
         GameStepModel<OperationCardStep> operation = operation(card, posId, OperationEnum.HU);
@@ -186,7 +201,10 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
                 .setStep(operationStep.getStep())
                 .setPosId(operationStep.getPosId());
         //最终应不应该把胡的牌从手牌中拿出来呢？
-        standCardList.add(card);
+        if(!isZiMo){
+            standCardList.add(card);
+        }
+        Collections.sort(standCardList);
         //要删掉胡牌的 OperationCardStep 改成用 HuCardStep
         List<OperationCardStep> operationHistory = playerSeat.getOperationHistory();
         operationHistory.remove(operationStep);
@@ -295,8 +313,11 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         List<Integer> cardCombination = null;
         OperationEnum value = OperationEnum.values()[operationType.value()];
         List<Integer> standCardListSort = playerSeat.getStandCardList();
+        Integer remaining = cardRemainingMap.get(card);
         switch (value) {
             case PENG:
+                remaining -= 3;
+                cardRemainingMap.put(card,remaining);
                 cardCombination = new ArrayList<>(Arrays.asList(card, card, card));
                 playerSeat.removeCard(card);
                 playerSeat.removeCard(card);
@@ -304,6 +325,8 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
                 playerSeat.solution();
                 break;
             case ZHI_GANG:
+                remaining -= 4;
+                cardRemainingMap.put(card,remaining);
                 cardCombination = new ArrayList<>(Arrays.asList(card, card, card, card));
                 playerSeat.removeCard(card);
                 playerSeat.removeCard(card);
@@ -311,6 +334,8 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
                 Collections.sort(standCardListSort);
                 break;
             case BU_GANG:
+                remaining -= 1;
+                cardRemainingMap.put(card,remaining);
                 cardCombination = new ArrayList<>(Arrays.asList(card, card, card, card));
                 playerSeat.removeCard(card);
                 Collections.sort(standCardListSort);
@@ -319,6 +344,8 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
                 desinateStep.setEffective(false);
                 break;
             case AN_GANG:
+                remaining -= 4;
+                cardRemainingMap.put(card,remaining);
                 cardCombination = new ArrayList<>(Arrays.asList(card, card, card, card));
                 playerSeat.removeCard(card);
                 playerSeat.removeCard(card);
@@ -328,6 +355,11 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
                 playerSeat.solution();
                 break;
             case CHI:
+                Integer beforeCardRemaning = cardRemainingMap.get(card + 1);
+                cardRemainingMap.put(card + 1,--beforeCardRemaning);
+                Integer afterCardRemaining = cardRemainingMap.get(card - 1);
+                cardRemainingMap.put(card - 1,--afterCardRemaining);
+
                 cardCombination = new ArrayList<>(Arrays.asList(card - 1, card, card + 1));
                 playerSeat.removeCard(card - 1);
                 playerSeat.removeCard(card + 1);
@@ -335,6 +367,8 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
                 playerSeat.solution();
                 break;
             case HU:
+                cardRemainingMap.put(card,--remaining);
+
                 cardCombination = new ArrayList<>();
                 cardCombination.addAll(playerSeat.getStandCardList());
                 //应该不需要把副露拼回手牌
@@ -484,8 +518,8 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
     }
 
     /**
-     * 现在操作了的玩家
      *
+     * 如果存在更高优先级，就需要等待
      * @return
      */
     public boolean existsCanOperation(MahjongOperation mahjongOperation) {
@@ -637,6 +671,9 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         this.gameStatus = gameStatus;
     }
 
+    public Integer getCardRemainingNum(Integer card){
+        return cardRemainingMap.get(card);
+    }
 
     public void canChi(MahjongSeat mahjongSeat, Integer card) {
     }

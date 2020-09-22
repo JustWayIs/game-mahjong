@@ -58,6 +58,10 @@ public enum OperationEnum implements MahjongOperation {
      * 查花猪
      */
     CHA_HUA_ZHU(false, 0),
+    /**
+     * 抢杠胡
+     */
+    QIANG_GANG_HU(false,0)
     ;
 
     /**

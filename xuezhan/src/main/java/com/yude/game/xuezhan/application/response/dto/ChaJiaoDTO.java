@@ -52,4 +52,14 @@ public class ChaJiaoDTO {
         this.remainingScore = remainingScore;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "ChaJiaoDTO{" +
+                "posId=" + posId +
+                ", beforeScore=" + beforeScore +
+                ", changeScore=" + changeScore +
+                ", remainingScore=" + remainingScore +
+                '}';
+    }
 }

@@ -13,12 +13,14 @@ import java.util.List;
  */
 public class GameOverResponse extends BaseResponse {
     private List<SeatInfoDTO> list;
+    private Boolean isLiuJu;
 
     public GameOverResponse() {
     }
 
-    public GameOverResponse(List<SeatInfoDTO> list) {
+    public GameOverResponse(List<SeatInfoDTO> list, Boolean isLiuJu) {
         this.list = list;
+        this.isLiuJu = isLiuJu;
     }
 
     public List<SeatInfoDTO> getList() {
@@ -28,5 +30,22 @@ public class GameOverResponse extends BaseResponse {
     public GameOverResponse setList(List<SeatInfoDTO> list) {
         this.list = list;
         return this;
+    }
+
+    public Boolean getLiuJu() {
+        return isLiuJu;
+    }
+
+    public GameOverResponse setLiuJu(Boolean liuJu) {
+        isLiuJu = liuJu;
+        return this;
+    }
+
+    @Override
+    public String toString() {
+        return "GameOverResponse{" +
+                "list=" + list +
+                ", isLiuJu=" + isLiuJu +
+                '}';
     }
 }

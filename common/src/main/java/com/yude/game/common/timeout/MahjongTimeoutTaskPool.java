@@ -116,6 +116,7 @@ public enum MahjongTimeoutTaskPool implements TimeoutTaskPool{
     public void execute(){
         while(!Thread.currentThread().isInterrupted()){
             TimeoutTask timeOutTask = linkedQueue.poll();
+
             if(timeOutTask != null){
                 executorService.execute(timeOutTask);
                 continue;

@@ -11,6 +11,7 @@ import com.yude.protocol.common.response.BaseResponse;
 public class TookCardNoticeResponse extends BaseResponse {
     private Integer posId;
     private Integer card;
+    private Integer cardWallRemaining;
 
     public TookCardNoticeResponse() {
     }
@@ -46,11 +47,22 @@ public class TookCardNoticeResponse extends BaseResponse {
         return this;
     }
 
+    public Integer getCardWallRemaining() {
+        return cardWallRemaining;
+    }
+
+    public TookCardNoticeResponse setCardWallRemaining(Integer cardWallRemaining) {
+        this.cardWallRemaining = cardWallRemaining;
+        return this;
+    }
+
+
     @Override
     public String toString() {
         return "TookCardNoticeResponse{" +
                 "posId=" + posId +
                 ", card=" + card +
+                ", cardWallRemaining=" + cardWallRemaining +
                 '}';
     }
 }

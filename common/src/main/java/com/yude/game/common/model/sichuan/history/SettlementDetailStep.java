@@ -31,6 +31,11 @@ public class SettlementDetailStep implements Step {
         return 0;
     }
 
+    public SettlementDetailInfo getSettlementDetailInfoByPosId(Integer posId){
+        final SettlementDetailInfo settlementDetailInfo = map.get(posId);
+        return settlementDetailInfo;
+    }
+
     public int getStepCount() {
         return stepCount;
     }

@@ -17,4 +17,11 @@ public class RecommendDingQueResponse extends BaseResponse {
     public RecommendDingQueResponse(Integer color) {
         this.color = color;
     }
+
+    @Override
+    public String toString() {
+        return "RecommendDingQueResponse{" +
+                "color=" + color +
+                '}';
+    }
 }

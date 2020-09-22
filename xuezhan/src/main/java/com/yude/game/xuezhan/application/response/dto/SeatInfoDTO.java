@@ -22,6 +22,9 @@ public class SeatInfoDTO {
     private List<Integer> standCardList;
     private List<ActionDTO> actionDTOList;
     private List<Integer> cardPool;
+    /**
+     * 不能看到别人的
+     */
     private List<Integer> canOperationList;
     private List<Integer> seatStatus;
 

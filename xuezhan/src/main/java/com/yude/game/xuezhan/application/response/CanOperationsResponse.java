@@ -52,4 +52,13 @@ public class CanOperationsResponse extends BaseResponse {
         this.operations = operations;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "CanOperationsResponse{" +
+                "operationPosId=" + operationPosId +
+                ", operationCard=" + operationCard +
+                ", operations=" + operations +
+                '}';
+    }
 }

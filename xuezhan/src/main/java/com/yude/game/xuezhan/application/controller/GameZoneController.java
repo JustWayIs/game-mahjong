@@ -3,12 +3,15 @@ package com.yude.game.xuezhan.application.controller;
 import com.yude.game.common.application.controller.BaseController;
 import com.yude.game.common.command.annotation.RequestCommand;
 import com.yude.game.common.command.annotation.RequestController;
+import com.yude.game.common.contant.MahjongStatusCodeEnum;
 import com.yude.game.common.manager.IRoomManager;
 import com.yude.game.xuezhan.application.request.DingQueRequest;
 import com.yude.game.xuezhan.application.request.ExchangeCardRequest;
 import com.yude.game.xuezhan.application.request.OperationCardRequest;
 import com.yude.game.xuezhan.constant.XueZhanCommandCode;
 import com.yude.game.xuezhan.domain.XueZhanRoom;
+import com.yude.protocol.common.response.CommonResponse;
+import com.yude.protocol.common.response.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,15 +60,18 @@ public class GameZoneController implements BaseController {
     }
 
     @RequestCommand(value = XueZhanCommandCode.OPERATION_CARD)
-    public void operation(OperationCardRequest request) {
+    public Response operation(OperationCardRequest request) {
         log.debug("玩家请求操作：{}", request);
         Long userId = request.getUserIdByChannel();
         XueZhanRoom room = roomManager.getRoomByUserId(userId);
         if (room == null) {
             log.warn("玩家已经不在游戏中: userId={}", userId);
-            return;
+            CommonResponse commonResponse = new CommonResponse(MahjongStatusCodeEnum.PLAYER_NOT_GAMEMING);
+            return commonResponse;
         }
         room.operation(request.getCard(), request.getOperationType(), userId,false);
+        CommonResponse response = new CommonResponse(MahjongStatusCodeEnum.SUCCESS);
+        return response;
        /* Integer operationType = request.getOperationType();
         XueZhanMahjongOperationEnum operationEnum = XueZhanMahjongOperationEnum.matchByValue(request.getOperationType());
         switch (operationEnum) {

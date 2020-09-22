@@ -1,7 +1,7 @@
 package com.yude.game.common;
 
-import com.yude.game.common.application.response.dto.BaseSeatInfo;
 import com.yude.game.common.application.response.MatchFinishResponse;
+import com.yude.game.common.application.response.dto.BaseSeatInfo;
 import com.yude.game.common.application.response.dto.PlayerDTO;
 import com.yude.game.common.constant.PlayerStatusEnum;
 import com.yude.game.common.constant.Status;
@@ -190,13 +190,13 @@ public class RoomManager<T extends
             String nickName = player.getNickName();
             String headUrl = player.getHeadUrl();
             long score = player.getScore();
-            PlayerDTO playerDTO = new PlayerDTO(userId, nickName, headUrl, score);
-            BaseSeatInfo seatInfoDTO = new BaseSeatInfo();
-            seatInfoDTO.setUserId(userId)
-                    .setNickName(nickName)
+
+            PlayerDTO playerDTO = new PlayerDTO();
+            playerDTO.setUserId(userId)
                     .setHeadUrl(headUrl)
-                    .setScore(score)
-                    .setPosId(posId);
+                    .setName(nickName)
+                    .setScore(score);
+            BaseSeatInfo seatInfoDTO = new BaseSeatInfo(posId,playerDTO);
             seatInfoDTOS.add(seatInfoDTO);
             //这里用putIfAbsent()是不是会更好：如果关闭房间后，应该手动清理到玩家与房间的映射关系
             //所以如果在存进map的时候，已经有值了的话，是一种异常现象，应该标识出来
