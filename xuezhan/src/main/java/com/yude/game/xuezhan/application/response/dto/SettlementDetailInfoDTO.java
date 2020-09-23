@@ -17,6 +17,9 @@ public class SettlementDetailInfoDTO {
     private Integer fanNum;
     private Integer fanScore;
     private List<Integer> fanIdList;
+    /**
+     * 触发这次结算的相对值：
+     */
     private Integer targetPosId;
 
     public Integer getFanNum() {

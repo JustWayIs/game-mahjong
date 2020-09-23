@@ -1398,12 +1398,10 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                     if (settlementInfo == null) {
                         continue;
                     }
-                    Integer targetPosId = null;
+                    Integer targetPosId;
                     if (settlementStep.posId() == mahjongSeat.getPosId()) {
-
                         targetPosId = action.getCardSource();
-                    } else if (action.getCardSource().equals(mahjongSeat.getPosId())) {
-
+                    } else{
                         targetPosId = settlementStep.getPosId();
                     }
 
@@ -1902,11 +1900,11 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                 if (settlementInfo == null) {
                     continue;
                 }
-                Integer targetPosId = null;
+                Integer targetPosId;
                 if (settlementStep.posId() == mahjongSeat.getPosId()) {
 
                     targetPosId = action.getCardSource();
-                } else if (action.getCardSource().equals(mahjongSeat.getPosId())) {
+                } else {
                     targetPosId = settlementStep.getPosId();
                 }
 

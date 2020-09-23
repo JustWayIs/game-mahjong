@@ -18,6 +18,16 @@ public class OtherReconnectResponse extends BaseResponse {
         this.posId = posId;
     }
 
+
+    public Integer getPosId() {
+        return posId;
+    }
+
+    public OtherReconnectResponse setPosId(Integer posId) {
+        this.posId = posId;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "OtherReconnectResponse{" +
