@@ -68,7 +68,7 @@ public class MahjongSeat extends AbstractSeatModel implements Cloneable{
     /**
      * 出过的牌：不能包含被吃碰杠的牌
      */
-    private List<Integer> cardPool;
+    private List<Integer> outCardPool;
 
 
     public MahjongSeat(Player player, int posId) {
@@ -79,7 +79,7 @@ public class MahjongSeat extends AbstractSeatModel implements Cloneable{
         seatStatusList = new ArrayList<>();
         playerHand = new PlayerHand();
         carryScore = player.getScore();
-        cardPool = new ArrayList<>();
+        outCardPool = new ArrayList<>();
     }
 
     @Override
@@ -298,6 +298,7 @@ public class MahjongSeat extends AbstractSeatModel implements Cloneable{
 
     public void removeCardFromStandCards(Integer card) {
         standCardList.remove(card);
+        outCard(card);
 
         //如果出的不是摸上来的牌，就重新理牌
         //这里找出该玩家最后一个操作的意义不仅仅在于找摸的牌，因为吃、碰操作是没有摸牌的。如果采用一个成员变量来存储上一次摸的牌，除非在吃碰的时候手动把 上一次摸的牌设为null，否则判断会有问题
@@ -340,17 +341,29 @@ public class MahjongSeat extends AbstractSeatModel implements Cloneable{
     }
 
     public void outCard(Integer card){
-        cardPool.add(card);
+        outCardPool.add(card);
     }
 
+    /**
+     * 出的牌被吃碰杠胡后调用
+     */
     public void removeLastOutCard(){
-        cardPool.remove(cardPool.size()-1);
+        outCardPool.remove(outCardPool.size()-1);
+    }
+
+    public List<Integer> getOutCardPool() {
+        return outCardPool;
+    }
+
+    public List<SeatStatusEnum> getSeatStatusList() {
+        return seatStatusList;
     }
 
     @Override
     public MahjongSeat clone() throws CloneNotSupportedException {
         final MahjongSeat cloneMahjongSeat = (MahjongSeat) super.clone();
         cloneMahjongSeat.playerHand = cloneMahjongSeat.playerHand.clone();
+        cloneMahjongSeat.standCardList = new ArrayList<>(cloneMahjongSeat.getStandCardList());
         return cloneMahjongSeat;
     }
 

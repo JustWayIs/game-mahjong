@@ -15,7 +15,7 @@ import java.util.List;
  * @Version: 1.0
  * @Declare:
  */
-public class SichuanMahjongSeat extends AbstractSeatModel{
+public class SichuanMahjongSeat extends AbstractSeatModel implements Cloneable{
     private MahjongSeat mahjongSeat;
 
     /**
@@ -27,6 +27,13 @@ public class SichuanMahjongSeat extends AbstractSeatModel{
      * 换三张：得到的牌
      */
     private List<Integer> gainedCards;
+
+    /**
+     * 推荐值
+     */
+    private List<Integer> recommendExchangeCards;
+
+    private Integer remommendQueColor;
 
     /**
      * 定缺的花色
@@ -128,4 +135,26 @@ public class SichuanMahjongSeat extends AbstractSeatModel{
         return this;
     }
 
+    public List<Integer> getRecommendExchangeCards() {
+        return recommendExchangeCards;
+    }
+
+    public SichuanMahjongSeat setRecommendExchangeCards(List<Integer> recommendExchangeCards) {
+        this.recommendExchangeCards = recommendExchangeCards;
+        return this;
+    }
+
+    public Integer getRemommendQueColor() {
+        return remommendQueColor;
+    }
+
+    public SichuanMahjongSeat setRemommendQueColor(Integer remommendQueColor) {
+        this.remommendQueColor = remommendQueColor;
+        return this;
+    }
+
+    @Override
+    public SichuanMahjongSeat clone() throws CloneNotSupportedException {
+        return (SichuanMahjongSeat) super.clone();
+    }
 }

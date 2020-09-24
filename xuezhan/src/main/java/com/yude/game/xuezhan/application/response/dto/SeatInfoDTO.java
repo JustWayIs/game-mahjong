@@ -18,14 +18,20 @@ public class SeatInfoDTO {
     private PlayerDTO playerDTO;
     private Integer posId;
     private Integer queColor;
-    private List<Integer> hszList;
+    private List<Integer> recommendExchangeCards;
+    private Integer recommendDingQueColor;
     private List<Integer> standCardList;
+    private Integer standCardRemaining;
     private List<ActionDTO> actionDTOList;
-    private List<Integer> cardPool;
+    /**
+     * 不包含被碰、杠、胡的牌
+     */
+    private List<Integer> outCardPool;
     /**
      * 不能看到别人的
      */
     private List<Integer> canOperationList;
+    private Integer huCard;
     private List<Integer> seatStatus;
 
     public PlayerDTO getPlayerDTO() {
@@ -55,12 +61,21 @@ public class SeatInfoDTO {
         return this;
     }
 
-    public List<Integer> getHszList() {
-        return hszList;
+    public List<Integer> getRecommendExchangeCards() {
+        return recommendExchangeCards;
     }
 
-    public SeatInfoDTO setHszList(List<Integer> hszList) {
-        this.hszList = hszList;
+    public SeatInfoDTO setRecommendExchangeCards(List<Integer> recommendExchangeCards) {
+        this.recommendExchangeCards = recommendExchangeCards;
+        return this;
+    }
+
+    public Integer getRecommendDingQueColor() {
+        return recommendDingQueColor;
+    }
+
+    public SeatInfoDTO setRecommendDingQueColor(Integer recommendDingQueColor) {
+        this.recommendDingQueColor = recommendDingQueColor;
         return this;
     }
 
@@ -73,6 +88,15 @@ public class SeatInfoDTO {
         return this;
     }
 
+    public Integer getStandCardRemaining() {
+        return standCardRemaining;
+    }
+
+    public SeatInfoDTO setStandCardRemaining(Integer standCardRemaining) {
+        this.standCardRemaining = standCardRemaining;
+        return this;
+    }
+
     public List<ActionDTO> getActionDTOList() {
         return actionDTOList;
     }
@@ -82,12 +106,12 @@ public class SeatInfoDTO {
         return this;
     }
 
-    public List<Integer> getCardPool() {
-        return cardPool;
+    public List<Integer> getOutCardPool() {
+        return outCardPool;
     }
 
-    public SeatInfoDTO setCardPool(List<Integer> cardPool) {
-        this.cardPool = cardPool;
+    public SeatInfoDTO setOutCardPool(List<Integer> outCardPool) {
+        this.outCardPool = outCardPool;
         return this;
     }
 
@@ -97,6 +121,15 @@ public class SeatInfoDTO {
 
     public SeatInfoDTO setCanOperationList(List<Integer> canOperationList) {
         this.canOperationList = canOperationList;
+        return this;
+    }
+
+    public Integer getHuCard() {
+        return huCard;
+    }
+
+    public SeatInfoDTO setHuCard(Integer huCard) {
+        this.huCard = huCard;
         return this;
     }
 
@@ -115,11 +148,14 @@ public class SeatInfoDTO {
                 "playerDTO=" + playerDTO +
                 ", posId=" + posId +
                 ", queColor=" + queColor +
-                ", hszList=" + hszList +
+                ", recommendExchangeCards=" + recommendExchangeCards +
+                ", recommendDingQueColor=" + recommendDingQueColor +
                 ", standCardList=" + standCardList +
+                ", standCardRemaining=" + standCardRemaining +
                 ", actionDTOList=" + actionDTOList +
-                ", cardPool=" + cardPool +
+                ", outCardPool=" + outCardPool +
                 ", canOperationList=" + canOperationList +
+                ", huCard=" + huCard +
                 ", seatStatus=" + seatStatus +
                 '}';
     }

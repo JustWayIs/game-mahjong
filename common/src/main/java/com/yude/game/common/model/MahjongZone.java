@@ -190,6 +190,10 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         //playerSeat.solution();
         playerSeat.addStatus(SeatStatusEnum.ALREADY_HU);
         GameStepModel<OperationCardStep> operation = operation(card, posId, OperationEnum.HU);
+        Integer remaining = cardRemainingMap.get(card);
+        if(isZiMo){
+            cardRemainingMap.put(card,--remaining);
+        }
 
         OperationCardStep operationStep = operation.getOperationStep();
         HuCardStep huCardStep = new HuCardStep();
@@ -316,7 +320,7 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         Integer remaining = cardRemainingMap.get(card);
         switch (value) {
             case PENG:
-                remaining -= 3;
+                remaining -= 2;
                 cardRemainingMap.put(card,remaining);
                 cardCombination = new ArrayList<>(Arrays.asList(card, card, card));
                 playerSeat.removeCard(card);
@@ -325,7 +329,7 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
                 playerSeat.solution();
                 break;
             case ZHI_GANG:
-                remaining -= 4;
+                remaining -= 3;
                 cardRemainingMap.put(card,remaining);
                 cardCombination = new ArrayList<>(Arrays.asList(card, card, card, card));
                 playerSeat.removeCard(card);
@@ -367,7 +371,8 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
                 playerSeat.solution();
                 break;
             case HU:
-                cardRemainingMap.put(card,--remaining);
+                //自摸才减
+                //cardRemainingMap.put(card,--remaining);
 
                 cardCombination = new ArrayList<>();
                 cardCombination.addAll(playerSeat.getStandCardList());

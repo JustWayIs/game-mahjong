@@ -8,6 +8,7 @@ import com.yude.game.common.manager.IRoomManager;
 import com.yude.game.xuezhan.application.request.DingQueRequest;
 import com.yude.game.xuezhan.application.request.ExchangeCardRequest;
 import com.yude.game.xuezhan.application.request.OperationCardRequest;
+import com.yude.game.xuezhan.application.request.ReconnectRequest;
 import com.yude.game.xuezhan.constant.XueZhanCommandCode;
 import com.yude.game.xuezhan.domain.XueZhanRoom;
 import com.yude.protocol.common.response.CommonResponse;
@@ -95,6 +96,21 @@ public class GameZoneController implements BaseController {
             default:
                 log.error("没有匹配的操作类型 request={}", request);
                 throw new BizException(MahjongStatusCodeEnum.NO_MATCH_OPERATION);*/
+    }
+
+    @RequestCommand(value = XueZhanCommandCode.RECONNECT)
+    public Response reconnect(ReconnectRequest request){
+        log.debug("玩家请求重连： request={}",request);
+        Long userId = request.getUserIdByChannel();
+        XueZhanRoom room = roomManager.getRoomByUserId(userId);
+        if (room == null) {
+            log.warn("玩家已经不在游戏中: userId={}", userId);
+            CommonResponse commonResponse = new CommonResponse(MahjongStatusCodeEnum.PLAYER_NOT_GAMEMING);
+            return commonResponse;
+        }
+        room.reconnect(userId);
+        CommonResponse response = new CommonResponse(MahjongStatusCodeEnum.SUCCESS);
+        return response;
     }
 
 }

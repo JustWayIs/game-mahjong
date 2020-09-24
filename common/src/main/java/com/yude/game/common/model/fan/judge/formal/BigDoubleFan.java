@@ -34,11 +34,11 @@ public enum  BigDoubleFan implements Fan<FormalFanParam> {
         if(duiziList.size() != 1){
             return null;
         }
-        List<Integer> pengList = param.getPengList();
+        //List<Integer> pengList = param.getPengList();
         List<Integer> keZiList = param.getKeziList();
-        int pengCount = pengList.size();
+        //int pengCount = pengList.size();
         int keZiCount = keZiList.size();
-        if(pengCount + keZiCount != 4){
+        if(keZiCount != 4){
             return null;
         }
 

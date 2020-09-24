@@ -37,6 +37,9 @@ public interface XueZhanCommandCode extends MahjongCommandCode {
 
     int YI_PAO_DUO_XIANG = 0x100B;
 
-    int RECONNECTION = 0x100F;
+    /**
+     * 断线重连
+     */
+    int RECONNECT = 0x100F;
 
 }

@@ -66,6 +66,7 @@ public class XueZhanSeat extends AbstractSeatModel implements Cloneable{
     public XueZhanSeat clone() throws CloneNotSupportedException {
         final XueZhanSeat xueZhanSeat = (XueZhanSeat) super.clone();
         xueZhanSeat.mahjongSeat = xueZhanSeat.mahjongSeat.clone();
+        xueZhanSeat.sichuanMahjongSeat = xueZhanSeat.sichuanMahjongSeat.clone();
         xueZhanSeat.sichuanMahjongSeat.setMahjongSeat(xueZhanSeat.mahjongSeat);
         return xueZhanSeat;
     }

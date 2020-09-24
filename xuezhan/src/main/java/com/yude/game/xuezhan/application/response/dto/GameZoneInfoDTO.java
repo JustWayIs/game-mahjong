@@ -19,17 +19,13 @@ public class GameZoneInfoDTO {
     protected Integer step;
     protected List<Integer> diceList;
     protected Integer bankerPosId;
-    protected Integer posId;
+    private Integer cardWallRemainingSize;
     protected Integer gameStatus;
     /**
      * 当前操作人如果不是当前出牌玩家的话，是不能告诉其他玩家的
      */
     private Integer currentOperatorPosId;
-    private Integer currentOutCardPosId;
-
-    private Integer beforeOperatorPosId;
-    private Integer beforeOutCardPosId;
-    private Integer beforeOutCard;
+    private Integer currentTookCardPosId;
 
     private Integer exchangeType;
 
@@ -78,15 +74,6 @@ public class GameZoneInfoDTO {
         return this;
     }
 
-    public Integer getPosId() {
-        return posId;
-    }
-
-    public GameZoneInfoDTO setPosId(Integer posId) {
-        this.posId = posId;
-        return this;
-    }
-
     public Integer getGameStatus() {
         return gameStatus;
     }
@@ -105,39 +92,12 @@ public class GameZoneInfoDTO {
         return this;
     }
 
-    public Integer getCurrentOutCardPosId() {
-        return currentOutCardPosId;
+    public Integer getCurrentTookCardPosId() {
+        return currentTookCardPosId;
     }
 
-    public GameZoneInfoDTO setCurrentOutCardPosId(Integer currentOutCardPosId) {
-        this.currentOutCardPosId = currentOutCardPosId;
-        return this;
-    }
-
-    public Integer getBeforeOperatorPosId() {
-        return beforeOperatorPosId;
-    }
-
-    public GameZoneInfoDTO setBeforeOperatorPosId(Integer beforeOperatorPosId) {
-        this.beforeOperatorPosId = beforeOperatorPosId;
-        return this;
-    }
-
-    public Integer getBeforeOutCardPosId() {
-        return beforeOutCardPosId;
-    }
-
-    public GameZoneInfoDTO setBeforeOutCardPosId(Integer beforeOutCardPosId) {
-        this.beforeOutCardPosId = beforeOutCardPosId;
-        return this;
-    }
-
-    public Integer getBeforeOutCard() {
-        return beforeOutCard;
-    }
-
-    public GameZoneInfoDTO setBeforeOutCard(Integer beforeOutCard) {
-        this.beforeOutCard = beforeOutCard;
+    public GameZoneInfoDTO setCurrentTookCardPosId(Integer currentTookCardPosId) {
+        this.currentTookCardPosId = currentTookCardPosId;
         return this;
     }
 
@@ -150,6 +110,15 @@ public class GameZoneInfoDTO {
         return this;
     }
 
+    public Integer getCardWallRemainingSize() {
+        return cardWallRemainingSize;
+    }
+
+    public GameZoneInfoDTO setCardWallRemainingSize(Integer cardWallRemainingSize) {
+        this.cardWallRemainingSize = cardWallRemainingSize;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "GameZoneInfoDTO{" +
@@ -158,13 +127,10 @@ public class GameZoneInfoDTO {
                 ", step=" + step +
                 ", diceList=" + diceList +
                 ", bankerPosId=" + bankerPosId +
-                ", posId=" + posId +
+                ", cardWallRemainingSize=" + cardWallRemainingSize +
                 ", gameStatus=" + gameStatus +
                 ", currentOperatorPosId=" + currentOperatorPosId +
-                ", currentOutCardPosId=" + currentOutCardPosId +
-                ", beforeOperatorPosId=" + beforeOperatorPosId +
-                ", beforeOutCardPosId=" + beforeOutCardPosId +
-                ", beforeOutCard=" + beforeOutCard +
+                ", currentTookCardPosId=" + currentTookCardPosId +
                 ", exchangeType=" + exchangeType +
                 '}';
     }

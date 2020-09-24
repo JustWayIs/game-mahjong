@@ -228,8 +228,10 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
             }
         }
 
-        List<Solution> solutions = playerHand.canHu(card, true);
-        if (solutions.size() > 0) {
+        //如果该牌已经加入了PlayerHand 并且solution了，就调用canHu。否则就是canTing()
+        //boolean isHu = playerHand.canHu();
+        boolean canHu = playerHand.canTingTargetCard(card);
+        if (canHu) {
             StepAction stepAction = new StepAction();
             stepAction.setTargetCard(card)
                     .setCardSource(mahjongSeat.getPosId())
@@ -297,8 +299,8 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
                 }
             }
 
-            List<Solution> solutions = playerHand.canHu(card, false);
-            if (solutions.size() > 0) {
+            boolean isTing = playerHand.canTingTargetCard(card);
+            if (isTing) {
                 StepAction stepAction = new StepAction();
                 stepAction.setTargetCard(card)
                         .setCardSource(outCardSet.getPosId())
@@ -306,7 +308,7 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
                 mahjongSeat.addOperation(stepAction);
             }
 
-            if (canPeng || canZhiGang || solutions.size() > 0) {
+            if (canPeng || canZhiGang || isTing) {
                 StepAction stepAction = new StepAction();
                 stepAction.setTargetCard(card)
                         .setCardSource(outCardSet.getPosId())
@@ -337,7 +339,7 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
 
 
         List<Integer> standCardList = huPlayerSeat.getStandCardList();
-        List<Solution> solutions = huPlayerSeat.getPlayerHand().canHu(card, cardFromSelf);
+        List<Solution> solutions = huPlayerSeat.getPlayerHand().getHuCardSolution();
         //血战（无赖子）可能没有要找最大番型的需要
         //可能会出现多个solution能胡，但是番型完全一致的情况（没有被优化掉），比如面子 334455 的理牌
         /*for(Solution solution : solutions){
@@ -811,6 +813,8 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
         for (FanInfo fanInfo : fanInfos) {
             if (FanInfo.MULTIPLICATION == fanInfo.getCalculationType()) {
                 sumFan *= fanInfo.getFanNum();
+            }else{
+                additionFan.add(fanInfo);
             }
         }
         for (FanInfo fanInfo : additionFan) {

@@ -2,7 +2,6 @@ package com.yude.game.xuezhan.domain;
 
 
 import com.yude.game.common.mahjong.PlayerHand;
-import com.yude.game.common.mahjong.Solution;
 import com.yude.game.common.model.*;
 import com.yude.game.common.model.history.GameStepModel;
 import com.yude.game.common.model.history.OperationCardStep;
@@ -216,8 +215,8 @@ public class XueZhanZone extends AbstractGameZoneModel<XueZhanSeat, SichuanGameS
                     .setOperationType(XueZhanMahjongOperationEnum.BU_GANG);
             stepActions.add(stepAction);
         }
-        List<Solution> solutions = playerHand.canHu(card, true);
-        if(solutions.size() > 0){
+        boolean isHu = playerHand.canHu();
+        if(isHu){
             StepAction stepAction = new StepAction();
             stepAction.setTargetCard(card)
                     .setCardSource(mahjongSeat.getPosId())
@@ -273,8 +272,8 @@ public class XueZhanZone extends AbstractGameZoneModel<XueZhanSeat, SichuanGameS
                             .setOperationType(XueZhanMahjongOperationEnum.ZHI_GANG)
                             .setCombinationRsult(Arrays.asList(card,card,card,card));*/
             }
-            List<Solution> solutions = playerHand.canHu(card, false);
-            if(solutions.size() > 0){
+            boolean isTing = playerHand.canTingTargetCard(card);
+            if(isTing){
                 StepAction stepAction = new StepAction();
                 stepAction.setTargetCard(card)
                         .setCardSource(outCardSet.getPosId())
@@ -282,7 +281,7 @@ public class XueZhanZone extends AbstractGameZoneModel<XueZhanSeat, SichuanGameS
                 mahjongSeat.addOperation(stepAction);
             }
 
-            if(canPeng || canZhiGang || solutions.size() > 0){
+            if(canPeng || canZhiGang || isTing){
                 canOperationSeats.add(mahjongSeat);
             }
         }

@@ -18,6 +18,9 @@ public enum SeatStatusEnum implements Status {
      * 有这个状态意味着 还没有进行换牌请求
      */
     EXCHANGE_CARD,
+    /**
+     *
+     */
     DING_QUE,
     OPERATION_CARD,
     AUTO,

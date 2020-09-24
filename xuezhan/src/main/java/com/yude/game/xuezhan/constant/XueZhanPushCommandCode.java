@@ -86,4 +86,14 @@ public interface XueZhanPushCommandCode extends PushCommandCode {
      * 游戏牌桌界面上的 积分流水
      */
     int SCORE_WATER_FLOW = 0x2021;
+
+    /**
+     * 断线重连：通知自己
+     */
+    int RECONNECT_NOTICE_SELF = 0x2090;
+
+    /**
+     * 断线重连：通知其他玩家
+     */
+    int RECONNECT_NOTICE_OTHER = 0x2091;
 }

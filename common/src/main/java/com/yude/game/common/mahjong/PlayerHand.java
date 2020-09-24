@@ -142,7 +142,7 @@ public class PlayerHand implements Cloneable {
             tempCard = card.id;
             cardNum++;
             //摸上来的牌并没有立即更新到PalyerHand对象的tiles里。
-            if (cardNum == 4 || (cardNum == 3 && tempCard == tookCard)) {
+            if (cardNum == 4 || (cardNum == 3 && tookCard != null && tempCard == tookCard)) {
                 StepAction stepAction = new StepAction();
                 stepAction.setTargetCard(card.id);
                 //.setOperationType(XueZhanMahjongOperationEnum.AN_GANG);
@@ -168,27 +168,32 @@ public class PlayerHand implements Cloneable {
         return false;
     }
 
+    public boolean canHu() {
+        for (Solution solution : solutions) {
+            if (solution.isWin) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * 通知胡牌的时候不需要告诉客户端胡什么
      * 但是客户端请求胡的时候需要知道胡什么，并且找出胡牌的最大番，因为solutions里面可能不止有一种立牌方式可以胡牌
+     * 摸牌后，没有立马solution 【也没有必要立马solution，判断胡牌的话，像点炮胡一样，直接判断听牌列表就行了，出牌的时候再判断需不需要solution】
      *
-     * @param card
-     * @param cardFromSelf
      * @return
      */
-    public List<Solution> canHu(Integer card, boolean cardFromSelf) {
+    public List<Solution> getHuCardSolution() {
         List<Solution> canHuSolutions = new ArrayList<>();
-        if (card != null) { //&& !cardFromSelf 因为下面所说
-            for (Solution solution : solutions) {
-                List<Tile> canWin = solution.canWin;
-                for (Tile tile : canWin) {
-                    if (tile.id == card) {
-                        canHuSolutions.add(solution);
-                    }
 
-                }
+        for (Solution solution : solutions) {
+            if (solution.isWin) {
+                canHuSolutions.add(solution);
             }
-        } else {
+
+        }
+        /*else {
             //庄家第一次判断胡没胡牌是没有摸牌的
 
             //H2 玩家摸牌后判断胡不胡牌，这个时候因为牌已经加入到手牌里了，所以直接判断能不能胡就行了，问题在于有没有solution。如果加入手牌后，没有立马solution 【也没有必要立马solution，像点炮胡一样，直接判断听牌列表就行了，出牌的时候再solution】，就要走上面的逻辑
@@ -197,9 +202,25 @@ public class PlayerHand implements Cloneable {
                     canHuSolutions.add(solution);
                 }
             }
-        }
+        }*/
         return canHuSolutions;
     }
+
+    public boolean canTingTargetCard(Integer card) {
+        if (card != null) {
+            for (Solution solution : solutions) {
+                List<Tile> canWin = solution.canWin;
+                for (Tile tile : canWin) {
+                    if (tile.id == card) {
+                        return true;
+                    }
+
+                }
+            }
+        }
+        return false;
+    }
+
 
     /**
      * 已经胡牌的玩家 貌似一定会有一种理牌 是可以听的
@@ -230,6 +251,10 @@ public class PlayerHand implements Cloneable {
     @Override
     public PlayerHand clone() throws CloneNotSupportedException {
         PlayerHand playerHand = (PlayerHand) super.clone();
+        playerHand.tiles = new ArrayList<>(playerHand.tiles);
+        playerHand.melds = new ArrayList<>(playerHand.melds);
+        playerHand.discards = new ArrayList<>(playerHand.discards);
+        playerHand.solutions = new ArrayList<>(playerHand.solutions);
         return playerHand;
     }
 
