@@ -6,7 +6,7 @@ import com.yude.game.common.mahjong.PlayerHand;
 import com.yude.game.common.mahjong.Solution;
 import com.yude.game.common.mahjong.Tile;
 import com.yude.game.common.model.*;
-import com.yude.game.common.model.fan.Rule;
+import com.yude.game.common.model.fan.MahjongRule;
 import com.yude.game.common.model.fan.*;
 import com.yude.game.common.model.fan.param.AppendedFanParam;
 import com.yude.game.common.model.fan.param.CompoundFanParam;
@@ -328,10 +328,10 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
      * @param card
      * @param operationType 用于标识一炮多响，但是并没有用到
      * @param cardSourcePosId 听牌番型检测时，传入值为 -1
-     * @param rule
+     * @param mahjongRule
      * @return
      */
-    public List<FanInfo> checkFan(MahjongSeat huPlayerSeat, Integer card, MahjongOperation operationType, Integer cardSourcePosId, Rule<SichuanRoomConfig> rule) {
+    public List<FanInfo> checkFan(MahjongSeat huPlayerSeat, Integer card, MahjongOperation operationType, Integer cardSourcePosId, MahjongRule<SichuanRoomConfig> mahjongRule) {
         long befoerTime = System.currentTimeMillis();
         huPlayerSeat.solution();
         log.warn("solution 总共耗时：{}",(System.currentTimeMillis() - befoerTime));
@@ -353,19 +353,19 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
         BaseHuTypeEnum certaintyBaseHuType = solution.getBaseHuType();
         HuTypeEnum huType = cardFromSelf ? HuTypeEnum.自摸 : HuTypeEnum.点炮胡;
         List<FanInfo> certaintyFanList = new ArrayList<>();
-        for (FanInfo<BaseHuTypeEnum> fanInfo : rule.getBaseHuList()) {
+        for (FanInfo<BaseHuTypeEnum> fanInfo : mahjongRule.getBaseHuList()) {
             if (certaintyBaseHuType.equals(fanInfo.getFanType())) {
                 certaintyFanList.add(fanInfo);
             }
         }
 
-        for (FanInfo<HuTypeEnum> fanInfo : rule.getHuTypeList()) {
+        for (FanInfo<HuTypeEnum> fanInfo : mahjongRule.getHuTypeList()) {
             if (huType.equals(fanInfo.getFanType())) {
                 certaintyFanList.add(fanInfo);
             }
         }
 
-        List<FanInfo<FormalFanTypeEnum>> allFormalFanList = rule.getFormalFanTypeEnumList();
+        List<FanInfo<FormalFanTypeEnum>> allFormalFanList = mahjongRule.getFormalFanTypeEnumList();
         //这里传的是原立牌，涉及到修改立牌的番型判断，应该先copy一次
         FormalFanParam formalFanParam = FormalFanParam.build(standCardList, huPlayerSeat.getFuLu(), solution, certaintyBaseHuType);
 
@@ -394,7 +394,7 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
         CompoundFanParam compoundFanParam = new CompoundFanParam();
         compoundFanParam.setBaseHuType(certaintyBaseHuType)
                 .setFanTypeList(collect);
-        for (FanInfo<CompoundFanTypeEnum> fanInfo : rule.getCompoundFanTypeEnumList()) {
+        for (FanInfo<CompoundFanTypeEnum> fanInfo : mahjongRule.getCompoundFanTypeEnumList()) {
             boolean flag = fanInfo.judgeFan(compoundFanParam);
             if (flag) {
                 certaintyFanList.add(fanInfo);
@@ -426,7 +426,7 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
                     .setBeforeOperationIsGang(cardRourceSeat.judgeIsGangShangOperation());
         }
 
-        for (FanInfo<AppendedTypeEnum> fanInfo : rule.getAppendedTypeEnumList()) {
+        for (FanInfo<AppendedTypeEnum> fanInfo : mahjongRule.getAppendedTypeEnumList()) {
             boolean b = fanInfo.judgeFan(appendedFanParam);
             if (b) {
                 certaintyFanList.add(fanInfo);
@@ -574,7 +574,7 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
         return rebateStepGameStepModel;
     }
 
-    public GameStepModel<ChaJiaoStep> chaJiao(Rule<SichuanRoomConfig> rule, MahjongOperation operation) {
+    public GameStepModel<ChaJiaoStep> chaJiao(MahjongRule<SichuanRoomConfig> mahjongRule, MahjongOperation operation) {
         List<SichuanMahjongSeat> lossScoreSeats = new ArrayList<>();
         List<SichuanMahjongSeat> winScoreSeats = new ArrayList<>();
 
@@ -613,9 +613,9 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
                     List<Tile> canWin = solution.canWin;
                     if (canWin.size() > 0) {
                         for (Tile tile : canWin) {
-                            List<FanInfo> fanInfos = checkFan(winScoreSeat, tile.id, OperationEnum.HU, posId, rule);
+                            List<FanInfo> fanInfos = checkFan(winScoreSeat, tile.id, OperationEnum.HU, posId, mahjongRule);
                             final int sumFan = calculateFanNumByFanInfo(fanInfos);
-                            SichuanRoomConfig ruleConfig = rule.getRuleConfig();
+                            SichuanRoomConfig ruleConfig = mahjongRule.getRuleConfig();
                             int fanScore = ruleConfig.getBaseScoreFactor() * sumFan;
                             if (fanScore > resultFanScore) {
                                 resultFanScore = fanScore;
@@ -668,8 +668,8 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
         return chaJiaoStepGameStepModel;
     }
 
-    public GameStepModel<ChaHuaZhuStep> chaHuazhu(Rule<SichuanRoomConfig> rule, MahjongOperation operation) {
-        SichuanRoomConfig roomConfig = rule.getRuleConfig();
+    public GameStepModel<ChaHuaZhuStep> chaHuazhu(MahjongRule<SichuanRoomConfig> mahjongRule, MahjongOperation operation) {
+        SichuanRoomConfig roomConfig = mahjongRule.getRuleConfig();
         List<SichuanMahjongSeat> huaZhuSeats = new ArrayList<>();
         List<SichuanMahjongSeat> winSichuanSeats = new ArrayList<>();
         final int huaZhuBaseFan = roomConfig.getHuaZhuBaseFan();
@@ -727,9 +727,9 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
                         List<Tile> canWin = solution.canWin;
                         if (canWin.size() > 0) {
                             for (Tile tile : canWin) {
-                                List<FanInfo> fanInfos = checkFan(winSeat, tile.id, OperationEnum.HU, winSeatPosId, rule);
+                                List<FanInfo> fanInfos = checkFan(winSeat, tile.id, OperationEnum.HU, winSeatPosId, mahjongRule);
                                 final int sumFan = calculateFanNumByFanInfo(fanInfos);
-                                SichuanRoomConfig ruleConfig = rule.getRuleConfig();
+                                SichuanRoomConfig ruleConfig = mahjongRule.getRuleConfig();
                                 int fanScore = ruleConfig.getBaseScoreFactor() * sumFan;
                                 if (fanScore > resultFanScore) {
                                     resultFanScore = fanScore;

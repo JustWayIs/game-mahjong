@@ -394,10 +394,15 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
 
         StepAction action = playerSeat.getDesignateOperationCardSource(operationType.value(), card);
         Integer cardSource = action.getCardSource();
+
         if (cardSource == null) {
             log.error("严重错误：操作 operation ={} ，和实际操作信息不一致", operationType);
             throw new SystemException("没有匹配的可操作信息");
         }
+
+        //把被吃碰杠的牌，从出牌玩家的出牌池中移除
+        MahjongSeat outCardSeat = playerSeats[cardSource];
+        outCardSeat.removeLastOutCard();
 
         List<Integer> standCardList = new ArrayList<>(playerSeat.getStandCardList());
         stepAction.setTargetCard(card)

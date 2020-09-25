@@ -2,6 +2,7 @@ package com.yude.game.common.model.sichuan;
 
 import com.yude.game.common.contant.OperationEnum;
 import com.yude.game.common.contant.RuleConfig;
+import com.yude.game.common.model.sichuan.constant.SichuanGameStatusEnum;
 
 import java.util.HashMap;
 import java.util.List;
@@ -38,6 +39,33 @@ public class SichuanRoomConfig extends RuleConfig {
      */
     private Map<Integer,Integer> gangFanMap;
 
+    private Map<SichuanGameStatusEnum,Integer> gameStatusTimeoutMap;
+
+    /**
+     * 游戏开始动画
+     */
+    private int gameStartAnimationTime = 3500;
+
+    /**
+     * 完成换牌动画
+     */
+    private int finishExchangeCardAnimationTime = 2000;
+
+    /**
+     * 吃碰杠胡动作的动画
+     */
+    private int operationCardAnimationTime = 1000;
+
+    /**
+     * 一炮多响动画
+     */
+    private int mutipleHuAnimationTime = 1000;
+
+    /**
+     * 结算动画
+     */
+    private int settlementAnimationTime = 1000;
+
     public SichuanRoomConfig(Boolean canHsz, Boolean canDingQue,List<Integer> dingQueOption,boolean canHus) {
         this.canChi = false;
         this.canHsz = canHsz;
@@ -51,6 +79,9 @@ public class SichuanRoomConfig extends RuleConfig {
         this.canHus = canHus;
         this.lastCardProhibitGang = true;
 
+        for(SichuanGameStatusEnum sichuanGameStatusEnum : SichuanGameStatusEnum.values()){
+            this.gameStatusTimeoutMap.put(sichuanGameStatusEnum,sichuanGameStatusEnum.timeout);
+        }
     }
 
     public Integer getGangFan(Integer operationType){

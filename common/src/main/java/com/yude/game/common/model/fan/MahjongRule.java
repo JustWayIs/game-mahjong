@@ -1,6 +1,7 @@
 package com.yude.game.common.model.fan;
 
 import com.yude.game.common.contant.RuleConfig;
+import com.yude.game.common.model.Rule;
 
 import java.util.List;
 
@@ -10,14 +11,14 @@ import java.util.List;
  * @Version: 1.0
  * @Declare:
  */
-public class Rule<T extends RuleConfig> {
+public class MahjongRule<T extends RuleConfig> implements Rule {
     protected List<FanInfo<BaseHuTypeEnum>> baseHuList;
     protected List<FanInfo<HuTypeEnum>> huTypeList;
     protected List<FanInfo<FormalFanTypeEnum>> formalFanTypeEnumList;
     protected List<FanInfo<AppendedTypeEnum>> appendedTypeEnumList;
     protected List<FanInfo<CompoundFanTypeEnum>> compoundFanTypeEnumList;
 
-    protected List<FanInfo<SpecificFanTypeEnum>> specificFanTypeList;
+
 
     protected T ruleConfig;
 
@@ -25,7 +26,7 @@ public class Rule<T extends RuleConfig> {
         return baseHuList;
     }
 
-    public Rule<T> setBaseHuList(List<FanInfo<BaseHuTypeEnum>> baseHuList) {
+    public MahjongRule<T> setBaseHuList(List<FanInfo<BaseHuTypeEnum>> baseHuList) {
         this.baseHuList = baseHuList;
         return this;
     }
@@ -34,7 +35,7 @@ public class Rule<T extends RuleConfig> {
         return huTypeList;
     }
 
-    public Rule<T> setHuTypeList(List<FanInfo<HuTypeEnum>> huTypeList) {
+    public MahjongRule<T> setHuTypeList(List<FanInfo<HuTypeEnum>> huTypeList) {
         this.huTypeList = huTypeList;
         return this;
     }
@@ -43,7 +44,7 @@ public class Rule<T extends RuleConfig> {
         return formalFanTypeEnumList;
     }
 
-    public Rule<T> setFormalFanTypeEnumList(List<FanInfo<FormalFanTypeEnum>> formalFanTypeEnumList) {
+    public MahjongRule<T> setFormalFanTypeEnumList(List<FanInfo<FormalFanTypeEnum>> formalFanTypeEnumList) {
         this.formalFanTypeEnumList = formalFanTypeEnumList;
         return this;
     }
@@ -52,7 +53,7 @@ public class Rule<T extends RuleConfig> {
         return appendedTypeEnumList;
     }
 
-    public Rule<T> setAppendedTypeEnumList(List<FanInfo<AppendedTypeEnum>> appendedTypeEnumList) {
+    public MahjongRule<T> setAppendedTypeEnumList(List<FanInfo<AppendedTypeEnum>> appendedTypeEnumList) {
         this.appendedTypeEnumList = appendedTypeEnumList;
         return this;
     }
@@ -61,7 +62,7 @@ public class Rule<T extends RuleConfig> {
         return compoundFanTypeEnumList;
     }
 
-    public Rule<T> setCompoundFanTypeEnumList(List<FanInfo<CompoundFanTypeEnum>> compoundFanTypeEnumList) {
+    public MahjongRule<T> setCompoundFanTypeEnumList(List<FanInfo<CompoundFanTypeEnum>> compoundFanTypeEnumList) {
         this.compoundFanTypeEnumList = compoundFanTypeEnumList;
         return this;
     }
@@ -70,17 +71,20 @@ public class Rule<T extends RuleConfig> {
         return ruleConfig;
     }
 
-    public Rule<T> setRuleConfig(T ruleConfig) {
+    public MahjongRule<T> setRuleConfig(T ruleConfig) {
         this.ruleConfig = ruleConfig;
         return this;
     }
 
-    public List<FanInfo<SpecificFanTypeEnum>> getSpecificFanTypeList() {
-        return specificFanTypeList;
-    }
-
-    public Rule<T> setSpecificFanTypeList(List<FanInfo<SpecificFanTypeEnum>> specificFanTypeList) {
-        this.specificFanTypeList = specificFanTypeList;
-        return this;
+    @Override
+    public String toString() {
+        return "MahjongRule{" +
+                "baseHuList=" + baseHuList +
+                ", huTypeList=" + huTypeList +
+                ", formalFanTypeEnumList=" + formalFanTypeEnumList +
+                ", appendedTypeEnumList=" + appendedTypeEnumList +
+                ", compoundFanTypeEnumList=" + compoundFanTypeEnumList +
+                ", ruleConfig=" + ruleConfig +
+                '}';
     }
 }

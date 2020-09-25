@@ -19,7 +19,8 @@ public enum CompoundFanTypeEnum implements FanType{
      */
     清金钩钓("清金钩钓",new FanType[]{FormalFanTypeEnum.清一色,FormalFanTypeEnum.金钩钓}),
 
-    清十八罗汉("清十八罗汉",new FanType[]{FormalFanTypeEnum.清一色,FormalFanTypeEnum.十八罗汉});
+    清十八罗汉("清十八罗汉",new FanType[]{FormalFanTypeEnum.清一色,FormalFanTypeEnum.十八罗汉}),
+    清龙七对("清龙七对",new FanType[]{FormalFanTypeEnum.清一色,FormalFanTypeEnum.龙七对});
 
     public String name;
     public FanType[] fanTypes;

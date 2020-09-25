@@ -13,22 +13,28 @@ public enum SichuanGameStatusEnum implements Status {
     /**
      *
      */
-    DEAL_CARD,
-    EXCHANGE_CARD,
-    DING_QUE,
-    OPERATION_CARD,
-    SETTLEMENT,
+    DEAL_CARD(99900000),
+    EXCHANGE_CARD(8000),
+    DING_QUE(8000),
+    OPERATION_CARD(8000),
+    SETTLEMENT(99900000),
 
     /**
      * 血战血流似乎需要一个这样的标识
      */
-    GAME_OVER,
+    GAME_OVER(99900000),
     /**
      * 没有必要设置游戏状态为下面几个，只是在构建Step对象的时候用到
      */
-    LIU_JU_SETTLEMENT,
+    LIU_JU_SETTLEMENT(99900000),
+    TOOK_CARD(10000),
     ;
 
+    public int timeout;
+
+    SichuanGameStatusEnum(int timeout) {
+        this.timeout = timeout;
+    }
 
     @Override
     public int status() {

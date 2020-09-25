@@ -12,7 +12,6 @@ import com.yude.game.common.mahjong.PlayerHand;
 import com.yude.game.common.manager.IPushManager;
 import com.yude.game.common.manager.IRoomManager;
 import com.yude.game.common.model.*;
-import com.yude.game.common.model.fan.Rule;
 import com.yude.game.common.model.fan.*;
 import com.yude.game.common.model.fan.judge.HuTypeFan;
 import com.yude.game.common.model.fan.judge.appended.*;
@@ -57,12 +56,14 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
     private static final Logger log = LoggerFactory.getLogger(XueZhanRoom.class);
     private SichuanMahjongZone sichuanMahjongZone;
     private MahjongZone mahjongZone;
-    private Rule<SichuanRoomConfig> rule;
+    private SiChuanMahjongRule mahjongRule;
 
     /**
      * 从XueZhanZone挪到外层
      */
     private List<GameStepModel> historyList;
+
+
 
     @Override
     public void init(IRoomManager roomManager, Long roomId, List<Player> playerList, int roundLimit, int inningLimit) {
@@ -220,7 +221,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
         /**
          * 判断有没有玩家可以针对这次出牌进行操作
          */
-        final SichuanRoomConfig ruleConfig = rule.getRuleConfig();
+        final SichuanRoomConfig ruleConfig = mahjongRule.getRuleConfig();
         List<MahjongSeat> canOperationSeats =
                 sichuanMahjongZone.otherPalyerCanDo(seat.getSichuanMahjongSeat(), card, ruleConfig);
         if (canOperationSeats.size() > 0) {
@@ -268,7 +269,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                 }
                 standCardList.add(card);
                 Collections.sort(standCardList);
-                final List<FanInfo> fanInfos = sichuanMahjongZone.checkFan(tempMahjongSeat, card, XueZhanMahjongOperationEnum.HU, -1, rule);
+                final List<FanInfo> fanInfos = sichuanMahjongZone.checkFan(tempMahjongSeat, card, XueZhanMahjongOperationEnum.HU, -1, mahjongRule);
                 final int sumFanNum = sichuanMahjongZone.calculateFanNumByFanInfo(fanInfos);
                 TingInfoDTO tingInfoDTO = new TingInfoDTO();
                 tingInfoDTO.setCard(card)
@@ -406,7 +407,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             HuCardStep huStep = (HuCardStep) huSeat.getOperationHistoryByTypeAndCard(XueZhanMahjongOperationEnum.HU.value(), card);
             StepAction huAction = huStep.getAction();
             Integer cardSourcePosId = huAction.getCardSource();
-            List<FanInfo> fanInfos = sichuanMahjongZone.checkFan(huSeat, action.getTargetCard(), XueZhanMahjongOperationEnum.HU, cardSourcePosId, rule);
+            List<FanInfo> fanInfos = sichuanMahjongZone.checkFan(huSeat, action.getTargetCard(), XueZhanMahjongOperationEnum.HU, cardSourcePosId, mahjongRule);
             huStep.setFanInfoList(fanInfos);
 
             huSettlement(xueZhanSeat.getMahjongSeat(), action, fanInfos);
@@ -546,7 +547,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                 .setSeatSettlementInfoMap(settlementInfoMap);
 
         List<SettlementInfoDTO> settlementInfoDTOS = new ArrayList<>();
-        final SichuanRoomConfig ruleConfig = rule.getRuleConfig();
+        final SichuanRoomConfig ruleConfig = mahjongRule.getRuleConfig();
         final int baseScoreFactor = ruleConfig.getBaseScoreFactor();
 
         final XueZhanSeat loserXueZhanSeat = posIdSeatMap.get(cardSourcePosId);
@@ -560,7 +561,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             final SichuanMahjongSeat sichuanMahjongSeat = xueZhanSeat.getSichuanMahjongSeat();
             final MahjongSeat mahjongSeat = xueZhanSeat.getMahjongSeat();
             final Player player = mahjongSeat.getPlayer();
-            final List<FanInfo> fanInfos = sichuanMahjongZone.checkFan(mahjongSeat, card, XueZhanMahjongOperationEnum.YI_PAO_DUO_XIANG, cardSourcePosId, rule);
+            final List<FanInfo> fanInfos = sichuanMahjongZone.checkFan(mahjongSeat, card, XueZhanMahjongOperationEnum.YI_PAO_DUO_XIANG, cardSourcePosId, mahjongRule);
             final int sumFan = sichuanMahjongZone.calculateFanNumByFanInfo(fanInfos);
             int changeScore = sumFan * baseScoreFactor;
 
@@ -795,7 +796,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
 
             } else if (XueZhanMahjongOperationEnum.BU_GANG.value().equals(type)) {
                 //由于是补杠，理论上来说，只有可能别的玩家能胡，不可能是直杠、碰
-                final List<MahjongSeat> canOperationSeats = sichuanMahjongZone.otherPalyerCanDo(xueZhanSeat.getSichuanMahjongSeat(), card, rule.getRuleConfig());
+                final List<MahjongSeat> canOperationSeats = sichuanMahjongZone.otherPalyerCanDo(xueZhanSeat.getSichuanMahjongSeat(), card, mahjongRule.getRuleConfig());
                 if (canOperationSeats.isEmpty()) {
                     otherGangSettlement(operationSeat, action);
                 } else {
@@ -851,7 +852,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
         }
 
         final int sumFan = sichuanMahjongZone.calculateFanNumByFanInfo(fanInfos);
-        SichuanRoomConfig ruleConfig = rule.getRuleConfig();
+        SichuanRoomConfig ruleConfig = mahjongRule.getRuleConfig();
         int huScore = ruleConfig.getBaseScoreFactor() * sumFan;
 
         SettlementStep settlementStep = new SettlementStep();
@@ -977,7 +978,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
 
     private void zhiGangSettlement(MahjongSeat operationSeat, StepAction action) {
         log.info("直杠结算：roomId={} zoneId={} 方位=[{},posId={}] action={}", roomId, gameZone.getZoneId(), getSeatDirection(operationSeat.getPosId()), operationSeat.getPosId(), action);
-        SichuanRoomConfig ruleConfig = rule.getRuleConfig();
+        SichuanRoomConfig ruleConfig = mahjongRule.getRuleConfig();
         Integer gangFan = ruleConfig.getGangFan(action.getOperationType().value());
         Integer baseScoreFactor = ruleConfig.getBaseScoreFactor();
         int changeScore = gangFan * baseScoreFactor;
@@ -1037,7 +1038,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                 .setFuluList(new ArrayList<>(fuLu));
 
         List<FanInfo> fanInfoList = new ArrayList<>();
-        final List<FanInfo<SpecificFanTypeEnum>> specificFanTypeList = rule.getSpecificFanTypeList();
+        final List<FanInfo<SpecificFanTypeEnum>> specificFanTypeList = mahjongRule.getSpecificFanTypeList();
         for (FanInfo<SpecificFanTypeEnum> fanInfo : specificFanTypeList) {
             final SpecificFanTypeEnum fanType = fanInfo.getFanType();
             if (fanType.getActionType().equals(operationType)) {
@@ -1062,7 +1063,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
         List<MahjongSeat> needNoticeScoreWaterFlowSeats = new ArrayList<>();
         needNoticeScoreWaterFlowSeats.add(operationSeat);
 
-        SichuanRoomConfig ruleConfig = rule.getRuleConfig();
+        SichuanRoomConfig ruleConfig = mahjongRule.getRuleConfig();
         final Integer operationType = action.getOperationType().value();
         Integer gangFan = ruleConfig.getGangFan(operationType);
         Integer baseScoreFactor = ruleConfig.getBaseScoreFactor();
@@ -1109,7 +1110,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                     .setFuluList(new ArrayList<>(fuLu));
 
             List<FanInfo> fanInfoList = new ArrayList<>();
-            final List<FanInfo<SpecificFanTypeEnum>> specificFanTypeList = rule.getSpecificFanTypeList();
+            final List<FanInfo<SpecificFanTypeEnum>> specificFanTypeList = mahjongRule.getSpecificFanTypeList();
 
             for (FanInfo<SpecificFanTypeEnum> fanInfo : specificFanTypeList) {
                 final SpecificFanTypeEnum fanType = fanInfo.getFanType();
@@ -1140,7 +1141,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
         List<StepAction> fuLu = operationSeat.getFuLu();
         List<FanInfo> fanInfos = new ArrayList<>();
 
-        final List<FanInfo<SpecificFanTypeEnum>> specificFanTypeList = rule.getSpecificFanTypeList();
+        final List<FanInfo<SpecificFanTypeEnum>> specificFanTypeList = mahjongRule.getSpecificFanTypeList();
         for (FanInfo<SpecificFanTypeEnum> fanInfo : specificFanTypeList) {
             final Integer actionType = fanInfo.getFanType().getActionType();
             if (operationType.equals(actionType)) {
@@ -1183,7 +1184,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
     }
 
     private void checkGangFan(Integer operationType) {
-        SichuanRoomConfig ruleConfig = rule.getRuleConfig();
+        SichuanRoomConfig ruleConfig = mahjongRule.getRuleConfig();
         Integer gangFan = ruleConfig.getGangFan(operationType);
     }
 
@@ -1255,7 +1256,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
     public void exchangeCard(List<Integer> cards, Integer posId) {
         log.info("换三张操作： roomId={} zoneId={} 方位=[{},posId={}] 拿出去的牌：{}",roomId,gameZone.getZoneId(),getSeatDirection(posId),posId,cards);
         XueZhanSeat xueZhanSeat = posIdSeatMap.get(posId);
-        if (!rule.getRuleConfig().getCanHsz()) {
+        if (!mahjongRule.getRuleConfig().getCanHsz()) {
             log.error("当前游戏不支持换三张： roomId={} zoneId={} userId={} 方位=[{},posId={}]", roomId, gameZone.getZoneId(), xueZhanSeat.getUserId(), getSeatDirection(posId), posId);
             return;
         }
@@ -1279,7 +1280,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             sichuanMahjongZone.executeExchange(exchangeHistory);
 
             noticePlayersExchangeResult();
-            if (rule.getRuleConfig().getCanDingQue()) {
+            if (mahjongRule.getRuleConfig().getCanDingQue()) {
                 noticePlayersDingQue();
             }
         }
@@ -1289,7 +1290,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
     public void dingQue(Integer color, Integer posId) {
         log.info("玩家定缺： color={}",color);
         XueZhanSeat xueZhanSeat = posIdSeatMap.get(posId);
-        if (!rule.getRuleConfig().getCanDingQue()) {
+        if (!mahjongRule.getRuleConfig().getCanDingQue()) {
             log.error("当前游戏不支持定缺: roomId={} zoneId={} posId={}", roomId, gameZone.getZoneId(), posId);
             return;
         }
@@ -1355,7 +1356,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
         /**
          * 分别记录 立牌信息、胡牌信息、副露信息、单次结算详情
          */
-        final SichuanRoomConfig ruleConfig = rule.getRuleConfig();
+        final SichuanRoomConfig ruleConfig = mahjongRule.getRuleConfig();
         final int baseScoreFactor = ruleConfig.getBaseScoreFactor();
         SettlementDetailStep settlementDetailStep = new SettlementDetailStep();
         settlementDetailStep.setStepCount(mahjongZone.getStepCount());
@@ -1632,7 +1633,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
 
     private void chaJiao() {
         log.info("查叫结算： roomId={} zoneId={}", roomId, gameZone.getZoneId());
-        GameStepModel<ChaJiaoStep> chaJiaoStepGameStepModel = sichuanMahjongZone.chaJiao(rule, XueZhanMahjongOperationEnum.CHA_JIAO);
+        GameStepModel<ChaJiaoStep> chaJiaoStepGameStepModel = sichuanMahjongZone.chaJiao(mahjongRule, XueZhanMahjongOperationEnum.CHA_JIAO);
         historyList.add(chaJiaoStepGameStepModel);
         ChaJiaoStep operationStep = chaJiaoStepGameStepModel.getOperationStep();
 
@@ -1665,7 +1666,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
 
     private void chaHuazhu() {
         log.info("查花猪结算： roomId={} zoneId={}", roomId, gameZone.getZoneId());
-        final GameStepModel<ChaHuaZhuStep> gameStepModel = sichuanMahjongZone.chaHuazhu(rule, XueZhanMahjongOperationEnum.CHA_HUA_ZHU);
+        final GameStepModel<ChaHuaZhuStep> gameStepModel = sichuanMahjongZone.chaHuazhu(mahjongRule, XueZhanMahjongOperationEnum.CHA_HUA_ZHU);
         historyList.add(gameStepModel);
 
         ChaHuaZhuStep operationStep = gameStepModel.getOperationStep();
@@ -1784,7 +1785,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             XueZhanSeat seat = posIdSeatMap.get(posId);
 
             XueZhanStartResponse response = new XueZhanStartResponse();
-            if (rule.getRuleConfig().getCanHsz()) {
+            if (mahjongRule.getRuleConfig().getCanHsz()) {
                 List<Integer> recommendedCards = SichuanPlayHelper.recommendedChangeCard(gameStartStep.getStandCards(), 3);
                 recommendedCards = recommendedCards.subList(0, 3);
                 SichuanGameStartStep sichuanGameStartStep = new SichuanGameStartStep();
@@ -1867,7 +1868,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
         MahjongSeat mahjongSeat = seat.getMahjongSeat();
         mahjongSeat.addStatus(SeatStatusEnum.OPERATION_CARD);
 
-        List<StepAction> stepActions = sichuanMahjongZone.whatCanYouDo(card, rule.getRuleConfig());
+        List<StepAction> stepActions = sichuanMahjongZone.whatCanYouDo(card, mahjongRule.getRuleConfig());
         List<OperationDTO> canOperationDTOs = new ArrayList<>();
         OperationDTO outCardOperation = new OperationDTO(XueZhanMahjongOperationEnum.OUT_CARD.value(), null);
         canOperationDTOs.add(outCardOperation);
@@ -2097,7 +2098,11 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
 
     @Override
     public int getTimeoutLimit() {
-        return rule.getRuleConfig().getSERIAL_TIMEOUT_OUNT();
+        return mahjongRule.getRuleConfig().getSERIAL_TIMEOUT_OUNT();
+    }
+
+    public void timeoutExecute(){
+        final long lastOperationTime = mahjongZone.getLastOperationTime();
     }
 
     @Override
@@ -2109,7 +2114,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
         //H2 拉取房间配置信息,把配置传进去
         final List<Integer> dingQueOption = new ArrayList<>(Arrays.asList(1, 2, 3));
 
-        rule = new Rule<>();
+        mahjongRule = new SiChuanMahjongRule();
         SichuanRoomConfig ruleConfig = new SichuanRoomConfig(true, true, dingQueOption, false);
         final List<FanInfo<BaseHuTypeEnum>> baseHuList = new ArrayList<>();
         FanInfo<BaseHuTypeEnum> pingHu = new FanInfo<>(BaseHuTypeEnum.平胡, 1, FanInfo.MULTIPLICATION, PingHuFan.INSTANCE);
@@ -2181,13 +2186,13 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
         specificFanTypeEnumList.add(chaJiao);
         specificFanTypeEnumList.add(chaHuaZhu);
 
-        rule.setRuleConfig(ruleConfig)
+        mahjongRule.setRuleConfig(ruleConfig)
                 .setBaseHuList(baseHuList)
                 .setHuTypeList(huTypeList)
                 .setFormalFanTypeEnumList(formalFanTypeEnumList)
                 .setAppendedTypeEnumList(appendedTypeEnumList)
-                .setCompoundFanTypeEnumList(compoundFanTypeEnumList)
-                .setSpecificFanTypeList(specificFanTypeEnumList);
+                .setCompoundFanTypeEnumList(compoundFanTypeEnumList);
+        mahjongRule.setSpecificFanTypeList(specificFanTypeEnumList);
     }
 
     /**
