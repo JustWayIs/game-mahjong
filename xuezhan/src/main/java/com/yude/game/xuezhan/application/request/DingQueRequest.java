@@ -15,6 +15,13 @@ import com.yude.protocol.common.request.AbstractRequest;
 public class DingQueRequest extends AbstractRequest {
     private Integer color;
 
+    public DingQueRequest() {
+    }
+
+    public DingQueRequest(Integer color) {
+        this.color = color;
+    }
+
     public Integer getColor() {
         return color;
     }

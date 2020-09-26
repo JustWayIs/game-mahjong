@@ -71,6 +71,12 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
      */
     private List<TempAction> tempActions;
 
+
+    /**
+     * 本质上来说，是帮助当前有操作权限但是并未的玩家进行操作。虽然麻将可能在一个回合中有多个玩家操作，但是他们应该共享一个超时间
+     */
+    private long timeoutTime;
+
     public MahjongZone(MahjongSeat[] playerSeats, int round, int inning) {
         super(playerSeats, round, inning);
         gameHistory = new ArrayList<>();
@@ -190,12 +196,20 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         //playerSeat.solution();
         playerSeat.addStatus(SeatStatusEnum.ALREADY_HU);
         GameStepModel<OperationCardStep> operation = operation(card, posId, OperationEnum.HU);
+        OperationCardStep operationStep = operation.getOperationStep();
+
         Integer remaining = cardRemainingMap.get(card);
         if(isZiMo){
             cardRemainingMap.put(card,--remaining);
+        }else{
+            //移除放炮玩家的出牌池里 放炮的那张牌
+            final StepAction action = operationStep.getAction();
+            final Integer cardSource = action.getCardSource();
+            final MahjongSeat outCardMahjongSeat = playerSeats[cardSource];
+            outCardMahjongSeat.removeLastOutCard();
         }
 
-        OperationCardStep operationStep = operation.getOperationStep();
+
         HuCardStep huCardStep = new HuCardStep();
         huCardStep.setAction(operationStep.getAction())
                 .setGameStatus(operationStep.getGameStatus())
@@ -317,6 +331,18 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         List<Integer> cardCombination = null;
         OperationEnum value = OperationEnum.values()[operationType.value()];
         List<Integer> standCardListSort = playerSeat.getStandCardList();
+
+        StepAction action = playerSeat.getDesignateOperationCardSource(operationType.value(), card);
+        Integer cardSource = action.getCardSource();
+
+        if (cardSource == null) {
+            log.error("严重错误：操作 operation ={} ，和实际操作信息不一致", operationType);
+            throw new SystemException("没有匹配的可操作信息");
+        }
+
+        //把被吃碰杠的牌，从出牌玩家的出牌池中移除
+        MahjongSeat outCardSeat = playerSeats[cardSource];
+
         Integer remaining = cardRemainingMap.get(card);
         switch (value) {
             case PENG:
@@ -327,6 +353,8 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
                 playerSeat.removeCard(card);
                 Collections.sort(standCardListSort);
                 playerSeat.solution();
+
+                outCardSeat.removeLastOutCard();
                 break;
             case ZHI_GANG:
                 remaining -= 3;
@@ -336,6 +364,8 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
                 playerSeat.removeCard(card);
                 playerSeat.removeCard(card);
                 Collections.sort(standCardListSort);
+
+                outCardSeat.removeLastOutCard();
                 break;
             case BU_GANG:
                 remaining -= 1;
@@ -369,6 +399,8 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
                 playerSeat.removeCard(card + 1);
                 Collections.sort(standCardListSort);
                 playerSeat.solution();
+
+                outCardSeat.removeLastOutCard();
                 break;
             case HU:
                 //自摸才减
@@ -392,17 +424,6 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         StepAction stepAction = new StepAction();
         step.setAction(stepAction);
 
-        StepAction action = playerSeat.getDesignateOperationCardSource(operationType.value(), card);
-        Integer cardSource = action.getCardSource();
-
-        if (cardSource == null) {
-            log.error("严重错误：操作 operation ={} ，和实际操作信息不一致", operationType);
-            throw new SystemException("没有匹配的可操作信息");
-        }
-
-        //把被吃碰杠的牌，从出牌玩家的出牌池中移除
-        MahjongSeat outCardSeat = playerSeats[cardSource];
-        outCardSeat.removeLastOutCard();
 
         List<Integer> standCardList = new ArrayList<>(playerSeat.getStandCardList());
         stepAction.setTargetCard(card)
@@ -627,6 +648,15 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         return this;
     }
 
+    public long getTimeoutTime() {
+        return timeoutTime;
+    }
+
+    public MahjongZone setTimeoutTime(long timeoutTime) {
+        this.timeoutTime = timeoutTime;
+        return this;
+    }
+
     public void initCurrentOperator() {
         /**
          * 游戏正式开始:只有游戏进入出牌流程前 当前操作人 和 摸牌人为null
@@ -677,12 +707,28 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         this.lastOperationTime = time;
     }
 
-    public void setOperationStatus(Status gameStatus) {
-        this.gameStatus = gameStatus;
-    }
 
     public Integer getCardRemainingNum(Integer card){
         return cardRemainingMap.get(card);
+    }
+
+    /**
+     * 获取操作已经超时的位置 和 托管的位置
+     * @return
+     */
+    public List<MahjongSeat> getNeedImmediatelyExecuteSeats(){
+        List<MahjongSeat> mahjongSeatList = new ArrayList<>();
+        long currentTime = System.currentTimeMillis();
+        boolean isTimeOut = false;
+        if(timeoutTime >= currentTime){
+            isTimeOut = true;
+        }
+        for(MahjongSeat seat : playerSeats){
+            if(seat.canOperation() && (seat.isAutoOperation() || isTimeOut)){
+                mahjongSeatList.add(seat);
+            }
+        }
+        return mahjongSeatList;
     }
 
     public void canChi(MahjongSeat mahjongSeat, Integer card) {

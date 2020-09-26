@@ -3,11 +3,13 @@ package com.yude.game.xuezhan.domain;
 
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SerializerFeature;
+import com.baidu.bjf.remoting.protobuf.Any;
 import com.yude.game.common.application.response.dto.PlayerDTO;
 import com.yude.game.common.constant.PlayerStatusEnum;
 import com.yude.game.common.contant.MahjongStatusCodeEnum;
 import com.yude.game.common.contant.OperationEnum;
 import com.yude.game.common.contant.PushCommandCode;
+import com.yude.game.common.dispatcher.event.DisruptorRegistrar;
 import com.yude.game.common.mahjong.PlayerHand;
 import com.yude.game.common.manager.IPushManager;
 import com.yude.game.common.manager.IRoomManager;
@@ -29,17 +31,27 @@ import com.yude.game.common.model.sichuan.constant.SichuanGameStatusEnum;
 import com.yude.game.common.model.sichuan.history.*;
 import com.yude.game.common.model.sichuan.history.info.*;
 import com.yude.game.common.timeout.MahjongTimeoutTaskPool;
+import com.yude.game.communication.dispatcher.IProducerWithTranslator;
 import com.yude.game.exception.BizException;
+import com.yude.game.xuezhan.application.request.DingQueRequest;
+import com.yude.game.xuezhan.application.request.ExchangeCardRequest;
+import com.yude.game.xuezhan.application.request.OperationCardRequest;
 import com.yude.game.xuezhan.application.response.*;
 import com.yude.game.xuezhan.application.response.dto.*;
+import com.yude.game.xuezhan.constant.XueZhanCommandCode;
 import com.yude.game.xuezhan.constant.XueZhanMahjongOperationEnum;
 import com.yude.game.xuezhan.constant.XueZhanPushCommandCode;
 import com.yude.game.xuezhan.domain.action.BaseRoomProcess;
 import com.yude.game.xuezhan.domain.action.XueZhanAction;
+import com.yude.protocol.common.MessageType;
+import com.yude.protocol.common.message.GameRequestMessage;
+import com.yude.protocol.common.message.GameRequestMessageHead;
+import com.yude.protocol.common.request.Request;
 import com.yude.protocol.common.response.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -62,7 +74,6 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
      * 从XueZhanZone挪到外层
      */
     private List<GameStepModel> historyList;
-
 
 
     @Override
@@ -155,10 +166,12 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
         mahjongZone.deal(SichuanMahjongCard.values(), SichuanGameStatusEnum.DEAL_CARD, roomId, historyList);
         //0号玩家在该游戏没有任何操作的情况下重连了
 
-        mahjongZone.setLastOperationTime(System.currentTimeMillis());
+        final long currentTimeMillis = System.currentTimeMillis();
+        mahjongZone.setLastOperationTime(currentTimeMillis);
         mahjongZone.setGameStatus(SichuanGameStatusEnum.EXCHANGE_CARD);
 
         noticePlayersDealCardsResult();
+
         //noticePlayersChangeCard();
     }
 
@@ -235,6 +248,11 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
 
                 OperationNoticeResponse noticeResponse = new OperationNoticeResponse(canOperationSeat.getPosId(), operationList);
                 roomManager.pushToUser(XueZhanPushCommandCode.OPERATION_NOTICE, canOperationSeat.getUserId(), noticeResponse, roomId);
+
+                final SichuanRoomConfig roomConfig = mahjongRule.getRuleConfig();
+                final int timeout= roomConfig.getTimeoutTimeByGameStatus(SichuanGameStatusEnum.OPERATION_CARD);
+                final long currentTimeMillis = System.currentTimeMillis();
+                mahjongZone.setTimeoutTime(currentTimeMillis+timeout);
             }
         } else {
             Integer needTookCardPosId = sichuanMahjongZone.refreshTookPlayer();
@@ -275,8 +293,8 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                 tingInfoDTO.setCard(card)
                         .setFanNum(sumFanNum);
                 Integer cardRemainingNum = mahjongZone.getCardRemainingNum(card);
-                for(Integer allCard : tempStandCardList){
-                    if(allCard.equals(card)){
+                for (Integer allCard : tempStandCardList) {
+                    if (allCard.equals(card)) {
                         cardRemainingNum--;
                     }
                 }
@@ -292,6 +310,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
          * 没有玩家可以操作，下一个玩家摸牌
          */
         if (sichuanMahjongZone.gameover()) {
+            mahjongZone.setGameStatus(SichuanGameStatusEnum.GAME_OVER);
             if (isLiuJu()) {
                 sichuanMahjongZone.setLiuJu(true);
             } else {
@@ -332,6 +351,11 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
 
         //sichuanMahjongZone.whatCanYouDo(tookCard);
         noticePlayersOperation(tookCard);
+
+        final SichuanRoomConfig roomConfig = mahjongRule.getRuleConfig();
+        final int timeout= roomConfig.getTimeoutTimeByGameStatus(SichuanGameStatusEnum.OUT_CARD);
+        final long currentTimeMillis = System.currentTimeMillis();
+        mahjongZone.setTimeoutTime(currentTimeMillis+timeout);
     }
 
 
@@ -358,7 +382,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             boolean isZiMo = cardSourcePosId.equals(posId);
             final SichuanMahjongSeat sichuanMahjongSeat = xueZhanSeat.getSichuanMahjongSeat();
             sichuanMahjongSeat.setHuCard(card);
-            GameStepModel<HuCardStep> stepModel = mahjongZone.hu(card, posId,isZiMo);
+            GameStepModel<HuCardStep> stepModel = mahjongZone.hu(card, posId, isZiMo);
             final Integer cardSource = action.getCardSource();
             final XueZhanSeat loserXueZhanSeat = posIdSeatMap.get(cardSource);
             final MahjongSeat loserSeat = loserXueZhanSeat.getMahjongSeat();
@@ -512,7 +536,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
         pushToRoomUser(XueZhanPushCommandCode.YI_PAO_DUO_XIANG, response);
 
         multipleHuSettlement(card, cardSourcePosId, posIds);
-        for(Integer posId : posIds){
+        for (Integer posId : posIds) {
             final XueZhanSeat xueZhanSeat = posIdSeatMap.get(posId);
             final MahjongSeat mahjongSeat = xueZhanSeat.getMahjongSeat();
             mahjongSeat.removeCard(card);
@@ -521,9 +545,9 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
 
         Integer tookCardPosId = null;
         Integer tempCardSourcePosId = cardSourcePosId;
-        for(int i = 0 ; i < 3 ; ++i){
+        for (int i = 0; i < 3; ++i) {
             tempCardSourcePosId = (tempCardSourcePosId + 1) % posIdSeatMap.size();
-            if(posIds.contains(tempCardSourcePosId)){
+            if (posIds.contains(tempCardSourcePosId)) {
                 tookCardPosId = tempCardSourcePosId;
             }
         }
@@ -1254,7 +1278,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
 
     @Override
     public void exchangeCard(List<Integer> cards, Integer posId) {
-        log.info("换三张操作： roomId={} zoneId={} 方位=[{},posId={}] 拿出去的牌：{}",roomId,gameZone.getZoneId(),getSeatDirection(posId),posId,cards);
+        log.info("换三张操作： roomId={} zoneId={} 方位=[{},posId={}] 拿出去的牌：{}", roomId, gameZone.getZoneId(), getSeatDirection(posId), posId, cards);
         XueZhanSeat xueZhanSeat = posIdSeatMap.get(posId);
         if (!mahjongRule.getRuleConfig().getCanHsz()) {
             log.error("当前游戏不支持换三张： roomId={} zoneId={} userId={} 方位=[{},posId={}]", roomId, gameZone.getZoneId(), xueZhanSeat.getUserId(), getSeatDirection(posId), posId);
@@ -1275,20 +1299,32 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
         mahjongSeat.clearOperation();
         noticePlayersWhoFinishChangeCard(xueZhanSeat);
         if (isFinishExchange) {
-            log.info("开始换牌 roomId={} zoneId={}",roomId,gameZone.getZoneId());
+            log.info("开始换牌 roomId={} zoneId={}", roomId, gameZone.getZoneId());
             List<Step> exchangeHistory = getHistoryByGameStatus(SichuanGameStatusEnum.EXCHANGE_CARD);
             sichuanMahjongZone.executeExchange(exchangeHistory);
 
             noticePlayersExchangeResult();
             if (mahjongRule.getRuleConfig().getCanDingQue()) {
                 noticePlayersDingQue();
+
+                final SichuanRoomConfig roomConfig = mahjongRule.getRuleConfig();
+                final int timeout= roomConfig.getTimeoutTimeByGameStatus(SichuanGameStatusEnum.DING_QUE);
+                final long currentTimeMillis = System.currentTimeMillis();
+                //H2 实际上又定缺不一定有换三张
+                final int animationTime = roomConfig.getFinishExchangeCardAnimationTime();
+                mahjongZone.setTimeoutTime(currentTimeMillis+timeout+animationTime);
+            }else{
+                final SichuanRoomConfig roomConfig = mahjongRule.getRuleConfig();
+                final int timeout= roomConfig.getTimeoutTimeByGameStatus(SichuanGameStatusEnum.OPERATION_CARD);
+                final long currentTimeMillis = System.currentTimeMillis();
+                mahjongZone.setTimeoutTime(currentTimeMillis+timeout);
             }
         }
     }
 
     @Override
     public void dingQue(Integer color, Integer posId) {
-        log.info("玩家定缺： color={}",color);
+        log.info("玩家定缺： color={}", color);
         XueZhanSeat xueZhanSeat = posIdSeatMap.get(posId);
         if (!mahjongRule.getRuleConfig().getCanDingQue()) {
             log.error("当前游戏不支持定缺: roomId={} zoneId={} posId={}", roomId, gameZone.getZoneId(), posId);
@@ -1309,7 +1345,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
         mahjongSeat.removeStatus(SeatStatusEnum.DING_QUE.status());
         noticePlayersWhoFinishDingQue(xueZhanSeat);
         if (isFinishDingQue) {
-            log.info("定缺流程完成： roomId={} zoneId={}",roomId,gameZone.getZoneId());
+            log.info("定缺流程完成： roomId={} zoneId={}", roomId, gameZone.getZoneId());
             FormalProcessNoticeResponse response = new FormalProcessNoticeResponse(mahjongZone.getBankerPosId(), 10);
             pushToRoomUser(XueZhanPushCommandCode.FORMAL_PROCESS_NOTICE, response);
 
@@ -1347,7 +1383,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             chaJiao();
             rebate();
             List<MahjongSeat> allSeat = new ArrayList<>();
-            for(Map.Entry<Integer,XueZhanSeat> entry : posIdSeatMap.entrySet()){
+            for (Map.Entry<Integer, XueZhanSeat> entry : posIdSeatMap.entrySet()) {
                 final XueZhanSeat value = entry.getValue();
                 allSeat.add(value.getMahjongSeat());
             }
@@ -1419,7 +1455,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                     Integer targetPosId;
                     if (settlementStep.posId() == mahjongSeat.getPosId()) {
                         targetPosId = action.getCardSource();
-                    } else{
+                    } else {
                         targetPosId = settlementStep.getPosId();
                     }
 
@@ -1431,14 +1467,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                             .setTargetPosId(targetPosId);
                     settlementDetailInfo.addSingleSttlementInfo(singleSettlementInfo);
                     for (FanInfo fanInfo : settlementInfo.getFanInfoList()) {
-                           /* SettlementDetailInfoDTO settlementDetailInfoDTO = new SettlementDetailInfoDTO();
-                            settlementDetailInfoDTO.setFanId(fanInfo
-                                    .getFanType().getId())
-                                    .setFanNum(fanInfo.getFanNum())
-                                    .setFanScore(fanInfo.getFanNum() * baseScoreFactor)
-                                    .setTargetPosId(targetPosId);
-                            settlementDetailInfoDTOS.add(settlementDetailInfoDTO)*/
-                        ;
+
                         fanInfoList.add(fanInfo);
 
                     }
@@ -1448,11 +1477,6 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                          * 大牌展示
                          */
                         if (settlementInfo.getFanNum() >= 16) {
-                            final List<Integer> fanIds = settlementInfo.getFanInfoList().stream().map(fanInfo -> fanInfo.getFanType().getId()).collect(Collectors.toList());
-                                /*settlementDetailResponse.setBigFanIds(fanIds)
-                                        .setBigFanNum(settlementInfo.getFanNum())
-                                        .setBigFanScore(settlementInfo.getChangeScore());*/
-
                             settlementDetailInfo.setBigFan(settlementInfo.getFanInfoList())
                                     .setBigFanNum(settlementInfo.getFanNum())
                                     .setBigFanScore(settlementInfo.getChangeScore());
@@ -1468,14 +1492,6 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                         continue;
                     }
                     for (ChaHuaZhuInfo chaHuaZhuInfo : chaHuaZhuInfoList) {
-                        /*SettlementDetailInfoDTO settlementDetailInfoDTO = new SettlementDetailInfoDTO();
-                        settlementDetailInfoDTO.setTargetPosId(chaHuaZhuInfo.getCompensationToPosId())
-                                .setFanScore(chaHuaZhuInfo.getChangeScore())
-                                .setFanNum(chaHuaZhuInfo.getFanNum())
-                                .setFanId(SpecificFanTypeEnum.查花猪.getId());
-
-                        settlementDetailInfoDTOS.add(settlementDetailInfoDTO);*/
-
                         SingleSettlementInfo singleSettlementInfo = new SingleSettlementInfo();
                         FanInfo<SpecificFanTypeEnum> fanInfo = new FanInfo<>(SpecificFanTypeEnum.查花猪, chaHuaZhuInfo.getFanNum(), null, null);
                         List<FanInfo> fanInfoList = new ArrayList<>();
@@ -1494,14 +1510,6 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                         continue;
                     }
                     for (ChaJiaoInfo chaJiaoInfo : chaJiaoInfoList) {
-                        /*SettlementDetailInfoDTO settlementDetailInfoDTO = new SettlementDetailInfoDTO();
-                        settlementDetailInfoDTO.setTargetPosId(chaJiaoInfo.getCompensationToPosId())
-                                .setFanScore(chaJiaoInfo.getChangeScore())
-                                .setFanNum(chaJiaoInfo.getFanNum())
-                                .setFanId(SpecificFanTypeEnum.查叫.getId());
-
-                        settlementDetailInfoDTOS.add(settlementDetailInfoDTO);*/
-
                         SingleSettlementInfo singleSettlementInfo = new SingleSettlementInfo();
                         FanInfo<SpecificFanTypeEnum> fanInfo = new FanInfo<>(SpecificFanTypeEnum.查叫, chaJiaoInfo.getFanNum(), null, null);
                         List<FanInfo> fanInfoList = new ArrayList<>();
@@ -1520,14 +1528,6 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                         continue;
                     }
                     for (RebateInfo rebateInfo : rebateInfoList) {
-                        /*SettlementDetailInfoDTO settlementDetailInfoDTO = new SettlementDetailInfoDTO();
-                        settlementDetailInfoDTO.setTargetPosId(rebateInfo.getCompensationToPosId())
-                                .setFanScore(rebateInfo.getChangeScore())
-                                .setFanNum(rebateInfo.getFanNum())
-                                .setFanId(SpecificFanTypeEnum.退税.getId());
-
-                        settlementDetailInfoDTOS.add(settlementDetailInfoDTO);*/
-
                         SingleSettlementInfo singleSettlementInfo = new SingleSettlementInfo();
                         FanInfo<SpecificFanTypeEnum> fanInfo = new FanInfo<>(SpecificFanTypeEnum.退税, rebateInfo.getFanNum(), null, null);
                         List<FanInfo> fanInfoList = new ArrayList<>();
@@ -1797,13 +1797,36 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                 gameStepModel.setOperationStep(sichuanGameStartStep);
                 final SichuanMahjongSeat sichuanMahjongSeat = seat.getSichuanMahjongSeat();
                 sichuanMahjongSeat.setRecommendExchangeCards(recommendedCards);
+
+                MahjongSeat mahjongSeat = seat.getMahjongSeat();
+                mahjongSeat.addOperation(XueZhanMahjongOperationEnum.EXCHANGE_CARD);
+                mahjongSeat.addChangce();
+                mahjongSeat.addStatus(SeatStatusEnum.EXCHANGE_CARD);
+
+                final SichuanRoomConfig roomConfig = mahjongRule.getRuleConfig();
+                final int timeout= roomConfig.getTimeoutTimeByGameStatus(SichuanGameStatusEnum.EXCHANGE_CARD);
+                final long currentTimeMillis = System.currentTimeMillis();
+                final int gameStartAnimationTime = roomConfig.getGameStartAnimationTime();
+                mahjongZone.setTimeoutTime(currentTimeMillis+timeout+gameStartAnimationTime);
+
+            }else if(mahjongRule.getRuleConfig().getCanDingQue()){
+                //....设置定缺推荐....
+                MahjongSeat mahjongSeat = seat.getMahjongSeat();
+                mahjongSeat.addOperation(XueZhanMahjongOperationEnum.DING_QUE);
+                mahjongSeat.addChangce();
+                mahjongSeat.addStatus(SeatStatusEnum.DING_QUE);
+
+                noticePlayersDingQue();
+            }else{
+                MahjongSeat mahjongSeat = seat.getMahjongSeat();
+                final Integer bankerPosId = mahjongZone.getBankerPosId();
+                if(mahjongSeat.getPosId() == bankerPosId){
+                    mahjongSeat.addOperation(XueZhanMahjongOperationEnum.OUT_CARD);
+                    mahjongSeat.addChangce();
+                }
+
             }
-
-            MahjongSeat mahjongSeat = seat.getMahjongSeat();
-            mahjongSeat.addOperation(XueZhanMahjongOperationEnum.EXCHANGE_CARD);
-            mahjongSeat.addChangce();
-            mahjongSeat.addStatus(SeatStatusEnum.EXCHANGE_CARD);
-
+            final SichuanRoomConfig roomConfig = mahjongRule.getRuleConfig();
             response.setRoomId(gameStartStep.getRoomId())
                     .setZoneId(gameStartStep.getZoneId())
                     .setStep(gameStartStep.getStep())
@@ -1812,6 +1835,8 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                     .setPosId(gameStartStep.getPosId())
                     .setStandCardList(gameStartStep.getStandCards())
                     .setCardWallRemaining(mahjongZone.getCardWall().size())
+                    .setOutCardTime(roomConfig.getTimeoutTimeByGameStatus(SichuanGameStatusEnum.OUT_CARD))
+                    .setOtherOperationCardTime(roomConfig.getTimeoutTimeByGameStatus(SichuanGameStatusEnum.OPERATION_CARD))
                     //发给客户端的游戏状态不应该是记录step时的状态，而是下一个阶段。斗地主那里可能没处理好
                     .setGameStatus(mahjongZone.getGameStatus().status());
 
@@ -1895,6 +1920,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
 
     /**
      * 通知分数发生变动的玩家的积分流水变动
+     *
      * @param needNoticeSeats
      */
     private void noticePlayersWaterFlow(List<MahjongSeat> needNoticeSeats) {
@@ -1902,8 +1928,8 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             final Player player = mahjongSeat.getPlayer();
             int changeScore = (int) (player.getScore() - mahjongSeat.getCarryScore());
             final List<SettlementDetailInfoDTO> waterFlowList = getScoreWaterFlow(mahjongSeat.getPosId());
-            WaterFlowResponse response = new WaterFlowResponse(changeScore,waterFlowList);
-            roomManager.pushToUser(XueZhanPushCommandCode.SCORE_WATER_FLOW,player.getUserId(),response,roomId);
+            WaterFlowResponse response = new WaterFlowResponse(changeScore, waterFlowList);
+            roomManager.pushToUser(XueZhanPushCommandCode.SCORE_WATER_FLOW, player.getUserId(), response, roomId);
         }
 
     }
@@ -2011,13 +2037,14 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
         return settlementDetailInfoDTOS;
     }
 
-    public void reconnect(Long userId){
+    public void reconnect(Long userId) {
         final Integer posId = userPosIdMap.get(userId);
-        log.info("玩家断线重连：roomId={} zoneId={} userId={} 方位=[{},posId={}]",roomId,gameZone.getZoneId(),userId,getSeatDirection(posId),posId);
+        log.info("玩家断线重连：roomId={} zoneId={} userId={} 方位=[{},posId={}]", roomId, gameZone.getZoneId(), userId, getSeatDirection(posId), posId);
         List<SeatInfoDTO> seatInfoDTOList = new ArrayList<>();
         GameZoneInfoDTO gameZoneInfoDTO = new GameZoneInfoDTO();
-        ReconnectResponse slefReconnectResponse = new ReconnectResponse(posId,seatInfoDTOList,gameZoneInfoDTO);
+        ReconnectResponse slefReconnectResponse = new ReconnectResponse(posId, seatInfoDTOList, gameZoneInfoDTO);
 
+        final SichuanRoomConfig roomConfig = mahjongRule.getRuleConfig();
         final ExchangeTypeEnum exchangeType = sichuanMahjongZone.getExchangeType();
         gameZoneInfoDTO
                 .setRoomId(roomId)
@@ -2029,9 +2056,12 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                 .setCurrentOperatorPosId(mahjongZone.getCurOperatorPosId())
                 .setGameStatus(mahjongZone.getGameStatus().status())
                 .setCurrentTookCardPosId(mahjongZone.getCurTookCardPlayerPosId())
-                .setCurrentOperatorPosId(mahjongZone.getCurOperatorPosId());
+                .setCurrentOperatorPosId(mahjongZone.getCurOperatorPosId())
+                .setOperationRemainingTime(mahjongZone.getTimeoutTime()-System.currentTimeMillis())
+                .setOutCardTime(roomConfig.getTimeoutTimeByGameStatus(SichuanGameStatusEnum.OUT_CARD))
+                .setOtherOperationCardTime(roomConfig.getTimeoutTimeByGameStatus(SichuanGameStatusEnum.OPERATION_CARD));
 
-        for(Map.Entry<Integer,XueZhanSeat> entry : posIdSeatMap.entrySet()){
+        for (Map.Entry<Integer, XueZhanSeat> entry : posIdSeatMap.entrySet()) {
             final Integer currentPosId = entry.getKey();
             final XueZhanSeat value = entry.getValue();
             final SichuanMahjongSeat sichuanMahjongSeat = value.getSichuanMahjongSeat();
@@ -2044,7 +2074,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
 
             final List<StepAction> fuLu = mahjongSeat.getFuLu();
             List<ActionDTO> responseFulu = new ArrayList<>();
-            for(StepAction stepAction : fuLu){
+            for (StepAction stepAction : fuLu) {
                 ActionDTO actionDTO = new ActionDTO();
                 actionDTO.setOperationType(stepAction.getOperationType().value())
                         .setCardSourcePosId(stepAction.getCardSource())
@@ -2054,13 +2084,18 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
 
             SeatInfoDTO seatInfoDTO = new SeatInfoDTO();
             final List<Integer> standCardList = mahjongSeat.getStandCardList();
-            if(currentPosId.equals(posId)){
+            if (currentPosId.equals(posId)) {
                 seatInfoDTO.setStandCardList(new ArrayList<>(standCardList));
             }
+            List<OperationDTO> canOperationList = new ArrayList<>();
+            mahjongSeat.getCanOperations().stream().forEach(stepAction -> {
+                OperationDTO operationDTO = new OperationDTO(stepAction.getOperationType().value(), stepAction.getTargetCard());
+                canOperationList.add(operationDTO);
+            });
             seatInfoDTO.setPosId(currentPosId)
                     .setPlayerDTO(playerDTO)
                     .setActionDTOList(responseFulu)
-                    .setCanOperationList(mahjongSeat.getCanOperations().stream().map(stepAction -> stepAction.getOperationType().value()).collect(Collectors.toList()))
+                    .setCanOperationList(canOperationList)
                     .setQueColor(sichuanMahjongSeat.getQueColor())
                     .setStandCardRemaining(standCardList.size())
                     .setRecommendExchangeCards(sichuanMahjongSeat.getRecommendExchangeCards())
@@ -2071,10 +2106,10 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
 
             seatInfoDTOList.add(seatInfoDTO);
         }
-        roomManager.pushToUser(XueZhanPushCommandCode.RECONNECT_NOTICE_SELF,userId,slefReconnectResponse,roomId);
+        roomManager.pushToUser(XueZhanPushCommandCode.RECONNECT_NOTICE_SELF, userId, slefReconnectResponse, roomId);
 
         ReconnectResponse noticeOtherResponse = new ReconnectResponse(posId);
-        pushToRoomUser(XueZhanPushCommandCode.RECONNECT_NOTICE_OTHER,noticeOtherResponse,userId);
+        pushToRoomUser(XueZhanPushCommandCode.RECONNECT_NOTICE_OTHER, noticeOtherResponse, userId);
 
     }
 
@@ -2101,8 +2136,93 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
         return mahjongRule.getRuleConfig().getSERIAL_TIMEOUT_OUNT();
     }
 
-    public void timeoutExecute(){
-        final long lastOperationTime = mahjongZone.getLastOperationTime();
+    /**
+     * 超时判断与执行方法
+     */
+    @Override
+    public void timeoutExecute() {
+        if(mahjongZone.getGameStatus() == null){
+            return;
+        }
+        if(mahjongZone.checkCurrentGameStatus(SichuanGameStatusEnum.GAME_OVER)){
+            return;
+        }
+        final List<MahjongSeat> needImmediatelyExecuteSeats = mahjongZone.getNeedImmediatelyExecuteSeats();
+
+        for (MahjongSeat mahjongSeat : needImmediatelyExecuteSeats) {
+            final List<StepAction> canOperations = mahjongSeat.getCanOperations();
+                /**
+                 *
+                 */
+            IProducerWithTranslator eventPublisher = DisruptorRegistrar.needEventPublisher(MessageType.SERVICE, roomId);
+                final List<Integer> canOperationList = canOperations.stream().map(stepAction -> stepAction.getOperationType().value()).collect(Collectors.toList());
+                if(canOperationList.contains(XueZhanMahjongOperationEnum.EXCHANGE_CARD.value())){
+                    final int posId = mahjongSeat.getPosId();
+                    final XueZhanSeat xueZhanSeat = posIdSeatMap.get(posId);
+                    final SichuanMahjongSeat sichuanMahjongSeat = xueZhanSeat.getSichuanMahjongSeat();
+                    ExchangeCardRequest request = new ExchangeCardRequest(sichuanMahjongSeat.getRecommendExchangeCards());
+                    request.setChannelUserId(mahjongSeat.getUserId());
+                    publishTimeoutEvent(eventPublisher,request,XueZhanCommandCode.EXCHANGE_CARD);
+                    break;
+                }
+                if(canOperationList.contains(XueZhanMahjongOperationEnum.DING_QUE.value())){
+                    final int posId = mahjongSeat.getPosId();
+                    final XueZhanSeat xueZhanSeat = posIdSeatMap.get(posId);
+                    final SichuanMahjongSeat sichuanMahjongSeat = xueZhanSeat.getSichuanMahjongSeat();
+                    DingQueRequest request = new DingQueRequest(sichuanMahjongSeat.getRemommendQueColor());
+                    request.setChannelUserId(mahjongSeat.getUserId());
+                    publishTimeoutEvent(eventPublisher,request,XueZhanCommandCode.DING_QUE);
+                    break;
+                }
+                if(mahjongSeat.isAutoOperation()){
+
+                }else{
+                    if(canOperationList.contains(XueZhanMahjongOperationEnum.OUT_CARD.value())){
+                        OperationCardRequest request = new OperationCardRequest();
+                        final List<Integer> standCardList = mahjongSeat.getStandCardList();
+                        request.setCard(standCardList.get(standCardList.size()))
+                                .setOperationType(XueZhanMahjongOperationEnum.OUT_CARD.value())
+                                .setChannelUserId(mahjongSeat.getUserId());
+
+                        publishTimeoutEvent(eventPublisher,request,XueZhanCommandCode.OPERATION_CARD);
+                        break;
+                    }
+                    if(canOperationList.contains(XueZhanMahjongOperationEnum.CANCEL.value())){
+                        OperationCardRequest request = new OperationCardRequest();
+                        final List<Integer> standCardList = mahjongSeat.getStandCardList();
+                        request.setCard(standCardList.get(standCardList.size()))
+                                .setOperationType(XueZhanMahjongOperationEnum.CANCEL.value())
+                                .setChannelUserId(mahjongSeat.getUserId());
+
+                        publishTimeoutEvent(eventPublisher,request,XueZhanCommandCode.OPERATION_CARD);
+                        break;
+                    }
+                }
+
+            }
+
+    }
+
+    private void publishTimeoutEvent(IProducerWithTranslator eventPublisher,Request request,int command){
+        Any any = null;
+        try {
+            any = Any.pack(request);
+        } catch (IOException e) {
+            log.error("超时任务编码异常 roomId={} zoneId={} request={}",roomId,gameZone.getZoneId(),request);
+            e.printStackTrace();
+        }
+        GameRequestMessage gameRequestMessage = new GameRequestMessage();
+        gameRequestMessage.setObject(any);
+        GameRequestMessageHead head = new GameRequestMessageHead();
+        head.setCmd(command);
+        head.setType(MessageType.TIMEOUT.getType());
+        head.setRoomId(roomId);
+        gameRequestMessage.setHead(head);
+        try {
+            eventPublisher.publish(gameRequestMessage,null);
+        } catch (Exception e) {
+            log.error("发布超时任务失败： roomId={} zoneId={}  message={}",roomId,gameZone.getZoneId(),gameRequestMessage);
+        }
     }
 
     @Override

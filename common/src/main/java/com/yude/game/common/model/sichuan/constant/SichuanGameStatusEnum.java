@@ -27,7 +27,7 @@ public enum SichuanGameStatusEnum implements Status {
      * 没有必要设置游戏状态为下面几个，只是在构建Step对象的时候用到
      */
     LIU_JU_SETTLEMENT(99900000),
-    TOOK_CARD(10000),
+    OUT_CARD(10000),
     ;
 
     public int timeout;
@@ -39,5 +39,12 @@ public enum SichuanGameStatusEnum implements Status {
     @Override
     public int status() {
         return this.ordinal();
+    }
+
+    @Override
+    public String toString() {
+        return "SichuanGameStatusEnum{" +
+                "timeout=" + timeout +
+                "} " + super.toString();
     }
 }

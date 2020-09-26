@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongArray;
@@ -83,6 +84,28 @@ public class RoomManager<T extends
     protected static final AtomicLong roomIdGenerator = new AtomicLong(System.currentTimeMillis());
 
     private TempSeatPool tempSeatPool;
+
+
+    private AtomicBoolean atomicBoolean = new AtomicBoolean(false);
+    /**
+     * 超时机制
+     * @return
+     */
+    ScheduledThreadPoolExecutor scheduled = new ScheduledThreadPoolExecutor(1);
+    private void timeoutExecute(){
+        scheduled.scheduleWithFixedDelay(() ->{
+            try {
+                for(Map.Entry<Long, T> entry : roomMap.entrySet()){
+                    final T roomModel = entry.getValue();
+                    roomModel.timeoutExecute();
+                }
+
+            } catch (Exception e) {
+                log.error("超时任务执行异常： ",e);
+            }
+        },1000*60,300,TimeUnit.MILLISECONDS);
+    }
+
 
     protected long getNewRoomId() {
         long roomId = RoomManager.roomIdGenerator.getAndIncrement();
@@ -286,6 +309,7 @@ public class RoomManager<T extends
         createMatchThreadPool();
         createRoomThreadPool();
         executeMatchThread(matchThreadPool);
+        timeoutExecute();
     }
 
     public ExecutorService createMatchThreadPool() {

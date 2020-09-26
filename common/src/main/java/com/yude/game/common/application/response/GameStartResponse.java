@@ -21,6 +21,9 @@ public class GameStartResponse extends BaseResponse {
     private Integer gameStatus;
     private Integer cardWallRemaining;
 
+    private Integer outCardTime;
+    private Integer otherOperationCardTime;
+
     public GameStartResponse setRoomId(Long roomId) {
         this.roomId = roomId;
         return this;
@@ -66,6 +69,24 @@ public class GameStartResponse extends BaseResponse {
         return this;
     }
 
+    public Integer getOutCardTime() {
+        return outCardTime;
+    }
+
+    public GameStartResponse setOutCardTime(Integer outCardTime) {
+        this.outCardTime = outCardTime;
+        return this;
+    }
+
+    public Integer getOtherOperationCardTime() {
+        return otherOperationCardTime;
+    }
+
+    public GameStartResponse setOtherOperationCardTime(Integer otherOperationCardTime) {
+        this.otherOperationCardTime = otherOperationCardTime;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "GameStartResponse{" +
@@ -78,6 +99,8 @@ public class GameStartResponse extends BaseResponse {
                 ", standCardList=" + standCardList +
                 ", gameStatus=" + gameStatus +
                 ", cardWallRemaining=" + cardWallRemaining +
+                ", outCardTime=" + outCardTime +
+                ", otherOperationCardTime=" + otherOperationCardTime +
                 "} " + super.toString();
     }
 }

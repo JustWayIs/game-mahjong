@@ -79,6 +79,7 @@ public class SichuanRoomConfig extends RuleConfig {
         this.canHus = canHus;
         this.lastCardProhibitGang = true;
 
+        gameStatusTimeoutMap = new HashMap<>();
         for(SichuanGameStatusEnum sichuanGameStatusEnum : SichuanGameStatusEnum.values()){
             this.gameStatusTimeoutMap.put(sichuanGameStatusEnum,sichuanGameStatusEnum.timeout);
         }
@@ -150,6 +151,55 @@ public class SichuanRoomConfig extends RuleConfig {
     public SichuanRoomConfig setLastCardProhibitGang(boolean lastCardProhibitGang) {
         this.lastCardProhibitGang = lastCardProhibitGang;
         return this;
+    }
+
+    public int getGameStartAnimationTime() {
+        return gameStartAnimationTime;
+    }
+
+    public SichuanRoomConfig setGameStartAnimationTime(int gameStartAnimationTime) {
+        this.gameStartAnimationTime = gameStartAnimationTime;
+        return this;
+    }
+
+    public int getFinishExchangeCardAnimationTime() {
+        return finishExchangeCardAnimationTime;
+    }
+
+    public SichuanRoomConfig setFinishExchangeCardAnimationTime(int finishExchangeCardAnimationTime) {
+        this.finishExchangeCardAnimationTime = finishExchangeCardAnimationTime;
+        return this;
+    }
+
+    public int getOperationCardAnimationTime() {
+        return operationCardAnimationTime;
+    }
+
+    public SichuanRoomConfig setOperationCardAnimationTime(int operationCardAnimationTime) {
+        this.operationCardAnimationTime = operationCardAnimationTime;
+        return this;
+    }
+
+    public int getMutipleHuAnimationTime() {
+        return mutipleHuAnimationTime;
+    }
+
+    public SichuanRoomConfig setMutipleHuAnimationTime(int mutipleHuAnimationTime) {
+        this.mutipleHuAnimationTime = mutipleHuAnimationTime;
+        return this;
+    }
+
+    public int getSettlementAnimationTime() {
+        return settlementAnimationTime;
+    }
+
+    public SichuanRoomConfig setSettlementAnimationTime(int settlementAnimationTime) {
+        this.settlementAnimationTime = settlementAnimationTime;
+        return this;
+    }
+
+    public int getTimeoutTimeByGameStatus(SichuanGameStatusEnum sichuanGameStatusEnum){
+        return gameStatusTimeoutMap.get(sichuanGameStatusEnum);
     }
 
     @Override

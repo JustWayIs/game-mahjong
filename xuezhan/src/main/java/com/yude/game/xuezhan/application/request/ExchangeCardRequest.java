@@ -17,6 +17,13 @@ import java.util.List;
 public class ExchangeCardRequest extends AbstractRequest {
     private List<Integer> discardCardList;
 
+    public ExchangeCardRequest() {
+    }
+
+    public ExchangeCardRequest(List<Integer> discardCardList) {
+        this.discardCardList = discardCardList;
+    }
+
     public List<Integer> getDiscardCardList() {
         return discardCardList;
     }

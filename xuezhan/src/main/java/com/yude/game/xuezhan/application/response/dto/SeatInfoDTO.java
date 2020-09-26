@@ -30,7 +30,7 @@ public class SeatInfoDTO {
     /**
      * 不能看到别人的
      */
-    private List<Integer> canOperationList;
+    private List<OperationDTO> canOperationList;
     private Integer huCard;
     private List<Integer> seatStatus;
 
@@ -115,11 +115,11 @@ public class SeatInfoDTO {
         return this;
     }
 
-    public List<Integer> getCanOperationList() {
+    public List<OperationDTO> getCanOperationList() {
         return canOperationList;
     }
 
-    public SeatInfoDTO setCanOperationList(List<Integer> canOperationList) {
+    public SeatInfoDTO setCanOperationList(List<OperationDTO> canOperationList) {
         this.canOperationList = canOperationList;
         return this;
     }

@@ -29,6 +29,11 @@ public class GameZoneInfoDTO {
 
     private Integer exchangeType;
 
+    private Long operationRemainingTime;
+
+    private Integer outCardTime;
+    private Integer otherOperationCardTime;
+
     public Long getRoomId() {
         return roomId;
     }
@@ -119,6 +124,33 @@ public class GameZoneInfoDTO {
         return this;
     }
 
+    public Long getOperationRemainingTime() {
+        return operationRemainingTime;
+    }
+
+    public GameZoneInfoDTO setOperationRemainingTime(Long operationRemainingTime) {
+        this.operationRemainingTime = operationRemainingTime;
+        return this;
+    }
+
+    public Integer getOutCardTime() {
+        return outCardTime;
+    }
+
+    public GameZoneInfoDTO setOutCardTime(Integer outCardTime) {
+        this.outCardTime = outCardTime;
+        return this;
+    }
+
+    public Integer getOtherOperationCardTime() {
+        return otherOperationCardTime;
+    }
+
+    public GameZoneInfoDTO setOtherOperationCardTime(Integer otherOperationCardTime) {
+        this.otherOperationCardTime = otherOperationCardTime;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "GameZoneInfoDTO{" +
@@ -132,6 +164,9 @@ public class GameZoneInfoDTO {
                 ", currentOperatorPosId=" + currentOperatorPosId +
                 ", currentTookCardPosId=" + currentTookCardPosId +
                 ", exchangeType=" + exchangeType +
+                ", operationRemainingTime=" + operationRemainingTime +
+                ", outCardTime=" + outCardTime +
+                ", otherOperationCardTime=" + otherOperationCardTime +
                 '}';
     }
 }
