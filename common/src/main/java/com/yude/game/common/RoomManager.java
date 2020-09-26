@@ -103,7 +103,7 @@ public class RoomManager<T extends
             } catch (Exception e) {
                 log.error("超时任务执行异常： ",e);
             }
-        },1000*60,300,TimeUnit.MILLISECONDS);
+        },1000*10,300,TimeUnit.MILLISECONDS);
     }
 
 

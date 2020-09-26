@@ -2180,7 +2180,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                     if(canOperationList.contains(XueZhanMahjongOperationEnum.OUT_CARD.value())){
                         OperationCardRequest request = new OperationCardRequest();
                         final List<Integer> standCardList = mahjongSeat.getStandCardList();
-                        request.setCard(standCardList.get(standCardList.size()))
+                        request.setCard(standCardList.get(standCardList.size()-1))
                                 .setOperationType(XueZhanMahjongOperationEnum.OUT_CARD.value())
                                 .setChannelUserId(mahjongSeat.getUserId());
 
