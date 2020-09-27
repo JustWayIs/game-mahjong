@@ -346,6 +346,7 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
 
         }*/
         if (solutions.size() == 0) {
+            log.error("玩家有听牌信息，但是没有番型： seat={}",huPlayerSeat);
             throw new SystemException(StatusCodeEnum.FAIL);
         }
 

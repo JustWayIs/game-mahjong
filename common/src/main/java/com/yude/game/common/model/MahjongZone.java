@@ -75,7 +75,7 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
     /**
      * 本质上来说，是帮助当前有操作权限但是并未的玩家进行操作。虽然麻将可能在一个回合中有多个玩家操作，但是他们应该共享一个超时间
      */
-    private long timeoutTime;
+    private volatile long timeoutTime;
 
     public MahjongZone(MahjongSeat[] playerSeats, int round, int inning) {
         super(playerSeats, round, inning);
@@ -720,7 +720,7 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         List<MahjongSeat> mahjongSeatList = new ArrayList<>();
         long currentTime = System.currentTimeMillis();
         boolean isTimeOut = false;
-        if(timeoutTime >= currentTime){
+        if(timeoutTime <= currentTime){
             isTimeOut = true;
         }
         for(MahjongSeat seat : playerSeats){

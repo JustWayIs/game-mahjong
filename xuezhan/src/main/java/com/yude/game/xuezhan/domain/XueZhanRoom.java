@@ -2141,7 +2141,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
      */
     @Override
     public void timeoutExecute() {
-        if(mahjongZone.getGameStatus() == null){
+        if(mahjongZone == null){
             return;
         }
         if(mahjongZone.checkCurrentGameStatus(SichuanGameStatusEnum.GAME_OVER)){
@@ -2163,7 +2163,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                     ExchangeCardRequest request = new ExchangeCardRequest(sichuanMahjongSeat.getRecommendExchangeCards());
                     request.setChannelUserId(mahjongSeat.getUserId());
                     publishTimeoutEvent(eventPublisher,request,XueZhanCommandCode.EXCHANGE_CARD);
-                    break;
+                    continue;
                 }
                 if(canOperationList.contains(XueZhanMahjongOperationEnum.DING_QUE.value())){
                     final int posId = mahjongSeat.getPosId();
@@ -2172,7 +2172,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                     DingQueRequest request = new DingQueRequest(sichuanMahjongSeat.getRemommendQueColor());
                     request.setChannelUserId(mahjongSeat.getUserId());
                     publishTimeoutEvent(eventPublisher,request,XueZhanCommandCode.DING_QUE);
-                    break;
+                    continue;
                 }
                 if(mahjongSeat.isAutoOperation()){
 
@@ -2185,17 +2185,24 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                                 .setChannelUserId(mahjongSeat.getUserId());
 
                         publishTimeoutEvent(eventPublisher,request,XueZhanCommandCode.OPERATION_CARD);
-                        break;
+                        continue;
                     }
                     if(canOperationList.contains(XueZhanMahjongOperationEnum.CANCEL.value())){
+                        StepAction cancelAction = null;
+                        for(StepAction stepAction : canOperations){
+                            if(XueZhanMahjongOperationEnum.CANCEL.value().equals(stepAction.getOperationType().value())){
+                                cancelAction = stepAction;
+                            }
+                        }
+
                         OperationCardRequest request = new OperationCardRequest();
-                        final List<Integer> standCardList = mahjongSeat.getStandCardList();
-                        request.setCard(standCardList.get(standCardList.size()))
+                        //cancelAction不可能为null
+                        request.setCard(cancelAction.getTargetCard())
                                 .setOperationType(XueZhanMahjongOperationEnum.CANCEL.value())
                                 .setChannelUserId(mahjongSeat.getUserId());
 
                         publishTimeoutEvent(eventPublisher,request,XueZhanCommandCode.OPERATION_CARD);
-                        break;
+                        continue;
                     }
                 }
 
