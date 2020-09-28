@@ -1,6 +1,7 @@
 package com.yude.game.common.mahjong;
 
 import com.google.common.collect.ImmutableList;
+import com.yude.game.common.model.CardEnum;
 import com.yude.game.common.model.fan.BaseHuTypeEnum;
 
 import java.util.ArrayList;
@@ -573,12 +574,19 @@ public enum MJManager {
 
         //tiles = Arrays.asList(Tile.t1,Tile.t9,Tile.b1,Tile.b9,)
 
-        tiles = Arrays.asList(Tile.w6, Tile.w7, Tile.w8, Tile.t5, Tile.t5, Tile.t5, Tile.t8, Tile.t9, Tile.t9, Tile.t9);
+        tiles = Arrays.asList(Tile.w6, Tile.w6, Tile.w7, Tile.w7, Tile.w7, Tile.b5, Tile.b5, Tile.b6, Tile.b6, Tile.b7,Tile.b7);
         List<Meld> pMelds = new ArrayList<>();
         Meld       meld   = new Meld();
+        meld.tiles =  ImmutableList.copyOf(Arrays.asList(Tile.w2,Tile.w2,Tile.w2));
+        meld.type = 4;
+        meld.from = 1;
+        meld.player = 1;
+        meld.isPlusKong = false;
+        meld.isStable = true;
+        pMelds.add(meld);
 //        // 四饼 四饼 四饼 七饼 一条 六条 九条 九条 三万 六万 東 中 發
 //        //List<Tile> tiles = Arrays.asList(Tile.b4, Tile.b4, Tile.b4, Tile.b7, Tile.t1, Tile.t6, Tile.t9, Tile.t9, Tile.w3, Tile.w6, Tile.E, Tile.Z, Tile.F);
-        List<Solution> solutions     = MJManager.INSTANCE.solutions(tiles);
+        List<Solution> solutions     = MJManager.INSTANCE.solutions(pMelds,tiles, CardEnum.条.getColor());
         List<Solution> tingSolutions = new ArrayList<>();
         for (Solution solution : solutions) {
             if (solution.isWin) {
