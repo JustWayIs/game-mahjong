@@ -4,10 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.yude.game.common.model.CardEnum;
 import com.yude.game.common.model.fan.BaseHuTypeEnum;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by someone on 2020/8/5 21:49.
@@ -174,7 +171,9 @@ public enum MJManager {
                     attachTileBranch(branch, tile, pBannedSuit);
                 }
             }
-            parseSolutions(solutions, branch, pMelds, pBannedSuit);
+            Map<String, Solution> solutionMap = new HashMap<>();
+            parseSolutions(solutionMap, branch, pMelds, pBannedSuit);
+            solutions = new ArrayList<>(solutionMap.values());
             solutions.sort((a, b) -> a.isWin || b.isWin ?
                     ((b.isWin ? 1 : 0) - (a.isWin ? 1 : 0)) : ((a.isReadyHand || b.isReadyHand) ?
                     (b.canWin.size() - a.canWin.size()) : (a.meldCount != b.meldCount) ? // 对子多的排前
@@ -185,15 +184,17 @@ public enum MJManager {
         return solutions;
     }
 
-    private void parseSolutions(List<Solution> pSolutions, TileBranch pBranch, List<Meld> pMelds, int pBannedSuit) {
+    private void parseSolutions(Map<String, Solution> pSolutions, TileBranch pBranch, List<Meld> pMelds, int pBannedSuit) {
         if (pBranch != null) {
-            if (pBranch.meld != null) {
-                parseSolutions(pSolutions, pBranch.meld, pMelds, pBannedSuit);
+            if (pBranch.meld.size() > 0) {
+                pBranch.meld.forEach(meld -> {
+                    parseSolutions(pSolutions, meld, pMelds, pBannedSuit);
+                });
             }
             if (pBranch.next != null) {
                 parseSolutions(pSolutions, pBranch.next, pMelds, pBannedSuit);
             }
-            if (pBranch.meld == null && pBranch.next == null) {
+            if (pBranch.meld.size() == 0 && pBranch.next == null) {
                 // 回溯牌路
                 Solution solution = new Solution();
                 for (Meld meld : pMelds) {
@@ -289,14 +290,13 @@ public enum MJManager {
                 if ((solution.meldCount == 4 && solution.pairCount == 1)) {
                     solution.isWin = true;
                     solution.setBaseHuType(BaseHuTypeEnum.平胡);
-
-                } else if (solution.pairCount == 7) {
+                }else if(solution.pairCount == 7){
                     solution.isWin = true;
                     solution.setBaseHuType(BaseHuTypeEnum.七对);
                 } else if (solution.meldCount == 4) {
                     // 四面子，听单张，可杠上花
-                    for(Tile tile : solution.tiles){
-                        if(tile.suit != pBannedSuit){
+                    for (Tile tile : solution.tiles) {
+                        if (tile.suit != pBannedSuit) {
                             solution.canWin.add(tile);
                         }
                     }
@@ -307,10 +307,10 @@ public enum MJManager {
                         }
                     }
                     solution.isReadyHand = solution.canWin.size() > 0;
-                } else if (solution.pairCount == 6) {
+                } else if(solution.pairCount == 6){
                     // 四面子，听单张，可杠上花
-                    for(Tile tile : solution.tiles){
-                        if(tile.suit != pBannedSuit){
+                    for (Tile tile : solution.tiles) {
+                        if (tile.suit != pBannedSuit) {
                             solution.canWin.add(tile);
                         }
                     }
@@ -321,7 +321,7 @@ public enum MJManager {
                         }
                     }
                     solution.isReadyHand = solution.canWin.size() > 0;
-                } else if (solution.meldCount == 3 && solution.pairCount == 1 && solution.meldingCount == 1) {
+                }else if (solution.meldCount == 3 && solution.pairCount == 1 && solution.meldingCount == 1) {
                     // 听搭子张
                     for (Meld meld : solution.melding) {
                         if (meld.type == Meld.TYPE_READY_SEQUENCE) {
@@ -432,7 +432,7 @@ public enum MJManager {
                             return;
                         }
                         // 改良张
-                        if(tile.suit != pBannedSuit) {
+                        if (tile.suit != pBannedSuit) {
                             switch (tile.suit) {
                                 case Tile.SUIT_DOTS:
                                 case Tile.SUIT_BAMBOO:
@@ -467,7 +467,10 @@ public enum MJManager {
                         }
                     }
                 }
-                pSolutions.add(solution);
+                solution.melds.sort(Comparator.comparingInt(meld -> -meld.tiles.size()));
+                //if (!pSolutions.contains(solution)) {
+                pSolutions.put(solution.toString(), solution);
+                //}
             }
         }
     }
@@ -479,8 +482,8 @@ public enum MJManager {
         if (pBranch != null) {
             // 定缺张只能挂载在next
             if (pBranch.tile.suit == pTile.suit && pTile.suit != pBannedSuit) {
-                // 同类张，无面子或搭子指向
-                if (pBranch.meld == null) {
+                // meld 为空集，判断是否需要进行挂载
+                if (pBranch.meld.size() == 0) {
                     if (pBranch.length == 1) {
                         // 当前张暂无关联
                         if (pBranch.tile.type == Tile.TYPE_SIMPLES) {
@@ -492,13 +495,13 @@ public enum MJManager {
                                     meldType = Meld.TYPE_PAIR;
                                 case 1: // 两面
                                 case 2: // 嵌张
-                                    pBranch.meld = new TileBranch(pTile, pBranch, 2, meldType);
+                                    pBranch.meld.add(new TileBranch(pTile, pBranch, 2, meldType));
                                     break;
                             }
                         } else if (pBranch.tile.type == Tile.TYPE_HONORS) {
                             // 字牌
                             if (pBranch.tile.id == pTile.id) {
-                                pBranch.meld = new TileBranch(pTile, pBranch, 2, Meld.TYPE_PAIR);
+                                pBranch.meld.add(new TileBranch(pTile, pBranch, 2, Meld.TYPE_PAIR));
                             }
                         }
                     } else if (pBranch.length == 2) {
@@ -507,34 +510,127 @@ public enum MJManager {
                             // 嵌张/两面
                             // 外部保证 Tile 已经排序，那么在嵌张的情况下不可能成面子
                             if (pTile.id - pBranch.tile.id == 1 && pBranch.tile.id - pBranch.prev.tile.id == 1) {
-                                pBranch.meld = new TileBranch(pTile, pBranch, 3, Meld.TYPE_SEQUENCE);
+                                TileBranch meld = new TileBranch(pTile, pBranch, 3, Meld.TYPE_SEQUENCE);
+                                pBranch.meld.add(meld);
                                 // 如果当前节点（pBranch.tile）存在next，需要移动此next到挂载节点的next，以确保不会丢失牌张
-                                // 举例： 3，4，4，5，当挂载到5时，345成顺，同时4会挂载第二个4
+                                // 当前节点应该不再继续挂载next内容
                                 if (pBranch.next != null) {
-                                    pBranch.meld.next = new TileBranch(pBranch.next.tile, pBranch.meld, 1, Meld.TYPE_SINGLE_TILE);
+                                    pBranch.next.prev = meld;
+                                    meld.next = pBranch.next;
+                                    pBranch.next = null;
+                                    pBranch.enableNext = false;
                                 }
                             }
                         } else if (pBranch.type == Meld.TYPE_PAIR && pBranch.tile.id == pTile.id) {
                             // 对子
-                            pBranch.meld = new TileBranch(pTile, pBranch, 3, Meld.TYPE_TRIPLET);
+                            pBranch.meld.add(new TileBranch(pTile, pBranch, 3, Meld.TYPE_TRIPLET));
                         }
                     } else if (pBranch.length == 3 && pBranch.type == Meld.TYPE_TRIPLET && pBranch.tile.id == pTile.id) {
-                        pBranch.meld = new TileBranch(pTile, pBranch, 4, Meld.TYPE_KONG);
+                        pBranch.meld.add(new TileBranch(pTile, pBranch, 4, Meld.TYPE_KONG));
                     }
+                } else if (pBranch.meld.size() == 1) {
+                    // meld 包含1个牌张
+                    TileBranch exists = pBranch.meld.get(0);
+                    // 因为牌张已经排序，仅当当前面子长度为1时，才有可能挂载2个meld
+                    // 同时已经挂载的meld应当是组成对子才有可能挂载多个，主要为了解决排序中多个同张后接搭子的情况
+                    if (exists.tile != pTile && pBranch.length == 1 && exists.type == Meld.TYPE_PAIR) {
+                        // 可以同时挂载
+                        int delta    = Math.abs(pBranch.tile.id - pTile.id);
+                        int meldType = Meld.TYPE_READY_SEQUENCE;
+                        switch (delta) {
+                            case 1: // 两面
+                            case 2: // 嵌张
+                                TileBranch meld = new TileBranch(pTile, pBranch, 2, meldType);
+                                pBranch.meld.add(meld);
+                                // 同时挂载时，增加已有挂载张到当前张的next位置
+                                meld.next = clone(exists);
+                                break;
+                        }
+                    }
+                    // 不可以同时挂载，继续向下挂载
+                    attachTileBranch(exists, pTile, pBannedSuit);
                 } else {
-                    // 同类张，有面子或搭子指向
-                    attachTileBranch(pBranch.meld, pTile, pBannedSuit);
+                    // 其他：meld 包含2个牌张，继续向下挂载
+                    pBranch.meld.forEach(meld -> {
+                        attachTileBranch(meld, pTile, pBannedSuit);
+                    });
                 }
             } else {
                 // 为保证所有路径为全牌面，非同类张向meld挂载，会挂载至meld节点的next上
-                attachTileBranch(pBranch.meld, pTile, pBannedSuit);
+                pBranch.meld.forEach(meld -> {
+                    attachTileBranch(meld, pTile, pBannedSuit);
+                });
             }
             // 为保证所有路径为全牌面，保证每张牌都会像末端张 next 挂载
             if (pBranch.next == null) {
-                // 无下一非搭子张
-                pBranch.next = new TileBranch(pTile, pBranch, 1, Meld.TYPE_SINGLE_TILE);
+                // 顺子中间张不需要挂载next
+                if (pBranch.enableNext) {
+                    // 无下一非搭子张
+                    pBranch.next = new TileBranch(pTile, pBranch, 1, Meld.TYPE_SINGLE_TILE);
+                }
             } else {
                 attachTileBranch(pBranch.next, pTile, pBannedSuit);
+            }
+        }
+    }
+
+    private TileBranch clone(TileBranch pBranch) {
+        if (pBranch != null) {
+            TileBranch clone = new TileBranch(pBranch.tile, null, 1, Meld.TYPE_SINGLE_TILE);
+            if (pBranch.meld.size() > 0) {
+                pBranch.meld.forEach(meld -> {
+                    cloneAttacheMeld(clone, meld);
+                });
+            }
+            if (pBranch.next != null) {
+                cloneAttacheNext(clone, pBranch.next);
+            }
+            return clone;
+        }
+        return null;
+    }
+
+    private void cloneAttacheMeld(TileBranch pClone, TileBranch pMeld) {
+        if (pClone != null && pMeld != null) {
+            int delta    = Math.abs(pClone.tile.id - pMeld.tile.id);
+            int meldType = Meld.TYPE_READY_SEQUENCE;
+            switch (delta) {
+                case 0: // 对子
+                    if (pClone.length == 1) {
+                        meldType = Meld.TYPE_PAIR;
+                    } else if (pClone.length == 2) {
+                        meldType = Meld.TYPE_TRIPLET;
+                    } else if (pClone.length == 3) {
+                        meldType = Meld.TYPE_KONG;
+                    }//
+                case 1: // 两面
+                    if (pClone.length == 2) {
+                        meldType = Meld.TYPE_SEQUENCE;
+                    }
+            }
+            TileBranch meld = new TileBranch(pMeld.tile, pClone, pClone.length + 1, meldType);
+            pClone.meld.add(meld);
+            if (pMeld.meld.size() > 0) {
+                pMeld.meld.forEach(m -> {
+                    cloneAttacheMeld(meld, m);
+                });
+            }
+            if (pMeld.next != null) {
+                cloneAttacheNext(meld, pMeld.next);
+            }
+        }
+    }
+
+    private void cloneAttacheNext(TileBranch pClone, TileBranch pMeld) {
+        if (pClone != null && pMeld != null) {
+            pClone.next = new TileBranch(pMeld.tile, pClone, 1, Meld.TYPE_SINGLE_TILE);
+            if (pMeld.meld.size() > 0) {
+                pMeld.meld.forEach(meld -> {
+                    cloneAttacheMeld(pClone.next, meld);
+                });
+            }
+            if (pMeld.next != null) {
+                cloneAttacheNext(pClone.next, pMeld.next);
             }
         }
     }
@@ -607,18 +703,37 @@ public enum MJManager {
     private static final class TileBranch {
         Tile tile;
         transient TileBranch prev; // 上一张
-        TileBranch meld;   // 下张搭子
-        TileBranch next;   // 不搭或不想搭的张
-        int        length; // 搭子长度[2,3,4]
-        int        type;   // 搭子、面子类型
+        List<TileBranch> meld;   // 下张搭子
+        TileBranch       next;   // 不搭或不想搭的张
+        int              length; // 搭子长度[2,3,4]
+        int              type;   // 搭子、面子类型
+        boolean          enableNext;
 
         TileBranch(Tile pTile, TileBranch pPrev, int pLength, int pType) {
             this.tile = pTile;
             this.prev = pPrev;
-            this.meld = null;
+            this.meld = new ArrayList<>();
             this.next = null;
             this.length = pLength;
             this.type = pType;
+            this.enableNext = true;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            TileBranch that = (TileBranch) o;
+            return tile == that.tile;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(tile);
         }
     }
 }

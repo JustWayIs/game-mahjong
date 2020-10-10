@@ -332,13 +332,17 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
      * @return
      */
     public List<FanInfo> checkFan(MahjongSeat huPlayerSeat, Integer card, MahjongOperation operationType, Integer cardSourcePosId, MahjongRule<SichuanRoomConfig> mahjongRule) {
+
+        List<Integer> standCardList = huPlayerSeat.getStandCardList();
+        Collections.sort(standCardList);
+
         long befoerTime = System.currentTimeMillis();
         huPlayerSeat.solution();
         log.warn("solution 总共耗时：{}",(System.currentTimeMillis() - befoerTime));
         boolean cardFromSelf = huPlayerSeat.getPosId() == cardSourcePosId;
 
 
-        List<Integer> standCardList = huPlayerSeat.getStandCardList();
+
         List<Solution> solutions = huPlayerSeat.getPlayerHand().getHuCardSolution();
         //血战（无赖子）可能没有要找最大番型的需要
         //可能会出现多个solution能胡，但是番型完全一致的情况（没有被优化掉），比如面子 334455 的理牌
@@ -614,6 +618,8 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
                     List<Tile> canWin = solution.canWin;
                     if (canWin.size() > 0) {
                         for (Tile tile : canWin) {
+                            final List<Integer> standCardList = winScoreSeat.getStandCardList();
+                            standCardList.add(tile.id);
                             List<FanInfo> fanInfos = checkFan(winScoreSeat, tile.id, OperationEnum.HU, posId, mahjongRule);
                             final int sumFan = calculateFanNumByFanInfo(fanInfos);
                             SichuanRoomConfig ruleConfig = mahjongRule.getRuleConfig();
@@ -623,6 +629,7 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
                                 resultFanInfos = fanInfos;
                                 resultFanNum = sumFan;
                             }
+                            standCardList.remove((Integer) tile.id);
                         }
 
                     }
@@ -728,6 +735,8 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
                         List<Tile> canWin = solution.canWin;
                         if (canWin.size() > 0) {
                             for (Tile tile : canWin) {
+                                final List<Integer> standCardList = winSeat.getStandCardList();
+                                standCardList.add(tile.id);
                                 List<FanInfo> fanInfos = checkFan(winSeat, tile.id, OperationEnum.HU, winSeatPosId, mahjongRule);
                                 final int sumFan = calculateFanNumByFanInfo(fanInfos);
                                 SichuanRoomConfig ruleConfig = mahjongRule.getRuleConfig();
@@ -737,6 +746,7 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
                                     resultFanInfos = fanInfos;
                                     resultFanNum = sumFan;
                                 }
+                                standCardList.remove((Integer) tile.id);
                             }
 
                         }

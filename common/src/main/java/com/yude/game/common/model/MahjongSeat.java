@@ -296,8 +296,11 @@ public class MahjongSeat extends AbstractSeatModel implements Cloneable{
         standCardList.remove(card);
     }
 
-    public void removeCardFromStandCards(Integer card) {
-        standCardList.remove(card);
+    public boolean removeCardFromStandCards(Integer card) {
+        final boolean remove = standCardList.remove(card);
+        if(!remove){
+            return remove;
+        }
         outCard(card);
 
         //如果出的不是摸上来的牌，就重新理牌
@@ -307,14 +310,13 @@ public class MahjongSeat extends AbstractSeatModel implements Cloneable{
             OperationCardStep step = operationHistory.get(size - 1);
             StepAction action = step.getAction();
             if (OperationEnum.TOOK_CARD.value().equals(action.getOperationType().value()) && !action.getTargetCard().equals(card)) {
-                Collections.sort(standCardList);
                 solution();
-                return;
+                return remove;
             }
         }
         Collections.sort(standCardList);
         solution();
-        return;
+        return remove;
     }
 
     public void addStep(OperationCardStep step) {

@@ -2,6 +2,7 @@ package com.yude.game.common.model;
 
 
 import com.yude.game.common.constant.Status;
+import com.yude.game.common.contant.MahjongStatusCodeEnum;
 import com.yude.game.common.contant.OperationEnum;
 import com.yude.game.common.mahjong.PlayBoard;
 import com.yude.game.common.model.history.GameStartStep;
@@ -9,6 +10,7 @@ import com.yude.game.common.model.history.GameStepModel;
 import com.yude.game.common.model.history.HuCardStep;
 import com.yude.game.common.model.history.OperationCardStep;
 import com.yude.game.common.model.sichuan.constant.SeatStatusEnum;
+import com.yude.game.exception.BizException;
 import com.yude.game.exception.SystemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -151,7 +153,11 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
 
     public GameStepModel<OperationCardStep> outCard(Integer card, Integer posId) {
         MahjongSeat mahjongSeat = playerSeats[posId];
-        mahjongSeat.removeCardFromStandCards(card);
+        final boolean haveCard = mahjongSeat.removeCardFromStandCards(card);
+        if(!haveCard){
+            log.error("不能出立牌中不存在的牌： userId={} posId={} card={}",mahjongSeat.getUserId(),posId,card);
+            throw new BizException(MahjongStatusCodeEnum.CARD_NOT_EXISTS_IN_STAND);
+        }
         OperationCardStep step = new OperationCardStep();
         StepAction outCardStepAction = new StepAction();
         outCardStepAction.setTargetCard(card)
@@ -351,7 +357,7 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
                 cardCombination = new ArrayList<>(Arrays.asList(card, card, card));
                 playerSeat.removeCard(card);
                 playerSeat.removeCard(card);
-                Collections.sort(standCardListSort);
+                //Collections.sort(standCardListSort);
                 playerSeat.solution();
 
                 outCardSeat.removeLastOutCard();
@@ -363,7 +369,7 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
                 playerSeat.removeCard(card);
                 playerSeat.removeCard(card);
                 playerSeat.removeCard(card);
-                Collections.sort(standCardListSort);
+                //Collections.sort(standCardListSort);
 
                 outCardSeat.removeLastOutCard();
                 break;
@@ -385,7 +391,7 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
                 playerSeat.removeCard(card);
                 playerSeat.removeCard(card);
                 playerSeat.removeCard(card);
-                Collections.sort(standCardListSort);
+                //Collections.sort(standCardListSort);
                 playerSeat.solution();
                 break;
             case CHI:
@@ -397,7 +403,7 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
                 cardCombination = new ArrayList<>(Arrays.asList(card - 1, card, card + 1));
                 playerSeat.removeCard(card - 1);
                 playerSeat.removeCard(card + 1);
-                Collections.sort(standCardListSort);
+                //Collections.sort(standCardListSort);
                 playerSeat.solution();
 
                 outCardSeat.removeLastOutCard();

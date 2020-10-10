@@ -280,7 +280,6 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                     standCardList.remove(beforeCard);
                 }
                 standCardList.add(card);
-                Collections.sort(standCardList);
                 final List<FanInfo> fanInfos = sichuanMahjongZone.checkFan(tempMahjongSeat, card, XueZhanMahjongOperationEnum.HU, -1, mahjongRule);
                 final int sumFanNum = sichuanMahjongZone.calculateFanNumByFanInfo(fanInfos);
                 TingInfoDTO tingInfoDTO = new TingInfoDTO();
@@ -637,6 +636,13 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                 .setTargetCard(card)
                 .setSettlementInfoDTOS(settlementInfoDTOS);
 
+
+        for(Integer posId : posIds){
+            final XueZhanSeat xueZhanSeat = posIdSeatMap.get(posId);
+            final MahjongSeat mahjongSeat = xueZhanSeat.getMahjongSeat();
+            final List<Integer> standCardList = mahjongSeat.getStandCardList();
+            standCardList.remove(card);
+        }
         mahjongZone.stepAdd();
         pushToRoomUser(XueZhanPushCommandCode.SETTLEMENT_NOTICE, settlementResponse);
     }
@@ -1516,6 +1522,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                         SingleSettlementInfo singleSettlementInfo = new SingleSettlementInfo();
                         FanInfo<SpecificFanTypeEnum> fanInfo = new FanInfo<>(SpecificFanTypeEnum.查叫, chaJiaoInfo.getFanNum(), null, null);
                         List<FanInfo> fanInfoList = new ArrayList<>();
+                        fanInfoList.add(fanInfo);
                         singleSettlementInfo.setTargetPosId(chaJiaoInfo.getCompensationToPosId())
                                 .setFanInfoList(fanInfoList)
                                 .setFanScore(chaJiaoInfo.getChangeScore())
@@ -1534,6 +1541,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                         SingleSettlementInfo singleSettlementInfo = new SingleSettlementInfo();
                         FanInfo<SpecificFanTypeEnum> fanInfo = new FanInfo<>(SpecificFanTypeEnum.退税, rebateInfo.getFanNum(), null, null);
                         List<FanInfo> fanInfoList = new ArrayList<>();
+                        fanInfoList.add(fanInfo);
                         singleSettlementInfo.setTargetPosId(rebateInfo.getCompensationToPosId())
                                 .setFanInfoList(fanInfoList)
                                 .setFanScore(rebateInfo.getChangeScore())
@@ -2193,9 +2201,26 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                 }else{
                     if(canOperationList.contains(XueZhanMahjongOperationEnum.OUT_CARD.value())){
                         OperationCardRequest request = new OperationCardRequest();
+
+                        /**
+                         * 如果玩家摸了牌，就出摸的那张牌。
+                         * 否则出最后一张牌（定缺花色的牌放在后面）
+                         */
+                        final int size = historyList.size();
+                        final GameStepModel gameStepModel = historyList.get(size - 1);
+                        final Step operationStep = gameStepModel.getOperationStep();
                         final List<Integer> standCardList = mahjongSeat.getStandCardList();
-                        request.setCard(standCardList.get(standCardList.size()-1))
-                                .setOperationType(XueZhanMahjongOperationEnum.OUT_CARD.value())
+                        if(XueZhanMahjongOperationEnum.TOOK_CARD.value().equals(operationStep.actionType())){
+                            request.setCard(standCardList.get(standCardList.size()-1));
+                        }else{
+                            List<Integer> copyStandCardList = new ArrayList<>(standCardList);
+                            final int posId = mahjongSeat.getPosId();
+                            final XueZhanSeat xueZhanSeat = posIdSeatMap.get(posId);
+                            final SichuanMahjongSeat sichuanMahjongSeat = xueZhanSeat.getSichuanMahjongSeat();
+                            SichuanPlayHelper.sortStandCardList(copyStandCardList,sichuanMahjongSeat.getQueColor());
+                            request.setCard(copyStandCardList.get(copyStandCardList.size()-1));
+                        }
+                        request.setOperationType(XueZhanMahjongOperationEnum.OUT_CARD.value())
                                 .setChannelUserId(mahjongSeat.getUserId());
 
                         publishTimeoutEvent(eventPublisher,request,XueZhanCommandCode.OPERATION_CARD);

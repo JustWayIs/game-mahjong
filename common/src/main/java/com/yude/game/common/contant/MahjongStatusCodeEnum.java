@@ -58,6 +58,8 @@ public enum MahjongStatusCodeEnum implements StatusCodeI {
     CHI_PARAM_ERROR(118, "吃牌参数错误"),
 
     PLAYER_NOT_GAMEMING(119,"没有获取到该玩家的游戏房间"),
+
+    CARD_NOT_EXISTS_IN_STAND(120,"不能出立牌中没有的牌"),
     EXCHANGE_ERROR(1001, "不能交换出自己没有的牌"),
     ;
 

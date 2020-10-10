@@ -101,10 +101,10 @@ public class PlayerHand implements Cloneable {
         for (Tile tile : tiles) {
             if (tile.id == card) {
                 num++;
+                if (num == 2) {
+                    return true;
+                }
             }
-        }
-        if (num == 2) {
-            return true;
         }
         return false;
     }
@@ -126,7 +126,7 @@ public class PlayerHand implements Cloneable {
     }
 
     /**
-     * 可能有多个暗杠，所以把stepActionsc传进来
+     * 可能有多个暗杠，所以把stepActions传进来
      *
      * @param stepActions
      */
@@ -153,6 +153,11 @@ public class PlayerHand implements Cloneable {
 
     }
 
+    /**
+     * 由于这里的补杠指定了card。所以该方法是不允许过手碰的
+     * @param card
+     * @return
+     */
     public boolean canBuGang(Integer card) {
         if (card == null) {
             return false;

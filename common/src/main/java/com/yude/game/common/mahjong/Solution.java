@@ -4,6 +4,7 @@ import com.yude.game.common.model.fan.BaseHuTypeEnum;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -112,6 +113,22 @@ public class Solution {
         return s.toString();
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        Solution solution = (Solution) o;
+        return toString().equals(solution.toString());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(toString());
+    }
 
     // ===========================================================
     // Methods
