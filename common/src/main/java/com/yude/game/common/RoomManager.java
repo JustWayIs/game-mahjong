@@ -204,11 +204,11 @@ public class RoomManager<T extends
         long newRoomId = getNewRoomId();
         roomMap.put(newRoomId, gameRoom);
 
-        List<BaseSeatInfo> seatInfoDTOS = new ArrayList<>();
+        List<BaseSeatInfo> seatInfoDtos= new ArrayList<>();
 
         playerList.stream().forEach(player -> {
             //由于这里的posId没有传进Room的初始化方法，所以里面又进行了一次类似的操作来获得posId。问题在于Player需不需要添加一个posId。如果需要的话，就可以传进去
-            int posId = seatInfoDTOS.size();
+            int posId = seatInfoDtos.size();
             long userId = player.getUserId();
             String nickName = player.getNickName();
             String headUrl = player.getHeadUrl();
@@ -220,13 +220,13 @@ public class RoomManager<T extends
                     .setName(nickName)
                     .setScore(score);
             BaseSeatInfo seatInfoDTO = new BaseSeatInfo(posId,playerDTO);
-            seatInfoDTOS.add(seatInfoDTO);
+            seatInfoDtos.add(seatInfoDTO);
             //这里用putIfAbsent()是不是会更好：如果关闭房间后，应该手动清理到玩家与房间的映射关系
             //所以如果在存进map的时候，已经有值了的话，是一种异常现象，应该标识出来
             userRoomMap.put(player.getUserId(), newRoomId);
         });
 
-        MatchFinishResponse matchFinishResponse = new MatchFinishResponse(newRoomId, seatInfoDTOS);
+        MatchFinishResponse matchFinishResponse = new MatchFinishResponse(newRoomId, seatInfoDtos);
         for (Player player : playerList) {
             pushManager.pushToUser(PushCommandCode.MATH_FINISH, player.getUserId(), matchFinishResponse, newRoomId);
         }

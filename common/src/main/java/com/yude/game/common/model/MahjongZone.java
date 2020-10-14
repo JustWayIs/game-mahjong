@@ -726,11 +726,11 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         List<MahjongSeat> mahjongSeatList = new ArrayList<>();
         long currentTime = System.currentTimeMillis();
         boolean isTimeOut = false;
-        if(timeoutTime <= currentTime){
+        /*if(timeoutTime <= currentTime){
             isTimeOut = true;
-        }
+        }*/
         for(MahjongSeat seat : playerSeats){
-            if(seat.canOperation() && (seat.isAutoOperation() || isTimeOut)){
+            if(seat.canOperation() && (seat.isAutoOperation()  || seat.getTimeoutTime() < currentTime)){
                 mahjongSeatList.add(seat);
             }
         }

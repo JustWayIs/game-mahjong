@@ -11,6 +11,7 @@ import com.yude.game.xuezhan.application.request.OperationCardRequest;
 import com.yude.game.xuezhan.application.request.ReconnectRequest;
 import com.yude.game.xuezhan.constant.XueZhanCommandCode;
 import com.yude.game.xuezhan.domain.XueZhanRoom;
+import com.yude.protocol.common.MessageType;
 import com.yude.protocol.common.response.CommonResponse;
 import com.yude.protocol.common.response.Response;
 import org.slf4j.Logger;
@@ -69,6 +70,10 @@ public class GameZoneController implements BaseController {
             log.warn("玩家已经不在游戏中: userId={}", userId);
             CommonResponse commonResponse = new CommonResponse(MahjongStatusCodeEnum.PLAYER_NOT_GAMEMING);
             return commonResponse;
+        }
+        final MessageType messageType = request.getMessageType();
+        if(!MessageType.TIMEOUT.equals(messageType)){
+            room.resetSerialTimeoutCount(room.getPosId(userId));
         }
         room.operation(request.getCard(), request.getOperationType(), userId,false);
         CommonResponse response = new CommonResponse(MahjongStatusCodeEnum.SUCCESS);

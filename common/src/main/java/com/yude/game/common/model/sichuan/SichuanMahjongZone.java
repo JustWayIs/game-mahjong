@@ -6,7 +6,6 @@ import com.yude.game.common.mahjong.PlayerHand;
 import com.yude.game.common.mahjong.Solution;
 import com.yude.game.common.mahjong.Tile;
 import com.yude.game.common.model.*;
-import com.yude.game.common.model.fan.MahjongRule;
 import com.yude.game.common.model.fan.*;
 import com.yude.game.common.model.fan.param.AppendedFanParam;
 import com.yude.game.common.model.fan.param.CompoundFanParam;

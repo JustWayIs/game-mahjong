@@ -212,13 +212,19 @@ public class SichuanRoomConfig extends RuleConfig {
                 ", canHus=" + canHus +
                 ", lastCardProhibitGang=" + lastCardProhibitGang +
                 ", gangFanMap=" + gangFanMap +
+                ", gameStatusTimeoutMap=" + gameStatusTimeoutMap +
+                ", gameStartAnimationTime=" + gameStartAnimationTime +
+                ", finishExchangeCardAnimationTime=" + finishExchangeCardAnimationTime +
+                ", operationCardAnimationTime=" + operationCardAnimationTime +
+                ", mutipleHuAnimationTime=" + mutipleHuAnimationTime +
+                ", settlementAnimationTime=" + settlementAnimationTime +
                 ", baseScoreFactor=" + baseScoreFactor +
-                ", SERIAL_TIMEOUT_OUNT=" + SERIAL_TIMEOUT_OUNT +
+                ", serialTimeoutCountLimit=" + serialTimeoutCountLimit +
                 ", canChi=" + canChi +
                 ", canPeng=" + canPeng +
                 ", canZhiGang=" + canZhiGang +
                 ", canBuGang=" + canBuGang +
                 ", canAnGang=" + canAnGang +
-                '}';
+                "} ";
     }
 }

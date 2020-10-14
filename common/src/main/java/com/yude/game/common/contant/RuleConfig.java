@@ -16,7 +16,7 @@ public abstract class RuleConfig {
     /**
      * 快速出牌/托管 所需要的玩家连续超时次数
      */
-    protected int SERIAL_TIMEOUT_OUNT = 2;
+    protected int serialTimeoutCountLimit = 2;
 
     protected boolean canChi = true;
 
@@ -38,12 +38,12 @@ public abstract class RuleConfig {
         return this;
     }
 
-    public int getSERIAL_TIMEOUT_OUNT() {
-        return SERIAL_TIMEOUT_OUNT;
+    public int getSerialTimeoutCountLimit() {
+        return serialTimeoutCountLimit;
     }
 
-    public RuleConfig setSERIAL_TIMEOUT_OUNT(int SERIAL_TIMEOUT_OUNT) {
-        this.SERIAL_TIMEOUT_OUNT = SERIAL_TIMEOUT_OUNT;
+    public RuleConfig setSerialTimeoutCountLimit(int serialTimeoutCountLimit) {
+        this.serialTimeoutCountLimit = serialTimeoutCountLimit;
         return this;
     }
 

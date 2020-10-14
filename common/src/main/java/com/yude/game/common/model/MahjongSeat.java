@@ -70,6 +70,8 @@ public class MahjongSeat extends AbstractSeatModel implements Cloneable{
      */
     private List<Integer> outCardPool;
 
+    private long timeoutTime;
+
 
     public MahjongSeat(Player player, int posId) {
         super(player, posId);
@@ -361,6 +363,23 @@ public class MahjongSeat extends AbstractSeatModel implements Cloneable{
         return seatStatusList;
     }
 
+    public int getSerialTimeoutCount(){
+        return  serialTimeoutCount;
+    }
+
+    public long getTimeoutTime() {
+        return timeoutTime;
+    }
+
+    public void setTimeoutTime(long timeoutTime) {
+        this.timeoutTime = timeoutTime;
+    }
+
+    public void resetSerialTimeoutCount(){
+        serialTimeoutCount = 0;
+    }
+
+
     @Override
     public MahjongSeat clone() throws CloneNotSupportedException {
         final MahjongSeat cloneMahjongSeat = (MahjongSeat) super.clone();
@@ -403,4 +422,24 @@ public class MahjongSeat extends AbstractSeatModel implements Cloneable{
         playerHand.solutions = MJManager.INSTANCE.solutions(playerHand.melds, playerHand.tiles, true, playerHand.bannedSuit);
     }
 
+    @Override
+    public String toString() {
+        return "MahjongSeat{" +
+                "carryScore=" + carryScore +
+                ", canOperations=" + canOperations +
+                ", operationHistory=" + operationHistory +
+                ", tookCardCount=" + tookCardCount +
+                ", qiangGang=" + qiangGang +
+                ", auto=" + auto +
+                ", standCardList=" + standCardList +
+                ", playerHand=" + playerHand +
+                ", changce=" + changce +
+                ", seatStatusList=" + seatStatusList +
+                ", outCardPool=" + outCardPool +
+                ", player=" + player +
+                ", posId=" + posId +
+                ", isAutoOperation=" + isAutoOperation +
+                ", serialTimeoutCount=" + serialTimeoutCount +
+                "} ";
+    }
 }
