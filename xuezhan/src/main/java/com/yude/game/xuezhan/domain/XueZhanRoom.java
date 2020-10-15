@@ -275,7 +275,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
     }
 
     private void noticePlayerCurrentTingInfo(XueZhanSeat xueZhanSeat) {
-        log.debug("查找玩家的听牌信息: roomId={} gameZoneId={} 方位[{},posId={}]", roomId, gameZone.getZoneId(), xueZhanSeat.getPosId());
+        log.debug("查找玩家的听牌信息: roomId={} gameZoneId={} 方位[{},posId={}]", roomId, gameZone.getZoneId(),getSeatDirection(xueZhanSeat.getPosId()), xueZhanSeat.getPosId());
         XueZhanSeat tempSeat;
         try {
             tempSeat = xueZhanSeat.clone();
@@ -1528,7 +1528,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                         /**
                          * 大牌展示
                          */
-                        if (settlementInfo.getFanNum() >= 16) {
+                        if (settlementInfo.getFanNum() >= 16 && settlementInfo.getChangeScore() > 0) {
                             settlementDetailInfo.setBigFan(settlementInfo.getFanInfoList())
                                     .setBigFanNum(settlementInfo.getFanNum())
                                     .setBigFanScore(settlementInfo.getChangeScore());

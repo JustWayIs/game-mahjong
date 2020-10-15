@@ -616,10 +616,16 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
                 for (Solution solution : playerHand.solutions) {
                     List<Tile> canWin = solution.canWin;
                     if (canWin.size() > 0) {
+                        MahjongSeat cloneSeat = null;
+                        try {
+                            cloneSeat = winScoreSeat.clone();
+                        } catch (CloneNotSupportedException e) {
+                            log.error("获取停牌信息时，克隆MahjongSeat 失败：  seat={}",  winScoreSeat);
+                        }
                         for (Tile tile : canWin) {
-                            final List<Integer> standCardList = winScoreSeat.getStandCardList();
+                            final List<Integer> standCardList = cloneSeat.getStandCardList();
                             standCardList.add(tile.id);
-                            List<FanInfo> fanInfos = checkFan(winScoreSeat, tile.id, OperationEnum.HU, posId, mahjongRule);
+                            List<FanInfo> fanInfos = checkFan(cloneSeat, tile.id, OperationEnum.HU, posId, mahjongRule);
                             final int sumFan = calculateFanNumByFanInfo(fanInfos);
                             SichuanRoomConfig ruleConfig = mahjongRule.getRuleConfig();
                             int fanScore = ruleConfig.getBaseScoreFactor() * sumFan;
@@ -733,10 +739,16 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
                     for (Solution solution : playerHand.solutions) {
                         List<Tile> canWin = solution.canWin;
                         if (canWin.size() > 0) {
+                            MahjongSeat cloneSeat = null;
+                            try {
+                                cloneSeat = winSeat.clone();
+                            } catch (CloneNotSupportedException e) {
+                                log.error("获取停牌信息时，克隆MahjongSeat 失败：  seat={}",  winSeat);
+                            }
                             for (Tile tile : canWin) {
-                                final List<Integer> standCardList = winSeat.getStandCardList();
+                                final List<Integer> standCardList = cloneSeat.getStandCardList();
                                 standCardList.add(tile.id);
-                                List<FanInfo> fanInfos = checkFan(winSeat, tile.id, OperationEnum.HU, winSeatPosId, mahjongRule);
+                                List<FanInfo> fanInfos = checkFan(cloneSeat, tile.id, OperationEnum.HU, winSeatPosId, mahjongRule);
                                 final int sumFan = calculateFanNumByFanInfo(fanInfos);
                                 SichuanRoomConfig ruleConfig = mahjongRule.getRuleConfig();
                                 int fanScore = ruleConfig.getBaseScoreFactor() * sumFan;
