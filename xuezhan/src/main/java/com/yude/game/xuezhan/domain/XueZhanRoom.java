@@ -679,6 +679,14 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
         //接下来要判断其他用户可不可以操作，可能会涉及到还原操作、通知下一个玩家摸牌
         GameStepModel<OperationCardStep> cancelStep = mahjongZone.cancel(card, posId);
         historyList.add(cancelStep);
+
+        OperationResultResponse operationResultResponse = new OperationResultResponse();
+        operationResultResponse
+                .setPosId(posId)
+                .setOperationType(XueZhanMahjongOperationEnum.CANCEL.value())
+                .setTargetCard(card);
+        roomManager.pushToUser(XueZhanPushCommandCode.OPERATION_RESULT_NOTICE, xueZhanSeat.getUserId(), operationResultResponse, roomId);
+
         boolean needWait = mahjongZone.existsCanOperation(XueZhanMahjongOperationEnum.CANCEL);
         if (needWait) {
             log.info("玩家过 需要等待其他玩家操作  roomId={} 方位=[{},posId={}]", roomId, getSeatDirection(posId), posId);
@@ -689,24 +697,21 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
          * 或者下一个玩家摸牌
          */
         if (!restoreAction()) {
-            OperationResultResponse operationResultResponse = new OperationResultResponse();
-            operationResultResponse
-                    .setPosId(posId)
-                    .setOperationType(XueZhanMahjongOperationEnum.CANCEL.value())
-                    .setTargetCard(card);
-            roomManager.pushToUser(XueZhanPushCommandCode.OPERATION_RESULT_NOTICE, xueZhanSeat.getUserId(), operationResultResponse, roomId);
-
             final OperationCardStep buGangStep = judgeQiangGang();
             if (buGangStep != null) {
                 final int buGangPosId = buGangStep.getPosId();
                 final XueZhanSeat seat = posIdSeatMap.get(buGangPosId);
                 //抢杠胡实际上不是多操作，所以选择执行过的话，是不需要等待玩家操作，或者还原操作
                 otherGangSettlement(seat.getMahjongSeat(), buGangStep.getAction());
+                //杠完要摸牌
+                mahjongZone.refreshCurrentPosId(buGangPosId);
+                nextPalyerTookCard(buGangPosId);
                 return;
             }
-            Integer needTookCardPosId = sichuanMahjongZone.refreshTookPlayer();
-            nextPalyerTookCard(needTookCardPosId);
         }
+        //多人操作时，前面的玩家点过操作并不会改变当前操作人
+        Integer needTookCardPosId = sichuanMahjongZone.refreshTookPlayer();
+        nextPalyerTookCard(needTookCardPosId);
     }
 
     /**
@@ -770,7 +775,8 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
     private void refreshTimeout(long time){
         final SichuanRoomConfig roomConfig = mahjongRule.getRuleConfig();
         final long currentTimeMillis = System.currentTimeMillis();
-        //mahjongZone.setTimeoutTime(currentTimeMillis+timeout);
+        final int timeout= roomConfig.getTimeoutTimeByGameStatus((SichuanGameStatusEnum) mahjongZone.getGameStatus());
+        mahjongZone.setTimeoutTime(currentTimeMillis+timeout);
 
         for(Map.Entry<Integer,XueZhanSeat> entry : posIdSeatMap.entrySet()){
             final XueZhanSeat value = entry.getValue();
@@ -2111,6 +2117,13 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
 
         final SichuanRoomConfig roomConfig = mahjongRule.getRuleConfig();
         final ExchangeTypeEnum exchangeType = sichuanMahjongZone.getExchangeType();
+        long remainingTime = mahjongZone.getTimeoutTime() - System.currentTimeMillis();
+        final Integer curOperatorPosId = mahjongZone.getCurOperatorPosId();
+        if(curOperatorPosId != null && curOperatorPosId.equals(posId)){
+            final XueZhanSeat xueZhanSeat = posIdSeatMap.get(curOperatorPosId);
+            final MahjongSeat currentOperationSeat = xueZhanSeat.getMahjongSeat();
+            remainingTime = currentOperationSeat.getTimeoutTime() - System.currentTimeMillis();
+        }
         gameZoneInfoDTO
                 .setRoomId(roomId)
                 .setZoneId(gameZone.getZoneId())
@@ -2118,11 +2131,10 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                 .setExchangeType(exchangeType == null ? null : exchangeType.type())
                 .setBankerPosId(mahjongZone.getBankerPosId())
                 .setCardWallRemainingSize(mahjongZone.getCardWall().size())
-                .setCurrentOperatorPosId(mahjongZone.getCurOperatorPosId())
+                .setCurrentOperatorPosId(curOperatorPosId)
                 .setGameStatus(mahjongZone.getGameStatus().status())
                 .setCurrentTookCardPosId(mahjongZone.getCurTookCardPlayerPosId())
-                .setCurrentOperatorPosId(mahjongZone.getCurOperatorPosId())
-                .setOperationRemainingTime(mahjongZone.getTimeoutTime()-System.currentTimeMillis())
+                .setOperationRemainingTime(remainingTime)
                 .setOutCardTime(roomConfig.getTimeoutTimeByGameStatus(SichuanGameStatusEnum.OUT_CARD))
                 .setOtherOperationCardTime(roomConfig.getTimeoutTimeByGameStatus(SichuanGameStatusEnum.OPERATION_CARD));
 

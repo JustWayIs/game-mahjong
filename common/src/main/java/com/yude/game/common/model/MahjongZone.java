@@ -267,11 +267,12 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         stepCount++;
         playerSeat.clearOperation();
 
-        if (needJoinTempActionZone(OperationEnum.CANCEL)) {
+       /* 过操作不需要存起来（本质上也无需还原此操作），还原操作那里两个过操作会走一炮多响
+       if (needJoinTempActionZone(OperationEnum.CANCEL)) {
             TempAction tempAction = new TempAction(posId, playerSeat.getUserId(), stepAction);
             tempActions.add(tempAction);
             Collections.sort(tempActions);
-        }
+        }*/
         return gameStepModel;
     }
 
