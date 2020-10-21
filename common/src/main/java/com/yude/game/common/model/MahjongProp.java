@@ -117,7 +117,7 @@ public enum MahjongProp {
         return parseTestCardConfigXml(path);
     }
 
-    public static Map<Integer, List<Integer>> parseTestCardConfigXml(String path) {
+    public static Map<Integer, List<Integer>>  parseTestCardConfigXml(String path) {
        /* File fileDir = new File(path);
         if (!fileDir.exists()) {
             fileDir.mkdir();
@@ -182,18 +182,28 @@ public enum MahjongProp {
         return false;
     }
 
-    public static Map<Integer, List<Integer>> getDealCardGroup(MahjongCard[] mahjongCards,Integer bankerPosId,List<Integer> allCard) {
+    public static Map<Integer, List<Integer>> getDealCardGroup(MahjongCard[] mahjongCards,MahjongZone mahjongZone) {
+        Integer bankerPosId = mahjongZone.getBankerPosId();
+        List<Integer> allCard = mahjongZone.getAllCard();
         try {
             if (OPEN_CONFIGURATION_CARD) {
                 //用于本地配牌
                 Map<Integer, List<Integer>> cardConfiguration = getCardConfiguration();
                 if (cardConfiguration != null) {
+                    List<Integer> allCardList = getAllCard(mahjongCards);
+                    mahjongZone.setBankerPosId(0);
+                    allCard.addAll(allCardList);
                     return cardConfiguration;
                 }
             }
         } catch (Exception e) {
             log.info("================配牌失败：使用随机发牌========================");
         }
+
+        return getDealCardGroup(mahjongCards,bankerPosId,allCard);
+    }
+
+    public static Map<Integer, List<Integer>> getDealCardGroup(MahjongCard[] mahjongCards,Integer bankerPosId,List<Integer> allCard) {
         List<Integer> allCardList = getAllCard(mahjongCards);
         Collections.shuffle(allCardList);
 
@@ -218,21 +228,6 @@ public enum MahjongProp {
             cardGroup.get((i + bankerPosId) % 4).add(allCardList.get(i));
         }
         cardWallRamaining.addAll(allCardList.subList(53, allCardList.size()));
-        /*int length = 14;
-        List<Integer> group_1 = new ArrayList<>(allCardList.subList(0, length));
-        cardGroup.put(bankerPosId, group_1);
-        for (int i = 0; i < 4; ++i) {
-            if(bankerPosId == i){
-                continue;
-            }
-            List<Integer> group_2 = new ArrayList<>(allCardList.subList(length, length + 13));
-            length += 13;
-            cardGroup.put(i,group_2);
-        }
-        List<Integer> cardWall = new ArrayList<>(allCardList.subList(length, allCardList.size()));
-        cardGroup.put(4, cardWall);
-
-        final PlayBoard playBoard = MJManager.INSTANCE.create(bankerPosId, cardWall, cardGroup);*/
 
         allCard.addAll(allCardList);
         cardGroup.put(4, cardWallRamaining);

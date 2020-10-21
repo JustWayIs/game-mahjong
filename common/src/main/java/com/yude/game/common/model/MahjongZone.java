@@ -102,7 +102,7 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         this.gameStatus = gameStatus;
         rollingDice();
 
-        Map<Integer, List<Integer>> dealCardGroup = MahjongProp.getDealCardGroup(mahjongCards, bankerPosId, allCard);
+        Map<Integer, List<Integer>> dealCardGroup = MahjongProp.getDealCardGroup(mahjongCards, this);
         //对allCard进行分组，用于标识 某张牌的剩余张数
         //cardRemainingMap = allCard.stream().collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
         for(Integer card : allCard){
@@ -207,14 +207,7 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
         Integer remaining = cardRemainingMap.get(card);
         if(isZiMo){
             cardRemainingMap.put(card,--remaining);
-        }else{
-            //移除放炮玩家的出牌池里 放炮的那张牌
-            final StepAction action = operationStep.getAction();
-            final Integer cardSource = action.getCardSource();
-            final MahjongSeat outCardMahjongSeat = playerSeats[cardSource];
-            outCardMahjongSeat.removeLastOutCard();
         }
-
 
         HuCardStep huCardStep = new HuCardStep();
         huCardStep.setAction(operationStep.getAction())
@@ -560,8 +553,11 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
      * 如果存在更高优先级，就需要等待
      * @return
      */
-    public boolean existsCanOperation(MahjongOperation mahjongOperation) {
+    public boolean existsCanOperation(MahjongOperation mahjongOperation,int excludePosId) {
         for (MahjongSeat mahjongSeat : playerSeats) {
+            if(mahjongSeat.getPosId() == excludePosId){
+                continue;
+            }
             if (mahjongSeat.canOperation()) {
                 for(StepAction stepAction : mahjongSeat.getCanOperations()){
                     final MahjongOperation operationType = stepAction.getOperationType();
@@ -572,6 +568,10 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
             }
         }
         return false;
+    }
+
+    public boolean existsCanOperation(MahjongOperation mahjongOperation) {
+        return existsCanOperation(mahjongOperation,-1);
     }
 
     /**
@@ -609,6 +609,10 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
 
     public Integer getBankerPosId() {
         return bankerPosId;
+    }
+
+    public void setBankerPosId(Integer bankerPosId) {
+        this.bankerPosId = bankerPosId;
     }
 
     public List<Integer> getCardWall() {
@@ -736,6 +740,10 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
             }
         }
         return mahjongSeatList;
+    }
+
+    public List<Integer> getAllCard() {
+        return allCard;
     }
 
     public void canChi(MahjongSeat mahjongSeat, Integer card) {

@@ -409,9 +409,9 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
         }
 
 
-        boolean needWait = mahjongZone.existsCanOperation(XueZhanMahjongOperationEnum.HU);
+        boolean needWait = mahjongZone.existsCanOperation(XueZhanMahjongOperationEnum.HU,posId);
         if (needWait) {
-            log.info("玩家胡牌：需要等他其他可胡牌玩家操作 roomId={} zoneId={} 方位=[{},posId={}]  card={}", roomId, gameZone.getZoneId(), getSeatDirection(posId), card);
+            log.info("玩家胡牌：需要等他其他可胡牌玩家操作 roomId={} zoneId={} 方位=[{},posId={}]  card={}", roomId, gameZone.getZoneId(), getSeatDirection(posId),posId, card);
             return;
         }
         /**
@@ -427,6 +427,8 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                 final MahjongSeat mahjongSeat = currentXueZhanSeat.getMahjongSeat();
                 mahjongSeat.clearOperation();
             }
+            mahjongZone.cleanTempAction();
+
             OperationResultResponse operationResultResponse = new OperationResultResponse();
             operationResultResponse
                     .setPosId(huSeat.getPosId())
@@ -440,6 +442,12 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             HuCardStep huStep = (HuCardStep) huSeat.getOperationHistoryByTypeAndCard(XueZhanMahjongOperationEnum.HU.value(), card);
             StepAction huAction = huStep.getAction();
             Integer cardSourcePosId = huAction.getCardSource();
+
+            //移除放炮玩家的出牌池里 放炮的那张牌
+            final XueZhanSeat outCardSeat = posIdSeatMap.get(cardSourcePosId);
+            final MahjongSeat outCardMahjongSeat = outCardSeat.getMahjongSeat();
+            outCardMahjongSeat.removeLastOutCard();
+
             List<FanInfo> fanInfos = sichuanMahjongZone.checkFan(huSeat, action.getTargetCard(), XueZhanMahjongOperationEnum.HU, cardSourcePosId, mahjongRule);
             huStep.setFanInfoList(fanInfos);
 
@@ -551,6 +559,9 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             mahjongSeat.removeCard(card);
         }
 
+        final XueZhanSeat outCardSeat = posIdSeatMap.get(cardSourcePosId);
+        final MahjongSeat outCardMahjongSeat = outCardSeat.getMahjongSeat();
+        outCardMahjongSeat.removeLastOutCard();
 
         Integer tookCardPosId = null;
         Integer tempCardSourcePosId = cardSourcePosId;
@@ -708,10 +719,11 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                 nextPalyerTookCard(buGangPosId);
                 return;
             }
+            //多人操作时，前面的玩家点过操作并不会改变当前操作人
+            Integer needTookCardPosId = sichuanMahjongZone.refreshTookPlayer();
+            nextPalyerTookCard(needTookCardPosId);
         }
-        //多人操作时，前面的玩家点过操作并不会改变当前操作人
-        Integer needTookCardPosId = sichuanMahjongZone.refreshTookPlayer();
-        nextPalyerTookCard(needTookCardPosId);
+
     }
 
     /**
@@ -824,7 +836,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
      * @param action
      */
     private void nextProcess(XueZhanSeat xueZhanSeat, final Integer card, StepAction action) {
-        boolean needWait = mahjongZone.existsCanOperation(action.getOperationType());
+        boolean needWait = mahjongZone.existsCanOperation(action.getOperationType(),xueZhanSeat.getPosId());
         if (needWait) {
             log.debug("玩家需要等待操作： roomId={} zoneId={} 方位=[{},posId={}] action={}", roomId, gameZone.getZoneId(), getSeatDirection(xueZhanSeat.getPosId()), xueZhanSeat.getPosId(), action);
             return;
@@ -847,6 +859,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             pushToRoomUser(XueZhanPushCommandCode.OPERATION_RESULT_NOTICE, operationResultResponse);
             mahjongZone.setCurOperatorPosId(operationSeat.getPosId());
             mahjongZone.cleanTempAction();
+            operationSeat.clearOperation();
 
             //H2 如果是杠操作 还要触发小结算。 既然要在这里做具体类型判断，那么其实胡牌也可以直接用operation方法
             //一堆的if-else 中间还夹杂着return，使得逻辑变动混乱
@@ -1302,7 +1315,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             log.error("玩家没有暗杠这张牌的权限: roomId={} zoneId={} posId={} card={}", roomId, gameZone.getZoneId(), posId, card);
             throw new BizException(MahjongStatusCodeEnum.AN_GANG_PARAM_ERROR);
         }
-        GameStepModel<OperationCardStep> stepModel = mahjongZone.peng(card, posId);
+        GameStepModel<OperationCardStep> stepModel = mahjongZone.anGang(card, posId);
         historyList.add(stepModel);
         nextProcess(xueZhanSeat, card, action);
     }
@@ -1450,8 +1463,6 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
         /**
          * 分别记录 立牌信息、胡牌信息、副露信息、单次结算详情
          */
-        final SichuanRoomConfig ruleConfig = mahjongRule.getRuleConfig();
-        final int baseScoreFactor = ruleConfig.getBaseScoreFactor();
         SettlementDetailStep settlementDetailStep = new SettlementDetailStep();
         settlementDetailStep.setStepCount(mahjongZone.getStepCount());
         Map<Integer, SettlementDetailInfo> map = new HashMap<>();
@@ -1784,6 +1795,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                     needExecuteActionList.add(tempAction);
                 }
             }
+            mahjongZone.cleanTempAction();
 
             //H2 不能直接还原，要判断是否有多人胡。如果是多人胡，要把操作类型改为一炮多响
             if (needExecuteActionList.size() > 1) {
@@ -1885,6 +1897,9 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                 mahjongSeat.setTimeoutTime(currentTimeMillis+timeout+gameStartAnimationTime);
             }else{
                 MahjongSeat mahjongSeat = seat.getMahjongSeat();
+                Collections.sort(mahjongSeat.getStandCardList());
+                mahjongSeat.solution();
+                mahjongZone.initCurrentOperator();
                 final Integer bankerPosId = mahjongZone.getBankerPosId();
                 if(mahjongSeat.getPosId() == bankerPosId){
                     mahjongSeat.addOperation(XueZhanMahjongOperationEnum.OUT_CARD);
