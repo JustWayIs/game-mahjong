@@ -572,7 +572,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
         for (int i = 0; i < 3; ++i) {
             tempCardSourcePosId = (tempCardSourcePosId + 1) % posIdSeatMap.size();
             if (posIds.contains(tempCardSourcePosId)) {
-                tookCardPosId = tempCardSourcePosId;
+                tookCardPosId = (tempCardSourcePosId + 1) % posIdSeatMap.size();
             }
         }
         nextPalyerTookCard(tookCardPosId);
