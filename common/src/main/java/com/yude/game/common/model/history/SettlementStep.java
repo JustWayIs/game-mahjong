@@ -17,8 +17,17 @@ public class SettlementStep implements Step {
      * 触发结算的玩家
      */
     private int posId;
+    /**
+     * 触发结算的动作类型
+     */
     private StepAction action;
+    /**
+     * posId -> 结算对象
+     */
     private Map<Integer,SettlementInfo> seatSettlementInfoMap;
+    /**
+     * 游戏阶段
+     */
     private Status gameStatus;
 
     public int getStep() {

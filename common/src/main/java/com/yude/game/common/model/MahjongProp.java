@@ -197,7 +197,7 @@ public enum MahjongProp {
                 }
             }
         } catch (Exception e) {
-            log.info("================配牌失败：使用随机发牌========================");
+            log.info("================配牌失败：使用随机发牌========================",e);
         }
 
         return getDealCardGroup(mahjongCards,bankerPosId,allCard);

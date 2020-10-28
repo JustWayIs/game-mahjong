@@ -166,7 +166,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
         mahjongZone.deal(SichuanMahjongCard.values(), SichuanGameStatusEnum.DEAL_CARD, roomId, historyList);
         //0号玩家在该游戏没有任何操作的情况下重连了
 
-        mahjongZone.setGameStatus(SichuanGameStatusEnum.EXCHANGE_CARD);
+
         noticePlayersDealCardsResult();
 
         //noticePlayersChangeCard();
@@ -207,8 +207,10 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
 
     @Override
     public void outCard(Integer card, Integer posId) {
-        log.info("出牌：roomId={} zoneId={} 方位=[{},posId={}] card={}", roomId, gameZone.getZoneId(), getSeatDirection(posId), posId, card);
         XueZhanSeat seat = posIdSeatMap.get(posId);
+        final MahjongSeat mahjongSeat = seat.getMahjongSeat();
+        log.info("出牌：roomId={} zoneId={} 方位=[{},posId={}] card={} 立牌：{}", roomId, gameZone.getZoneId(), getSeatDirection(posId), posId, card,mahjongSeat.getStandCardList());
+
         if (!seat.canOperation(XueZhanMahjongOperationEnum.OUT_CARD)) {
             log.warn("玩家没有出牌权限：roomId={} zoneId=={} userId={}  方位=[{},posId={}] card={}", roomId, gameZone.getZoneId(), seat.getUserId(), getSeatDirection(posId), posId, card);
             throw new BizException(MahjongStatusCodeEnum.NO_OUT_CARD_PERMISSION);
@@ -353,10 +355,12 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                 .setCardWallRemaining(mahjongZone.getCardWall().size());
 
         XueZhanSeat needTookCardSeat = posIdSeatMap.get(needTookCardPosId);
+        final MahjongSeat mahjongSeat = needTookCardSeat.getMahjongSeat();
         Long userId = needTookCardSeat.getUserId();
         pushToRoomUser(XueZhanPushCommandCode.TOOK_CARD_NOTICE, tookCardNoticeResponse, userId);
 
         Integer tookCard = tookCardStep.getOperationStep().getAction().getTargetCard();
+        log.info("玩家摸牌：roomId={} 方位=[{},posId={}] 摸的牌={}  摸牌前的立牌={}",roomId,getSeatDirection(needTookCardPosId),needTookCardPosId,tookCard,mahjongSeat.getStandCardList());
         //因为在pushToRoomUser方法中，需要推送的数据已经被序列化了，所以这里修改相同的response不会影响之前的推送
         tookCardNoticeResponse.setCard(tookCard);
         roomManager.pushToUser(XueZhanPushCommandCode.TOOK_CARD_NOTICE, userId, tookCardNoticeResponse, roomId);
@@ -754,14 +758,16 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
      * @param operationType
      */
     public void operation(Integer card, Integer posId, MahjongOperation operationType, boolean isRestore) {
-        log.info("请求操作：  roomId={} zoneId={} 方位=[{},posId={}] type={} card={}", roomId, gameZone.getZoneId(), getSeatDirection(posId), posId, operationType, card);
         XueZhanSeat xueZhanSeat = posIdSeatMap.get(posId);
+        final MahjongSeat mahjongSeat = xueZhanSeat.getMahjongSeat();
+        log.info("请求操作：  roomId={} zoneId={} 方位=[{},posId={}] type={} card={}  立牌：{}", roomId, gameZone.getZoneId(), getSeatDirection(posId), posId, operationType, card,mahjongSeat.getStandCardList());
+
         boolean canCancel = xueZhanSeat.canOperation(operationType);
         if (!canCancel) {
             log.warn("玩家没有该的操作权限：operation={} roomId={} userId={} 方位=[{},posId={}]", operationType, roomId, xueZhanSeat.getUserId(), getSeatDirection(posId), posId);
             throw new BizException(MahjongStatusCodeEnum.matchNotOperationErrorByOperation(operationType.value()));
         }
-        MahjongSeat mahjongSeat = xueZhanSeat.getMahjongSeat();
+
         //一定得确保执行的时候，玩家还有操作权限
         StepAction action = mahjongSeat.getDesignateOperationCardSource(operationType.value(), card);
         if (action == null) {
@@ -886,7 +892,17 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                 //由于是补杠，理论上来说，只有可能别的玩家能胡，不可能是直杠、碰
                 final List<MahjongSeat> canOperationSeats = sichuanMahjongZone.otherPalyerCanDo(xueZhanSeat.getSichuanMahjongSeat(), card, mahjongRule.getRuleConfig());
                 if (canOperationSeats.isEmpty()) {
-                    otherGangSettlement(operationSeat, action);
+                    //能够补杠，并且其他玩家不能抢杠胡，前一个操作一定是该玩家的摸牌-- 这里的写法不能体现这个领域知识
+                    final GameStepModel gameStepModel = historyList.get(historyList.size() - 2);
+                    final Step operationStep = gameStepModel.getOperationStep();
+                    if(XueZhanMahjongOperationEnum.TOOK_CARD.value().equals(operationStep.actionType())){
+                           OperationCardStep operationCardStep = (OperationCardStep) operationStep;
+                        final StepAction tookCardAction = operationCardStep.getAction();
+                        if(tookCardAction.getTargetCard().equals(card)){
+                            otherGangSettlement(operationSeat, action);
+                        }
+                    }
+
                 } else {
                     //H2 这段代码跟出牌后的判断是一样的
                     for (MahjongSeat canOperationSeat : canOperationSeats) {
@@ -1858,6 +1874,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
 
             XueZhanStartResponse response = new XueZhanStartResponse();
             if (mahjongRule.getRuleConfig().getCanHsz()) {
+                mahjongZone.setGameStatus(SichuanGameStatusEnum.EXCHANGE_CARD);
                 List<Integer> recommendedCards = SichuanPlayHelper.recommendedChangeCard(gameStartStep.getStandCards(), 3);
                 recommendedCards = recommendedCards.subList(0, 3);
                 SichuanGameStartStep sichuanGameStartStep = new SichuanGameStartStep();
@@ -1882,6 +1899,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                 mahjongSeat.setTimeoutTime(currentTimeMillis+timeout+gameStartAnimationTime);
 
             }else if(mahjongRule.getRuleConfig().getCanDingQue()){
+                mahjongZone.setGameStatus(SichuanGameStatusEnum.DING_QUE);
                 //....设置定缺推荐....
                 MahjongSeat mahjongSeat = seat.getMahjongSeat();
                 mahjongSeat.addOperation(XueZhanMahjongOperationEnum.DING_QUE);
@@ -1896,6 +1914,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                 final int gameStartAnimationTime = roomConfig.getGameStartAnimationTime();
                 mahjongSeat.setTimeoutTime(currentTimeMillis+timeout+gameStartAnimationTime);
             }else{
+                mahjongZone.setGameStatus(SichuanGameStatusEnum.OPERATION_CARD);
                 MahjongSeat mahjongSeat = seat.getMahjongSeat();
                 Collections.sort(mahjongSeat.getStandCardList());
                 mahjongSeat.solution();

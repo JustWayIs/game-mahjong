@@ -173,6 +173,35 @@ public class PlayerHand implements Cloneable {
         return false;
     }
 
+    /**
+     * 由于需求变动，可以过手杠，那么就可能出现多张可以补杠的牌
+     * @param stepActions
+     * @return
+     */
+    public void canBuGang(List<StepAction> stepActions,Integer tookCard) {
+        for (Meld meld : melds) {
+            if (meld.type == Meld.TYPE_TRIPLET) {
+                final int pengCard = meld.tiles.get(0).id;
+                if(pengCard == tookCard){
+                    StepAction stepAction = new StepAction();
+                    stepAction.setTargetCard(tookCard);
+                    stepActions.add(stepAction);
+                    continue;
+                }
+                for(Tile card : tiles){
+                    if(pengCard == card.id){
+                        StepAction stepAction = new StepAction();
+                        stepAction.setTargetCard(card.id);
+                        stepActions.add(stepAction);
+                    }
+                }
+
+            }
+        }
+
+    }
+
+
     public boolean canHu() {
         for (Solution solution : solutions) {
             if (solution.isWin) {

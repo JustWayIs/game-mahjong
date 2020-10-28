@@ -670,10 +670,10 @@ public enum MJManager {
 
         //tiles = Arrays.asList(Tile.t1,Tile.t9,Tile.b1,Tile.b9,)
 
-        tiles = Arrays.asList(Tile.t7, Tile.t7, Tile.t8, Tile.t9);
+        tiles = Arrays.asList(Tile.t6,Tile.t6);
         List<Meld> pMelds = new ArrayList<>();
         Meld       meld   = new Meld();
-        meld.tiles =  ImmutableList.copyOf(Arrays.asList(Tile.b4,Tile.b4,Tile.b4));
+        meld.tiles =  ImmutableList.copyOf(Arrays.asList(Tile.t3,Tile.t3,Tile.t3));
         meld.type = 4;
         meld.from = 1;
         meld.player = 3;
@@ -682,7 +682,7 @@ public enum MJManager {
         pMelds.add(meld);
 
         meld   = new Meld();
-        meld.tiles =  ImmutableList.copyOf(Arrays.asList(Tile.t3,Tile.t3,Tile.t3));
+        meld.tiles =  ImmutableList.copyOf(Arrays.asList(Tile.t7,Tile.t7,Tile.t7));
         meld.type = 4;
         meld.from = 1;
         meld.player = 1;
@@ -692,10 +692,19 @@ public enum MJManager {
 
 
         meld   = new Meld();
-        meld.tiles =  ImmutableList.copyOf(Arrays.asList(Tile.b5,Tile.b5,Tile.b5));
-        meld.type = 4;
+        meld.tiles =  ImmutableList.copyOf(Arrays.asList(Tile.t9,Tile.t9,Tile.t9,Tile.t9));
+        meld.type = Meld.TYPE_KONG;
         meld.from = 1;
         meld.player = 1;
+        meld.isPlusKong = false;
+        meld.isStable = true;
+        pMelds.add(meld);
+
+        meld   = new Meld();
+        meld.tiles =  ImmutableList.copyOf(Arrays.asList(Tile.t2,Tile.t2,Tile.t2,Tile.t2));
+        meld.type = Meld.TYPE_KONG;
+        meld.from = 0;
+        meld.player = 0;
         meld.isPlusKong = false;
         meld.isStable = true;
         pMelds.add(meld);

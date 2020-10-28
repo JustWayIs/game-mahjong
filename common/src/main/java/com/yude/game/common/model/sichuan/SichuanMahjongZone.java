@@ -217,13 +217,16 @@ public class SichuanMahjongZone extends AbstractGameZoneModel<SichuanMahjongSeat
                 stepAction.setCardSource(mahjongSeat.getPosId())
                         .setOperationType(OperationEnum.AN_GANG);
             }
-            boolean canBuGang = playerHand.canBuGang(card);
-            if (canBuGang) {
-                StepAction stepAction = new StepAction();
-                stepAction.setTargetCard(card)
-                        .setCardSource(mahjongSeat.getPosId())
-                        .setOperationType(OperationEnum.BU_GANG);
-                stepActions.add(stepAction);
+
+            List<StepAction> buGangStepActions = new ArrayList<>();
+            playerHand.canBuGang(buGangStepActions,card);
+            if (buGangStepActions.size() > 0) {
+                for(StepAction stepAction : buGangStepActions){
+                    stepAction.setCardSource(mahjongSeat.getPosId())
+                            .setOperationType(OperationEnum.BU_GANG);
+                    stepActions.add(stepAction);
+                }
+                stepActions.addAll(buGangStepActions);
             }
         }
 

@@ -12,14 +12,41 @@ import java.util.List;
  * @Declare:
  */
 public class SettlementInfo {
+    /**
+     * 位置
+     */
     private Integer posId;
+    /**
+     * 结算之前的分
+     */
     private Long beforeScore;
+    /**
+     * 结算变化分
+     */
     private int changeScore;
+    /**
+     * 结算后剩余分
+     */
     private Long remaningScore;
+    /**
+     * 番数
+     */
     private int fanNum;
+    /**
+     * 立牌
+     */
     private List<Integer> standCards;
+    /**
+     * 立牌翻译解析
+     */
     private List<String> standCardsConvertList;
+    /**
+     * 副露
+     */
     private List<StepAction> fuluList;
+    /**
+     * 结算涉及的 番信息
+     */
     private List<FanInfo> fanInfoList;
 
     public Integer getPosId() {

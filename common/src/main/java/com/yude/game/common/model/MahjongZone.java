@@ -352,8 +352,6 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
                 playerSeat.removeCard(card);
                 playerSeat.removeCard(card);
                 //Collections.sort(standCardListSort);
-                playerSeat.solution();
-
                 outCardSeat.removeLastOutCard();
                 break;
             case ZHI_GANG:
@@ -386,7 +384,7 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
                 playerSeat.removeCard(card);
                 playerSeat.removeCard(card);
                 //Collections.sort(standCardListSort);
-                playerSeat.solution();
+
                 break;
             case CHI:
                 Integer beforeCardRemaning = cardRemainingMap.get(card + 1);
@@ -398,8 +396,6 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
                 playerSeat.removeCard(card - 1);
                 playerSeat.removeCard(card + 1);
                 //Collections.sort(standCardListSort);
-                playerSeat.solution();
-
                 outCardSeat.removeLastOutCard();
                 break;
             case HU:
@@ -440,6 +436,8 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
 
         GameStepModel<OperationCardStep> gameStepModel = new GameStepModel<>(zoneId, playerSeat.getPlayer(), step);
         playerSeat.addStep(step);
+        //理牌操作需要在 副露被加到玩家的操作历史中才能执行。因为理牌会遍历这个集合
+        playerSeat.solution();
 
         stepCount++;
         playerSeat.clearOperation();
