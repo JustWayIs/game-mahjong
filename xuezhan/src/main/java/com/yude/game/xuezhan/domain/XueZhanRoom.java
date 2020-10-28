@@ -447,10 +447,13 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             StepAction huAction = huStep.getAction();
             Integer cardSourcePosId = huAction.getCardSource();
 
-            //移除放炮玩家的出牌池里 放炮的那张牌
-            final XueZhanSeat outCardSeat = posIdSeatMap.get(cardSourcePosId);
-            final MahjongSeat outCardMahjongSeat = outCardSeat.getMahjongSeat();
-            outCardMahjongSeat.removeLastOutCard();
+            if(!cardSourcePosId.equals(huStep.getPosId())){
+                //移除放炮玩家的出牌池里 放炮的那张牌
+                final XueZhanSeat outCardSeat = posIdSeatMap.get(cardSourcePosId);
+                final MahjongSeat outCardMahjongSeat = outCardSeat.getMahjongSeat();
+                outCardMahjongSeat.removeLastOutCard();
+            }
+
 
             List<FanInfo> fanInfos = sichuanMahjongZone.checkFan(huSeat, action.getTargetCard(), XueZhanMahjongOperationEnum.HU, cardSourcePosId, mahjongRule);
             huStep.setFanInfoList(fanInfos);
@@ -583,20 +586,6 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
         log.info("一炮多响结算：roomId={} zoneId={} posIds={} card={}", roomId, gameZone.getZoneId(), posIds, card);
         SettlementResponse settlementResponse = new SettlementResponse();
 
-        SettlementStep settlementStep = new SettlementStep();
-        Map<Integer, SettlementInfo> settlementInfoMap = new HashMap<>();
-        StepAction stepAction = new StepAction();
-        stepAction.setOperationType(XueZhanMahjongOperationEnum.YI_PAO_DUO_XIANG)
-                .setTargetCard(card)
-                .setCardSource(cardSourcePosId);
-        settlementStep.setStep(mahjongZone.getStepCount())
-                .setGameStatus(SichuanGameStatusEnum.SETTLEMENT)
-                .setAction(stepAction)
-                .setSeatSettlementInfoMap(settlementInfoMap);
-
-        GameStepModel<SettlementStep> mutipleHuSettlementStep = new GameStepModel<>(mahjongZone.getZoneId(),null,settlementStep);
-        historyList.add(mutipleHuSettlementStep);
-
         List<SettlementInfoDTO> settlementInfoDTOS = new ArrayList<>();
         final SichuanRoomConfig ruleConfig = mahjongRule.getRuleConfig();
         final int baseScoreFactor = ruleConfig.getBaseScoreFactor();
@@ -605,17 +594,45 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
         final MahjongSeat loserSeat = loserXueZhanSeat.getMahjongSeat();
         final Player loserPlayer = loserSeat.getPlayer();
 
+        long loserBeforeScore = loserPlayer.getScore();
         int loserSumScore = 0;
         int loserSumFanNum = 0;
         for (Integer posId : posIds) {
+            SettlementStep settlementStep = new SettlementStep();
+            Map<Integer, SettlementInfo> settlementInfoMap = new HashMap<>();
+            StepAction stepAction = new StepAction();
+            stepAction.setOperationType(XueZhanMahjongOperationEnum.YI_PAO_DUO_XIANG)
+                    .setTargetCard(card)
+                    .setCardSource(cardSourcePosId);
+            settlementStep.setStep(mahjongZone.getStepCount())
+                    .setPosId(posId)
+                    .setGameStatus(SichuanGameStatusEnum.SETTLEMENT)
+                    .setAction(stepAction)
+                    .setSeatSettlementInfoMap(settlementInfoMap);
+
+            GameStepModel<SettlementStep> mutipleHuSettlementStep = new GameStepModel<>(mahjongZone.getZoneId(),null,settlementStep);
+            historyList.add(mutipleHuSettlementStep);
+
             final XueZhanSeat xueZhanSeat = posIdSeatMap.get(posId);
             final SichuanMahjongSeat sichuanMahjongSeat = xueZhanSeat.getSichuanMahjongSeat();
             final MahjongSeat mahjongSeat = xueZhanSeat.getMahjongSeat();
             final Player player = mahjongSeat.getPlayer();
             final List<FanInfo> fanInfos = sichuanMahjongZone.checkFan(mahjongSeat, card, XueZhanMahjongOperationEnum.YI_PAO_DUO_XIANG, cardSourcePosId, mahjongRule);
+
+            /**
+             * 修改胡的动作类型为一炮多响
+             */
+            final HuCardStep huStep = (HuCardStep) mahjongSeat.getOperationHistoryByTypeAndCard(XueZhanMahjongOperationEnum.HU.value(), card);
+            huStep.setFanInfoList(fanInfos);
+            final StepAction action = huStep.getAction();
+            action.setOperationType(XueZhanMahjongOperationEnum.YI_PAO_DUO_XIANG);
+
             final int sumFan = sichuanMahjongZone.calculateFanNumByFanInfo(fanInfos);
             int changeScore = sumFan * baseScoreFactor;
 
+            /**
+             * 赢家结算分
+             */
             long beforeScore = player.getScore();
             player.scoreSettle(changeScore);
             long remainingScore = player.getScore();
@@ -641,25 +658,31 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                     .setRemaningScore(remainingScore);
             settlementInfoDTOS.add(winInfoDTO);
 
+            /**
+             * 输家结算分
+             */
+            long loserCurrentSettlementBeforeScore = loserPlayer.getScore();
+            loserPlayer.scoreSettle(-changeScore);
+            long loserCurrentSettlementAfterScore = loserPlayer.getScore();
+
+            final List<StepAction> loserSeatFuLu = loserSeat.getFuLu();
+            SettlementInfo loserSettlementInfo = new SettlementInfo();
+            loserSettlementInfo.setPosId(cardSourcePosId)
+                    .setFanNum(loserSumFanNum)
+                    .setFanInfoList(fanInfos)
+                    .setBeforeScore(loserCurrentSettlementBeforeScore)
+                    .setChangeScore(-changeScore)
+                    .setRemaningScore(loserCurrentSettlementAfterScore)
+                    .setFuluList(new ArrayList<>(loserSeatFuLu))
+                    .setStandCards(new ArrayList<>(loserSeat.getStandCardList()))
+                    .setStandCardsConvertList(MahjongProp.cardConvertName(loserSeat.getStandCardList()));
+            settlementInfoMap.put(cardSourcePosId, loserSettlementInfo);
+
             loserSumScore += changeScore;
             loserSumFanNum += sumFan;
         }
 
-        long loserBeforeScore = loserPlayer.getScore();
-        loserPlayer.scoreSettle(-loserSumScore);
         long loserRemainingScore = loserPlayer.getScore();
-
-        final List<StepAction> fuLu = loserSeat.getFuLu();
-        SettlementInfo settlementInfo = new SettlementInfo();
-        settlementInfo.setPosId(cardSourcePosId)
-                .setFanNum(loserSumFanNum)
-                .setBeforeScore(loserBeforeScore)
-                .setChangeScore(-loserSumScore)
-                .setRemaningScore(loserRemainingScore)
-                .setFuluList(new ArrayList<>(fuLu))
-                .setStandCards(new ArrayList<>(loserSeat.getStandCardList()))
-                .setStandCardsConvertList(MahjongProp.cardConvertName(loserSeat.getStandCardList()));
-        settlementInfoMap.put(cardSourcePosId, settlementInfo);
 
         SettlementInfoDTO loserInfoDTO = new SettlementInfoDTO();
         loserInfoDTO.setPosId(cardSourcePosId)
@@ -673,15 +696,21 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                 .setTargetCard(card)
                 .setSettlementInfoDTOS(settlementInfoDTOS);
 
-
+        List<MahjongSeat> needNoticeSeats = new ArrayList<>();
         for(Integer posId : posIds){
             final XueZhanSeat xueZhanSeat = posIdSeatMap.get(posId);
             final MahjongSeat mahjongSeat = xueZhanSeat.getMahjongSeat();
             final List<Integer> standCardList = mahjongSeat.getStandCardList();
             standCardList.remove(card);
+
+
+            needNoticeSeats.add(mahjongSeat);
         }
         mahjongZone.stepAdd();
         pushToRoomUser(XueZhanPushCommandCode.SETTLEMENT_NOTICE, settlementResponse);
+
+        needNoticeSeats.add(loserSeat);
+        noticePlayersWaterFlow(needNoticeSeats);
     }
 
     @Override
@@ -1412,7 +1441,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
 
     @Override
     public void dingQue(Integer color, Integer posId) {
-        log.info("玩家定缺： color={}", color);
+        log.info("玩家定缺： roomId={} 方位=[{},posId={}]  color={}",roomId,getSeatDirection(posId),posId, color);
         XueZhanSeat xueZhanSeat = posIdSeatMap.get(posId);
         if (!mahjongRule.getRuleConfig().getCanDingQue()) {
             log.error("当前游戏不支持定缺: roomId={} zoneId={} posId={}", roomId, gameZone.getZoneId(), posId);
@@ -1816,7 +1845,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             }
             mahjongZone.cleanTempAction();
 
-            //H2 不能直接还原，要判断是否有多人胡。如果是多人胡，要把操作类型改为一炮多响
+            //不能直接还原，要判断是否有多人胡。如果是多人胡，要把操作类型改为一炮多响
             if (needExecuteActionList.size() > 1) {
                 List<Integer> huPosIdList = new ArrayList<>();
                 Integer targetCard = null;
