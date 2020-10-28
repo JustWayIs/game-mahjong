@@ -594,6 +594,9 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                 .setAction(stepAction)
                 .setSeatSettlementInfoMap(settlementInfoMap);
 
+        GameStepModel<SettlementStep> mutipleHuSettlementStep = new GameStepModel<>(mahjongZone.getZoneId(),null,settlementStep);
+        historyList.add(mutipleHuSettlementStep);
+
         List<SettlementInfoDTO> settlementInfoDTOS = new ArrayList<>();
         final SichuanRoomConfig ruleConfig = mahjongRule.getRuleConfig();
         final int baseScoreFactor = ruleConfig.getBaseScoreFactor();
