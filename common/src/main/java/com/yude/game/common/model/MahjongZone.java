@@ -140,7 +140,9 @@ public class MahjongZone extends AbstractGameZoneModel<MahjongSeat, Status> {
 
     private void rollingDice() {
         Random random = new Random();
-        this.bankerPosId = random.nextInt(playerSeats.length);
+        //this.bankerPosId = random.nextInt(playerSeats.length);
+        //赛事版本0号位置永远是庄家
+        this.bankerPosId = 0;
 
         for (int i = 0; i < dice.length; ++i) {
             dice[i] = random.nextInt(6) + 1;
