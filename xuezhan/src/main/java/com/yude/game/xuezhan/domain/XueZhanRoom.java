@@ -404,7 +404,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
                 final HuCardStep operationStep = stepModel.getOperationStep();
                 final StepAction operationStepAction = operationStep.getAction();
                 operationStepAction.setOperationType(XueZhanMahjongOperationEnum.QIANG_GANG_HU);
-                final OperationCardStep buGangStep = loserSeat.getDesinateStep(XueZhanMahjongOperationEnum.QIANG_GANG_HU.value(), card);
+                final OperationCardStep buGangStep = loserSeat.getDesinateStep(XueZhanMahjongOperationEnum.BU_GANG.value(), card);
                 buGangStep.setEffective(false);
                 final OperationCardStep pengStep = loserSeat.getDesinateStep(OperationEnum.PENG.value(), card);
                 pengStep.setEffective(true);
@@ -444,10 +444,13 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
             pushToRoomUser(XueZhanPushCommandCode.OPERATION_RESULT_NOTICE, operationResultResponse);
 
             HuCardStep huStep = (HuCardStep) huSeat.getOperationHistoryByTypeAndCard(XueZhanMahjongOperationEnum.HU.value(), card);
+            if(huStep == null){
+                huStep = (HuCardStep) huSeat.getOperationHistoryByTypeAndCard(XueZhanMahjongOperationEnum.QIANG_GANG_HU.value(), card);
+            }
             StepAction huAction = huStep.getAction();
             Integer cardSourcePosId = huAction.getCardSource();
 
-            if(!cardSourcePosId.equals(huStep.getPosId())){
+            if(!cardSourcePosId.equals(huStep.getPosId()) && !XueZhanMahjongOperationEnum.QIANG_GANG_HU.value().equals(huAction.getOperationType().value())){
                 //移除放炮玩家的出牌池里 放炮的那张牌
                 final XueZhanSeat outCardSeat = posIdSeatMap.get(cardSourcePosId);
                 final MahjongSeat outCardMahjongSeat = outCardSeat.getMahjongSeat();
@@ -2414,7 +2417,7 @@ public class XueZhanRoom extends AbstractRoomModel<XueZhanZone, XueZhanSeat, Mah
         final List<Integer> dingQueOption = new ArrayList<>(Arrays.asList(1, 2, 3));
 
         mahjongRule = new SiChuanMahjongRule();
-        SichuanRoomConfig ruleConfig = new SichuanRoomConfig(true, true, dingQueOption, false);
+        SichuanRoomConfig ruleConfig = new SichuanRoomConfig(false, true, dingQueOption, false);
         final List<FanInfo<BaseHuTypeEnum>> baseHuList = new ArrayList<>();
         FanInfo<BaseHuTypeEnum> pingHu = new FanInfo<>(BaseHuTypeEnum.平胡, 1, FanInfo.MULTIPLICATION, PingHuFan.INSTANCE);
         FanInfo<BaseHuTypeEnum> qiDui = new FanInfo<>(BaseHuTypeEnum.七对, 4, FanInfo.MULTIPLICATION, QiDuiFan.INSTANCE);
